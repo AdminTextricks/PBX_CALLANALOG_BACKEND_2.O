@@ -87,8 +87,7 @@ class TrunkController extends Controller
                                 $columns = ['*'],
                                 $pageName = 'page'
                             );
-        }        
-
+        }
         if ($Trunks_data->isNotEmpty()) {
             $Trunks_dd = $Trunks_data->toArray();
             unset($Trunks_dd['links']);
