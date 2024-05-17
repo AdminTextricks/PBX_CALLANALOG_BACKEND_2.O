@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\{
+    MainPlan,
     User,
     Role,
     Permission
@@ -94,6 +95,11 @@ class UserSeeder extends Seeder
 			['name'=>'Edit Role', 'slug'=>'edit-role', 'permission_group' =>'Role', 'created_at'=>date('Y-m-d H:i:s'), 'updated_at'=>date('Y-m-d H:i:s')],
 			['name'=>'Delete Role', 'slug'=>'delete-role', 'permission_group' =>'Role', 'created_at'=>date('Y-m-d H:i:s'), 'updated_at'=>date('Y-m-d H:i:s')],
 			['name'=>'Get All Role', 'slug'=>'get-all-role', 'permission_group' =>'Role', 'created_at'=>date('Y-m-d H:i:s'), 'updated_at'=>date('Y-m-d H:i:s')],
+        ]);
+
+        MainPlan::insert([
+            ['name' => 'Fix per month', 'status' => '1', 'created_at' => date('Y-m-d H:i:s'), 'updated_at' => date('Y-m-d H:i:s')],
+            ['name' => 'Pay as you Go', 'status' => '1', 'created_at' => date('Y-m-d H:i:s'), 'updated_at' => date('Y-m-d H:i:s')]
         ]);
 
         DB::table('users_roles')
