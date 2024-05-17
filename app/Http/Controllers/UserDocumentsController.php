@@ -143,6 +143,7 @@ class UserDocumentsController extends Controller
                 $user_id = $UserDocuments->user_id;
                 $UserDocuments = UserDocuments::where('user_id', $user_id)->get();
                 //dd($UserDocuments[0]->user_id);
+                
                 $UserDetails = User::find($user_id);
                 $docStatusPending   = 0;
                 $docStatusRejected  = 0;
@@ -168,7 +169,6 @@ class UserDocumentsController extends Controller
                     $UserDetails->is_verified_doc = 2;
                     $UserDetails->save();
                 }                
-                
                 $response = $UserDocuments->toArray();
                 return $this->output(true, 'User Documents details updated successfully.', $response, 200);
             } else {
