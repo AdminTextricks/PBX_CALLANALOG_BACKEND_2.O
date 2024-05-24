@@ -101,6 +101,38 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::put('/{id}', [OutboundCallRateController::class, 'updateOutboundCallRate']);
 		Route::delete('/{id}', [OutboundCallRateController::class, 'deleteOutboundCallRate']);
 	});
+
+		# Tariff Plan
+		Route::group(['prefix' => 'tariff'], function () {
+			Route::post('/', [TariffController::class, 'createTariff']);
+			Route::get('/{id?}', [TariffController::class, 'getAllTariff']);
+			Route::get('/active', [TariffController::class, 'getAllActiveTariff']);
+			Route::put('/{id}', [TariffController::class, 'updateTariff']);
+			Route::patch('/changeStatus/{id}', [TariffController::class, 'changeTariffStatus']);
+		});
+	
+		# MainPlans
+		Route::group(['prefix' => 'plan'], function () {
+			Route::get('/active', [MainPlansController::class, 'getAllActivePlans']);
+			Route::get('/{id?}', [MainPlansController::class, 'getAllPlans']);
+		});
+	
+		# TfnGroup
+		Route::group(['prefix' => 'tfngroup'], function () {
+			Route::get('/active', [TfnGroupController::class, 'getAllActiveTfngroup']);
+			Route::get('/{id?}', [TfnGroupController::class, 'getAllTfngroup']);
+	
+		});
+	
+		# Tfn Number 
+		Route::group(['prefix' => 'tfn'], function () {
+			Route::get('/active', [TfnController::class, 'getAllActiveTfns']);
+			Route::post('/', [TfnController::class, 'addAdminTfns']);
+			Route::put('/{id}', [TfnController::class, 'updateTfns']);
+			Route::patch('/changeStatus/{id}', [TfnController::class, 'changeTfnsStatus']);
+			Route::delete('/{id}', [TfnController::class, 'deleteTfn']);
+			Route::get('/{id?}', [TfnController::class, 'getAllTfn']);
+		});
 });
 /*
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
