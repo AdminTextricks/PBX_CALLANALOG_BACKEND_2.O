@@ -107,9 +107,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 		# Tariff Plan
 		Route::group(['prefix' => 'tariff'], function () {
+			Route::get('/active', [TariffController::class, 'getAllActiveTariff']);
 			Route::post('/', [TariffController::class, 'createTariff']);
 			Route::get('/{id?}', [TariffController::class, 'getAllTariff']);
-			Route::get('/active', [TariffController::class, 'getAllActiveTariff']);
 			Route::put('/{id}', [TariffController::class, 'updateTariff']);
 			Route::patch('/changeStatus/{id}', [TariffController::class, 'changeTariffStatus']);
 		});
