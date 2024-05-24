@@ -11,7 +11,10 @@ use App\Http\Controllers\PasswordResetTokensController;
 use App\Http\Controllers\TrunkController;
 use App\Http\Controllers\MainPriceController;
 use App\Http\Controllers\OutboundCallRateController;
-
+use App\Http\Controllers\TariffController;
+use App\Http\Controllers\TfnController;
+use App\Http\Controllers\TfnGroupController;
+use App\Http\Controllers\MainPlansController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
