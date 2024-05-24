@@ -79,4 +79,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(State::class);
     }
+
+    public function tfn()
+    {
+        return $this->hasMany(Tfn::class);
+    }
 }
