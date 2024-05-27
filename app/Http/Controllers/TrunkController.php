@@ -98,27 +98,20 @@ class TrunkController extends Controller
         }
     }
 
-    public function getActiveOutboundTrunk(Request $request)
+    public function getTrunksByType(Request $request)
     {
         //$user = \Auth::user();
         $perPageNo = isset($request->perpage) ? $request->perpage : 10;
         $params = $request->params ?? "";
 
-        $trunk_id = $request->id ?? NULL;
-        if($trunk_id){            
+        $type = $request->type ?? NULL;
+        
+        if(in_array($type, ['Inbound','Outbound']) ){
             $Trunks_data = Trunk::select('*') 
-                            ->where('id', $trunk_id)
                             ->where('status', 1)
-                            ->where('type', 'Outbound')->get();
+                            ->where('type', $type)->get();
         }else{
-            $Trunks_data = Trunk::select('*')
-                            ->where('type', 'Outbound') 
-                            ->where('status', 1)->get();
-                            /*->paginate(
-                                $perPage = $perPageNo,
-                                $columns = ['*'],
-                                $pageName = 'page'
-                            );*/
+            return $this->output(false, 'Trunk type not exist', [], 409);
         }
         if ($Trunks_data->isNotEmpty()) {
             $Trunks_dd = $Trunks_data->toArray();
@@ -179,12 +172,12 @@ class TrunkController extends Controller
                 'tech'          => 'required|max:250',
                 'is_register'   => 'required',
                 'ip'            => 'required|ip',
-                'remove_prefix' => 'required',
+                'remove_prefix' => 'nullable',
                 'failover'      => 'nullable|exists:trunks,id',
-                'max_use'       => 'required',
-                'if_max_use'    => 'required',
-                'username'      => 'required|max:250',
-                'password'      => 'required|max:250',
+                'max_use'       => 'nullable',
+                'if_max_use'    => 'nullable',
+                'username'      => 'nullable|max:250',
+                'password'      => 'nullable|max:250',
             ],[
                 'name.unique' => 'This Trunk name is already registered. Please try with different trunk.',
             ]);

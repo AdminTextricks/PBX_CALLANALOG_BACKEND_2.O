@@ -74,7 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::group(['prefix' => 'trunk'], function () {
 		Route::post('/', [TrunkController::class, 'addTrunk']);
 		Route::get('/active', [TrunkController::class, 'getAllActiveTrunks']);
-		Route::get('/activeOutboundList', [TrunkController::class, 'getActiveOutboundTrunk']);
+		Route::get('/type/{type}', [TrunkController::class, 'getTrunksByType']);
 		Route::get('/{id?}', [TrunkController::class, 'getAllTrunk']);		
 		Route::patch('/changeStatus/{id}', [TrunkController::class, 'changeTrunkStatus']);
 		Route::put('/{id}', [TrunkController::class, 'updateTrunk']);
