@@ -17,8 +17,8 @@ class MainPriceController extends Controller
     {
         $validator = Validator::make($request->all(), [            
             'country_id'=> 'required',
-            'user_type' => 'required|max:500',
-            'user_id'   => 'required_if:user_type,Reseller|exists:users,id',
+            'user_type' => 'required|max:500|in:Reseller,Company',
+            'user_id'   => 'bail|required_if:user_type,Reseller,exists:users,id',
             'product'   => 'required|max:500|in:TFN,Extension',
             'price'     => 'required|max:255',
         ]/*,[
