@@ -108,15 +108,17 @@ class TrunkController extends Controller
         if($trunk_id){            
             $Trunks_data = Trunk::select('*') 
                             ->where('id', $trunk_id)
+                            ->where('status', 1)
                             ->where('type', 'Outbound')->get();
         }else{
             $Trunks_data = Trunk::select('*')
                             ->where('type', 'Outbound') 
-                            ->paginate(
+                            ->where('status', 1)->get();
+                            /*->paginate(
                                 $perPage = $perPageNo,
                                 $columns = ['*'],
                                 $pageName = 'page'
-                            );
+                            );*/
         }
         if ($Trunks_data->isNotEmpty()) {
             $Trunks_dd = $Trunks_data->toArray();
