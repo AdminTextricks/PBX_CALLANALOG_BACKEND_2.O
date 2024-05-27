@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('selling_rate',50)->nullable()->default(0);
             $table->string('init_block',50)->nullable()->default(0);
             $table->string('billing_block',30)->nullable()->default(0);
-            $table->integer('start_date')->nullable();
+            $table->string('start_date',50)->nullable();
             $table->string('stop_date',50)->nullable();
 			$table->tinyInteger('status')->default(0);
             $table->timestamps();
