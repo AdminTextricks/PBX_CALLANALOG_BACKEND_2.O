@@ -11,6 +11,7 @@ use App\Http\Controllers\PasswordResetTokensController;
 use App\Http\Controllers\TrunkController;
 use App\Http\Controllers\MainPriceController;
 use App\Http\Controllers\OutboundCallRateController;
+use App\Http\Controllers\ExtensionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -100,6 +101,16 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::patch('/changeStatus/{id}', [OutboundCallRateController::class, 'changeOutboundCallRateStatus']);				
 		Route::put('/{id}', [OutboundCallRateController::class, 'updateOutboundCallRate']);
 		Route::delete('/{id}', [OutboundCallRateController::class, 'deleteOutboundCallRate']);
+	});
+
+	# Manage Extensions
+	Route::group(['prefix' => 'extensions'], function () {
+		Route::post('/', [ExtensionController::class, 'addExtensions']);	
+		Route::post('/genrate', [ExtensionController::class, 'genrateExtensions']);
+		Route::get('/{id?}', [ExtensionController::class, 'getAllOutboundCallRate']);				
+		Route::patch('/changeStatus/{id}', [ExtensionController::class, 'changeOutboundCallRateStatus']);				
+		Route::put('/{id}', [ExtensionController::class, 'updateOutboundCallRate']);
+		Route::delete('/{id}', [ExtensionController::class, 'deleteOutboundCallRate']);
 	});
 });
 /*

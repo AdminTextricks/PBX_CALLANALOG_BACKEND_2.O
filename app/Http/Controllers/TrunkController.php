@@ -14,21 +14,21 @@ class TrunkController extends Controller
     }
     public function addTrunk(Request $request)
     {
-        $failover_trunk = $request->failover_trunk;
         $validator = Validator::make($request->all(), [
-            'trunk_type'        => 'required|in:Inbound,Outbound',
-            'trunk_name'        => 'required|unique:trunks',
-            'trunk_prefix'      => 'required|max:250',
-            'tech'              => 'required|max:250',
-            'trunk_ip'          => 'required|ip',
-            'remove_prefix'     => 'required',
-            'failover_trunk'    => 'nullable|exists:trunks,id',
-            'max_use'           => 'required',
-            'if_max_use'        => 'required',
-            'trunk_username'    => 'required|max:250',
-            'trunk_password'    => 'required|max:250',
+            'type'          => 'required|in:Inbound,Outbound',
+            'name'          => 'required|unique:trunks',
+            'prefix'        => 'required|max:250',
+            'tech'          => 'required|max:250',
+            'ip'            => 'required|ip',
+			'is_register'   => 'required',
+            'remove_prefix' => 'nullable',
+            'failover'      => 'nullable',
+            'max_use'       => 'nullable',
+            'if_max_use'    => 'nullable',
+            'username'      => 'nullable|max:250',
+            'password'      => 'nullable|max:250',
         ],[
-            'trunk_name.unique'  => 'This Trunk name is already registered. Please try with different trunk.',
+            'name.unique'  => 'This Trunk name is already registered. Please try with different trunk.',
         ]);
         if ($validator->fails()){
             return $this->output(false, $validator->errors()->first(), [], 409);
@@ -36,21 +36,22 @@ class TrunkController extends Controller
         // Start transaction!
         try { 
             DB::beginTransaction();
-            $Trunk = Trunk::where('trunk_name', $request->trunk_name)->first();        
+            $Trunk = Trunk::where('name', $request->name)->first();        
             if(!$Trunk){
                 $Trunk = Trunk::create([
-                    'trunk_type'    => $request->trunk_type,
-                    'trunk_name'    => $request->trunk_name,
-                    'trunk_prefix'	=> $request->trunk_prefix,
-                    'tech'          => $request->tech,
-                    'trunk_ip'      => $request->trunk_ip,
+                    'type'      => $request->type,
+                    'name'      => $request->name,
+                    'prefix'	=> $request->prefix,
+                    'tech'      => $request->tech,
+                    'is_register'   => $request->is_register,
+                    'ip'            => $request->ip,
                     'remove_prefix' => $request->remove_prefix,
-                    'failover_trunk'=> $request->failover_trunk,
+                    'failover'      => $request->failover,
                     'max_use' 	    => $request->max_use,
                     'if_max_use' 	=> $request->if_max_use,
-                    'trunk_username'=> $request->trunk_username,
-                    'trunk_password'=> $request->trunk_password,
-                    'status' 	    => $request->status,
+                    'username'      => $request->username,
+                    'password'      => $request->password,
+                    'status' 	    => isset($request->status) ? $request->status : 1,
                 ]);
                 
                 $response 	= $Trunk->toArray();               
@@ -142,35 +143,37 @@ class TrunkController extends Controller
 			return $this->output(false, 'This Trunks not exist with us. Please try again!.', [], 404);
 		} else {
 			$validator = Validator::make($request->all(), [
-                'trunk_type'        => 'required|in:Inbound,Outbound',
-                'trunk_name'        => 'required|unique:trunks,trunk_name,'.$Trunk->id,
-                'trunk_prefix'      => 'required|max:250',
-                'tech'              => 'required|max:250',
-                'trunk_ip'          => 'required|ip',
-                'remove_prefix'     => 'required',
-                'failover_trunk'    => 'nullable|exists:trunks,id',
-                'max_use'           => 'required',
-                'if_max_use'        => 'required',
-                'trunk_username'    => 'required|max:250',
-                'trunk_password'    => 'required|max:250',
+                'type'          => 'required|in:Inbound,Outbound',
+                'name'          => 'required|unique:trunks,name,'.$Trunk->id,
+                'prefix'        => 'required|max:250',
+                'tech'          => 'required|max:250',
+                'is_register'   => 'required',
+                'ip'            => 'required|ip',
+                'remove_prefix' => 'required',
+                'failover'      => 'nullable|exists:trunks,id',
+                'max_use'       => 'required',
+                'if_max_use'    => 'required',
+                'username'      => 'required|max:250',
+                'password'      => 'required|max:250',
             ],[
-                'trunk_name.unique' => 'This Trunk name is already registered. Please try with different trunk.',
+                'name.unique' => 'This Trunk name is already registered. Please try with different trunk.',
             ]);
             if ($validator->fails()){
                 return $this->output(false, $validator->errors()->first(), [], 409);
             }
 			//$user = $request->user();
-			$Trunk->trunk_type      = $request->trunk_type;
-			$Trunk->trunk_name 	    = $request->trunk_name;
-			$Trunk->trunk_prefix	= $request->trunk_prefix;
-			$Trunk->tech	        = $request->tech;
-			$Trunk->trunk_ip        = $request->trunk_ip;
+			$Trunk->type        = $request->type;
+			$Trunk->name 	    = $request->name;
+			$Trunk->prefix	    = $request->prefix;
+			$Trunk->tech	    = $request->tech;
+			$Trunk->is_register = $request->is_register;
+			$Trunk->ip          = $request->ip;
 			$Trunk->remove_prefix   = $request->remove_prefix;
-			$Trunk->failover_trunk 	= $request->failover_trunk;			
+			$Trunk->failover 	    = $request->failover;			
 			$Trunk->max_use 	    = $request->max_use;			
 			$Trunk->if_max_use 	    = $request->if_max_use;			
-			$Trunk->trunk_username 	= $request->trunk_username;			
-			$Trunk->trunk_password 	= $request->trunk_password;			
+			$Trunk->username 	    = $request->username;			
+			$Trunk->password 	    = $request->password;			
 			$TrunkRes 			    = $Trunk->save();
 
 			if ($TrunkRes) {

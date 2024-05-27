@@ -108,7 +108,7 @@ class UserController extends Controller
             'password' 		=> 'nullable|required|confirmed',            
         ],[
             'plan_id'       => 'Plan type is required!',
-            'parent_id'     => 'You are not an authorized user to create an account.',
+            'parent_id'     => 'parent ID is required.',
             'email.unique'  => 'This email ID is already registered. Please try with different email ID.',
             'mobile.unique' => 'This mobile number is already registered. Please try with different mobile number.',
             'company_name.unique' => 'This Company name is already registered. Please try with different Company name.',

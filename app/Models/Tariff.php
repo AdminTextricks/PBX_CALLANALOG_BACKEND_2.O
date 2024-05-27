@@ -8,4 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Tariff extends Model
 {
     use HasFactory;
+    protected $fillable = [
+        'id',
+        'terrif_name',
+        'status'        
+    ];
 }
