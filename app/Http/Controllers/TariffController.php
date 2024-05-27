@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tariff;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Validator;
 
 class TariffController extends Controller
 {
@@ -39,7 +39,7 @@ class TariffController extends Controller
             return $this->output(false, 'This Tariff is not belong with us. Please try again!.', [], 404);
         } else {
             $validator = Validator::make($request->all(), [
-                'tariff_name' => $request->tariff_name,
+                'tariff_name' => "required|max:255",
             ]);
             if ($validator->fails()) {
                 return $this->output(false, $validator->errors()->first(), [], 409);
@@ -73,8 +73,8 @@ class TariffController extends Controller
             } else {
                 $TariffData->status = $request->status;
                 $TariffDataRes = $TariffData->save();
-                if ($TariffDataRes) {
-                    $response  = $TariffDataRes->toArray();
+                if ($TariffData) {
+                    $response  = $TariffData->toArray();
                     return $this->output(true, 'Tariff updated successfully.', $response, 200);
                 } else {
                     return $this->output(false, 'Error occurred in Tariff Updating. Please try again!.', [], 200);
@@ -91,6 +91,31 @@ class TariffController extends Controller
             return $this->output(true, 'success', $TariffData->toArray());
         } else {
             return $this->output(true, 'No Record Found', []);
+        }
+    }
+
+    public function getAllTariff(Request $request)
+    {
+        $user  = \Auth::user();
+        $perPageNo = isset($request->perpage) ? $request->perpage : 10;
+        $params = $request->params ?? "";
+
+        $tariff_id = $request->id ?? NULL;
+        if ($tariff_id) {
+            $tariff_data = Tariff::select()->where('id', $tariff_id)->get();
+        } else {
+            if ($params !== "") {
+                $tariff_data = Tariff::select('*')->where('tariff_name', 'LIKE', "%$params%")->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
+            } else {
+                $tariff_data = Tariff::select('*')->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
+            }
+        }
+        if ($tariff_data->isNotEmpty()) {
+            $response = $tariff_data->toArray();
+            unset($tariff_data['links']);
+            return $this->output(true, 'success', $response, 200);
+        } else {
+            return $this->output(true, 'No Record Found', [], 200);
         }
     }
 }
