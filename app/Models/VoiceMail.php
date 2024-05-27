@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class VoiceMail extends Model
+{
+    use HasFactory;
+    protected $fillable = [
+        'id',
+        'company_id',
+        'context',
+        'mailbox',
+        'password',
+        'fullname',
+        'email',
+        'pager',        
+        'timezone',        
+        'attach',        
+        'saycid',        
+        'dialout',        
+        'callback',        
+        'review',        
+        'operator',        
+        'envelope',        
+        'sayduration',        
+        'saydurationm',        
+        'sendvoicemail',        
+        'nextaftercmd',        
+        'forcename',        
+        'forcegreetings',        
+        'hidefromdir',        
+        'status'        
+    ];
+}

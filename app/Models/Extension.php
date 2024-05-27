@@ -10,6 +10,7 @@ class Extension extends Model
     use HasFactory;
     protected $fillable = [
         'id',
+        'country_id',
         'company_id',
         'intercom',
         'name',

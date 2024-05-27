@@ -13,7 +13,7 @@ class ExtensionController extends Controller
 
     }
 
-    public function genrateExtensions(Request $request)
+    public function generateExtensions(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'extension_digit'    => 'nullable|numeric|between:5,10',
@@ -29,8 +29,6 @@ class ExtensionController extends Controller
             $extension_digit = !empty($request->extension_digit) ? $request->extension_digit : 7;
             $extension_number = $request->extension_number;
             $number_array = $final_array =  array();
-            $number_array[] = '10230605';
-            $number_array[] = '44092960';
             while(1) {
                 // generate unique random number 
                 $numberArr = array('5'=>'99999','6'=>'999999','7'=>'9999999','8'=>'99999999','9'=>'999999999','10'=>'9999999999');
@@ -55,7 +53,7 @@ class ExtensionController extends Controller
             //print_r($final_array);exit;
             $response = implode(',',$final_array);
             DB::commit();
-            return $this->output(true, 'Extensions genreted successfully.', $response);
+            return $this->output(true, 'Extensions generated successfully.', $response);
         } catch(\Exception $e)
         {
             DB::rollback();
@@ -79,17 +77,17 @@ class ExtensionController extends Controller
     {
         $failover_trunk = $request->failover_trunk;
         $validator = Validator::make($request->all(), [
-            'trunk_type'        => 'required|in:Inbound,Outbound',
-            'trunk_name'        => 'required|unique:trunks',
-            'trunk_prefix'      => 'required|max:250',
-            'tech'              => 'required|max:250',
-            'trunk_ip'          => 'required|ip',
-            'remove_prefix'     => 'required',
-            'failover_trunk'    => 'nullable|exists:trunks,id',
-            'max_use'           => 'required',
-            'if_max_use'        => 'required',
-            'trunk_username'    => 'required|max:250',
-            'trunk_password'    => 'required|max:250',
+            'country_id'        => 'required|in:Inbound,Outbound',
+            'company_id'        => 'required|unique:trunks',
+            'name'              => 'required|max:250',
+            'intercom'          => 'required|max:250',            
+            'accountcode'       => 'required|ip',
+            'regexten'          => 'required',
+            'amaflags'          => 'nullable|exists:trunks,id',
+            'callerid'          => 'required_if:outbound_call,1',                                    
+            'secret'            => 'required',
+            'context'           => 'required',
+            'dtmfmode'          => 'required|max:250',
         ],[
             'trunk_name.unique'  => 'This Trunk name is already registered. Please try with different trunk.',
         ]);

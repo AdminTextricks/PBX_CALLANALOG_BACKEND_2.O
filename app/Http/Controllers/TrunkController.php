@@ -98,6 +98,34 @@ class TrunkController extends Controller
         }
     }
 
+    public function getActiveOutboundTrunk(Request $request)
+    {
+        //$user = \Auth::user();
+        $perPageNo = isset($request->perpage) ? $request->perpage : 10;
+        $params = $request->params ?? "";
+
+        $trunk_id = $request->id ?? NULL;
+        if($trunk_id){            
+            $Trunks_data = Trunk::select('*') 
+                            ->where('id', $trunk_id)
+                            ->where('type', 'Outbound')->get();
+        }else{
+            $Trunks_data = Trunk::select('*')
+                            ->where('type', 'Outbound') 
+                            ->paginate(
+                                $perPage = $perPageNo,
+                                $columns = ['*'],
+                                $pageName = 'page'
+                            );
+        }
+        if ($Trunks_data->isNotEmpty()) {
+            $Trunks_dd = $Trunks_data->toArray();
+            unset($Trunks_dd['links']);
+            return $this->output(true, 'Success', $Trunks_dd, 200);
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
+    }
 
     public function getAllActiveTrunks(Request $request)
     {

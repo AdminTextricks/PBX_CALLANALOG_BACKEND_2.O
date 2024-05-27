@@ -74,6 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::group(['prefix' => 'trunk'], function () {
 		Route::post('/', [TrunkController::class, 'addTrunk']);
 		Route::get('/active', [TrunkController::class, 'getAllActiveTrunks']);
+		Route::get('/activeOutboundList', [TrunkController::class, 'getActiveOutboundTrunk']);
 		Route::get('/{id?}', [TrunkController::class, 'getAllTrunk']);		
 		Route::patch('/changeStatus/{id}', [TrunkController::class, 'changeTrunkStatus']);
 		Route::put('/{id}', [TrunkController::class, 'updateTrunk']);
@@ -110,11 +111,12 @@ Route::middleware('auth:sanctum')->group(function () {
 	# Manage Extensions
 	Route::group(['prefix' => 'extensions'], function () {
 		Route::post('/', [ExtensionController::class, 'addExtensions']);	
-		Route::post('/genrate', [ExtensionController::class, 'genrateExtensions']);
-		Route::get('/{id?}', [ExtensionController::class, 'getAllOutboundCallRate']);				
+		Route::post('/generate', [ExtensionController::class, 'generateExtensions']);
+		Route::get('/generatePassword', [ExtensionController::class, 'generateStrongPassword']);
+		/*
 		Route::patch('/changeStatus/{id}', [ExtensionController::class, 'changeOutboundCallRateStatus']);				
 		Route::put('/{id}', [ExtensionController::class, 'updateOutboundCallRate']);
-		Route::delete('/{id}', [ExtensionController::class, 'deleteOutboundCallRate']);
+		Route::delete('/{id}', [ExtensionController::class, 'deleteOutboundCallRate']);*/
 	});
 		# Tariff Plan
 		Route::group(['prefix' => 'tariff'], function () {
