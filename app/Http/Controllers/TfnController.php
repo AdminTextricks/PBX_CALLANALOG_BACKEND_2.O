@@ -29,7 +29,6 @@ class TfnController extends Controller
                 $addTfns = Tfn::where('tfn_number', $request->tfn_number)->first();
                 if (!$addTfns) {
                     $addTfns = Tfn::create([
-                        'user_id'                  => $request->user()->id,
                         'tfn_number'               => $request->tfn_number,
                         'tfn_provider'             => $request->tfn_provider,
                         'tfn_group_id'             => $request->tfn_group_id,
@@ -77,8 +76,6 @@ class TfnController extends Controller
             if ($validator->fails()) {
                 return $this->output(false, $validator->errors()->first(), [], 409);
             } else {
-                $user = $request->user();
-                $updateTfns->user_id                   = $user->id;
                 $updateTfns->tfn_number               = $request->tfn_number;
                 $updateTfns->tfn_provider             = $request->tfn_provider;
                 $updateTfns->tfn_group_id             = $request->tfn_group_id;
@@ -206,12 +203,12 @@ class TfnController extends Controller
         $user = \Auth::user();
         if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
             $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
-                ->select('id', 'tfn_number', 'company_id', 'user_id', 'country_id')
+                ->select('id', 'tfn_number', 'company_id', 'country_id')
                 ->where('status', "=", 1)
                 ->get();
         } else {
             $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
-                ->select('id', 'tfn_number', 'company_id', 'user_id', 'country_id')
+                ->select('id', 'tfn_number', 'company_id', 'country_id')
                 ->where('company_id', '=',  $user->company_id)
                 ->where('status', "=", 1)
                 ->get();
