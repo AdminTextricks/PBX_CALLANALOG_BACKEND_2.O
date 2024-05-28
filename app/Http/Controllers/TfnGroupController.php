@@ -36,7 +36,7 @@ class TfnGroupController extends Controller
         }
         if ($tfngroupData->isNotEmpty()) {
             $response = $tfngroupData->toArray();
-            unset($tfngetAll_data['links']);
+            unset($response['links']);
             return $this->output(true, 'success', $response, 200);
         } else {
             return $this->output(true, 'No Record Found', [], 200);
