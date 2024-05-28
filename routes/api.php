@@ -84,21 +84,22 @@ Route::middleware('auth:sanctum')->group(function () {
 
 	# Main Price
 	Route::group(['prefix' => 'price'], function () {
-		Route::post('/', [MainPriceController::class, 'addSuperAdminPrice']);
-		Route::get('/reseller/{id?}', [MainPriceController::class, 'getResellerPriceList']);
-		Route::patch('/changeStatus/{id}', [MainPriceController::class, 'changeMainPriceStatus']);
-		Route::patch('/changeResellerPriceStatus/{id}', [MainPriceController::class, 'changeResellerPriceStatus']);
+		Route::post('/', [MainPriceController::class, 'addSuperAdminPrice']);		
+		Route::patch('/changeStatus/{id}', [MainPriceController::class, 'changeMainPriceStatus']);		
 		Route::get('/{id?}', [MainPriceController::class, 'getPriceList']);
-		Route::patch('/{id}', [MainPriceController::class, 'updatePrice']);
-		Route::put('/reseller/{id}', [MainPriceController::class, 'updateResellerPrice']);
+		Route::patch('/{id}', [MainPriceController::class, 'updatePrice']);		
 		Route::delete('/{id}', [MainPriceController::class, 'deletePrice']);
-		Route::delete('/reseller/{id}', [MainPriceController::class, 'deleteResellerPrice']);
-		Route::post('/reseller', [MainPriceController::class, 'addResellerPrice']);
-		
+	});
+	# Reseller commission Rate
+	Route::group(['prefix' => 'reseller-price'], function () {
+		Route::post('/', [MainPriceController::class, 'addResellerPrice']);
+		Route::get('/{id?}', [MainPriceController::class, 'getResellerPriceList']);
+		Route::patch('/changeStatus/{id}', [MainPriceController::class, 'changeResellerPriceStatus']);
+		Route::put('/{id}', [MainPriceController::class, 'updateResellerPrice']);
+		Route::delete('/{id}', [MainPriceController::class, 'deleteResellerPrice']);
 	});
 
-
-	# Main Price
+	# Outbound Call Rates
 	Route::group(['prefix' => 'outbound-call-rates'], function () {
 		Route::post('/', [OutboundCallRateController::class, 'addOutboundCallRate']);	
 		Route::get('/active', [OutboundCallRateController::class, 'getAllActiveOutboundCallRate']);
