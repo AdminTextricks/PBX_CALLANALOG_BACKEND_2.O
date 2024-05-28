@@ -20,4 +20,14 @@ class OutboundCallRate extends Model
         'stop_date',
         'status'        
     ];
+
+    public function tariff()
+    {
+        return $this->belongsTo(Tariff::class);
+    }
+
+    public function trunk()
+    {
+        return $this->belongsTo(Trunk::class);
+    }
 }

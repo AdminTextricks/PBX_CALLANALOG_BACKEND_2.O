@@ -73,9 +73,11 @@ class OutboundCallRateController extends Controller
             $OutboundCallRate_id = $request->id ?? NULL;
             if($OutboundCallRate_id){            
                 $OutboundCallRate_data = OutboundCallRate::select('*') 
-                                ->where('id', $OutboundCallRate_id)->get();;
+                                ->with(['tariff','trunk'])
+                                ->where('id', $OutboundCallRate_id)->get();
             }else{
                 $OutboundCallRate_data = OutboundCallRate::select('*') 
+                                        ->with(['tariff','trunk'])
                                     ->paginate(
                                     $perPage = $perPageNo,
                                     $columns = ['*'],

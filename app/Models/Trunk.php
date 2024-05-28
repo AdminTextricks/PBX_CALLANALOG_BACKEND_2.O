@@ -24,4 +24,9 @@ class Trunk extends Model
         'password',
         'status'
     ];
+
+    public function outboundcallrates()
+    {
+        return $this->hasMany(OutboundCallRate::class);
+    }
 }

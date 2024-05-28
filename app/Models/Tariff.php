@@ -12,4 +12,12 @@ class Tariff extends Model
         'terrif_name',
         'status' 
     ];
+
+    /**
+     * Get the outboundcallrate for the blog post.
+     */
+    public function outboundcallrates()
+    {
+        return $this->hasMany(OutboundCallRate::class);
+    }
 }
