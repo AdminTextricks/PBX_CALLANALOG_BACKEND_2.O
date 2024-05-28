@@ -150,16 +150,22 @@ class TfnController extends Controller
             $tfn_id = $request->id ?? NULL;
             if ($tfn_id) {
                 $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
+                    ->with('tfn_groups:id,tfngroup_name')
+                    ->with('truks:id,name')
                     ->select('*')->where('id', $tfn_id)->get();
             } else {
                 if ($params !== "") {
                     $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
+                        ->with('tfn_groups:id,tfngroup_name')
+                        ->with('truks:id,name')
                         ->where('tfn_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_type_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
                         ->select('*')->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 } else {
                     $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
+                        ->with('tfn_groups:id,tfngroup_name')
+                        ->with('truks:id,name')
                         ->select('*')->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 }
             }
