@@ -27,4 +27,14 @@ class Tfn extends Model
     {
         return $this->belongsTo(Company::class);
     }
+
+    public function tfn_groups()
+    {
+        return $this->belongsTo(TfnGroups::class, 'tfn_group_id', 'id');
+    }
+
+    public function truks()
+    {
+        return $this->belongsTo(Trunk::class, 'tfn_provider', 'id');
+    }
 }
