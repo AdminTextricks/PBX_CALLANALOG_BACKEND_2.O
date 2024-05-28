@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('tfns', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade')->onUpdate('cascade');
             $table->bigInteger('company_id')->index()->nullable()->default(0);
             $table->integer('assign_by')->nullable()->default(0);
             $table->bigInteger('plan_id')->nullable();
