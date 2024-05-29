@@ -12,7 +12,7 @@ use App\Http\Controllers\TrunkController;
 use App\Http\Controllers\MainPriceController;
 use App\Http\Controllers\OutboundCallRateController;
 use App\Http\Controllers\ExtensionController;
-
+use App\Http\Controllers\BlockNumberController;
 use App\Http\Controllers\TariffController;
 use App\Http\Controllers\TfnController;
 use App\Http\Controllers\TfnGroupController;
@@ -90,6 +90,7 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::patch('/{id}', [MainPriceController::class, 'updatePrice']);		
 		Route::delete('/{id}', [MainPriceController::class, 'deletePrice']);
 	});
+
 	# Reseller commission Rate
 	Route::group(['prefix' => 'reseller-price'], function () {
 		Route::post('/', [MainPriceController::class, 'addResellerPrice']);
@@ -149,6 +150,17 @@ Route::middleware('auth:sanctum')->group(function () {
 			Route::patch('/changeStatus/{id}', [TfnController::class, 'changeTfnsStatus']);
 			Route::delete('/{id}', [TfnController::class, 'deleteTfn']);
 			Route::get('/{id?}', [TfnController::class, 'getAllTfn']);
+		});
+
+
+		#Block Number Management
+		Route::group(['prefix' => 'block-number'], function () {		
+			Route::post('/', [BlockNumberController::class, 'addBlockNumber']);
+			Route::put('/{id}', [BlockNumberController::class, 'updateBlockNumber']);
+			Route::patch('/changeStatus/{id}', [BlockNumberController::class, 'changeBlockNumberStatus']);
+			Route::get('/active', [BlockNumberController::class, 'getAllActiveBlockNumbers']);
+			Route::get('/{id?}', [BlockNumberController::class, 'getAllBlockNumber']);		
+			Route::get('/getByCompany/{comapny_id}', [BlockNumberController::class, 'getBlockNumbersByCompany']);	
 		});
 });
 /*

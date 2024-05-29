@@ -84,4 +84,17 @@ class User extends Authenticatable
     {
         return $this->hasMany(Tfn::class);
     }
+
+    /**
+     * Get the resellerPrices for the blog post.
+     */
+    public function resellerPrices()
+    {
+        return $this->hasMany(ResellerPrice::class);
+    }
+
+    public function mainPrices()
+    {
+        return $this->hasMany(MainPrice::class, 'user_id');
+    }
 }

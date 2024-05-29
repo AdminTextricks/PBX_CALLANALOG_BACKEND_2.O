@@ -71,9 +71,11 @@ class MainPriceController extends Controller
         $trunk_id = $request->id ?? NULL;
         if($trunk_id){            
             $MainPrice_data = MainPrice::select('*') 
+                            ->with(['user:id,name,email,mobile']) 
                             ->where('id', $trunk_id)->get();;
         }else{
             $MainPrice_data = MainPrice::select('*') 
+                                ->with(['user:id,name,email,mobile']) 
                                 ->paginate(
                                 $perPage = $perPageNo,
                                 $columns = ['*'],
@@ -226,10 +228,12 @@ class MainPriceController extends Controller
 
         $trunk_id = $request->id ?? NULL;
         if($trunk_id){            
-            $ResellerPrice_data = ResellerPrice::select('*') 
+            $ResellerPrice_data = ResellerPrice::select('*')
+                            ->with(['user:id,name,email,mobile']) 
                             ->where('id', $trunk_id)->get();;
         }else{
             $ResellerPrice_data = ResellerPrice::select('*') 
+                                ->with(['user:id,name,email,mobile']) 
                                 ->paginate(
                                 $perPage = $perPageNo,
                                 $columns = ['*'],
