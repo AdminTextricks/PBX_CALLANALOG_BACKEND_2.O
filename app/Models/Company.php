@@ -24,4 +24,10 @@ class Company extends Model
         'balance',
         'status'        
     ];
+
+    
+    public function blockNumbers()
+    {
+        return $this->hasMany(BlockNumber::class);
+    }
 }
