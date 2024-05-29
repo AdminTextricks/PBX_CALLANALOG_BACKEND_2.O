@@ -77,19 +77,20 @@ class ExtensionController extends Controller
     {
         $failover_trunk = $request->failover_trunk;
         $validator = Validator::make($request->all(), [
-            'country_id'        => 'required|in:Inbound,Outbound',
-            'company_id'        => 'required|unique:trunks',
-            'name'              => 'required|max:250',
-            'intercom'          => 'required|max:250',            
-            'accountcode'       => 'required|ip',
-            'regexten'          => 'required',
-            'amaflags'          => 'nullable|exists:trunks,id',
-            'callerid'          => 'required_if:outbound_call,1',                                    
+            'country_id'        => 'required|numeric',
+            'company_id'        => 'required|numeric',
+            'name'              => 'required|max:250|unique:extensions',
+            'callbackextension' => 'required|max:50',            
+            'accountcode'       => 'required|max:50',
+            'agent_name'        => 'required|max:150',
+            'callgroup'         => 'required',
+            'callerid'          => 'required_if:callgroup,1',                                    
             'secret'            => 'required',
-            'context'           => 'required',
-            'dtmfmode'          => 'required|max:250',
+            'barge'             => 'required',
+            'mailbox'           => 'required',
+            'voice_email'       => 'required_if:mailbox,1',
         ],[
-            'trunk_name.unique'  => 'This Trunk name is already registered. Please try with different trunk.',
+            'name.unique'  => 'This Extension is already exist with us. Please try with different.',
         ]);
         if ($validator->fails()){
             return $this->output(false, $validator->errors()->first(), [], 409);

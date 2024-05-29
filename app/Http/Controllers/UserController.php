@@ -105,7 +105,7 @@ class UserController extends Controller
 			'state_id'		=> 'required',
 			'city'			=> 'required',
 			'zip'			=> 'required',
-            'password' 		=> 'nullable|required|confirmed',            
+            'password' 		=> 'required|confirmed',
         ],[
             'plan_id'       => 'Plan type is required!',
             'parent_id'     => 'parent ID is required.',
