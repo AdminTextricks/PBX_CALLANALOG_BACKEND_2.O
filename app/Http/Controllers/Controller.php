@@ -14,9 +14,9 @@ class Controller extends BaseController
 	
 	public function output($status = false, $message = '', $data = [], $httpcode = 200){
         if($status){
-            $response = ["status" => $status,"message" => $message, 'data' => $data];
+            $response = ["status" => $status,"message" => $message, 'code'=>$httpcode, 'data' => $data];
         }else{
-            $response = ["status" => $status,"message" => $message];
+            $response = ["status" => $status,"message" => $message, 'code'=>$httpcode];
         }
         return response()->json($response, $httpcode);
     }
