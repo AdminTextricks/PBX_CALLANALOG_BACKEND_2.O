@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\BlockNumber;
 use App\Models\User;
 use App\Models\Company;
@@ -89,9 +90,9 @@ class BlockNumberController extends Controller
 		}else{
 			$BlockNumber = BlockNumber::select('*')
 					->with('company:id,company_name,email,mobile')					
-					->where('company_id', '=',  $company_id)
+					->where('company_id', '=',  $company_id)->get();
 					//->where('user_id','=', $user_id)
-					->where('status', 1)->get();
+					//->where('status', 1)->get();
 			if($BlockNumber->isNotEmpty()){
 				return $this->output(true, 'Success', $BlockNumber->toArray());
 			}else{
@@ -123,111 +124,163 @@ class BlockNumberController extends Controller
 
 	public function addBlockNumber(Request $request)
     { 
-        $validator = Validator::make($request->all(), [
-            'company_id'	=> 'required|numeric',
-            'digits'	    => 'required|numeric',
-            'subject'	    => 'required|in:prefix,phonenumber',
-            'ruletype'	    => 'required|in:transfer,block',
-            'blocktype'	    => 'required_if:ruletype,block,in:busy,congestion,hangup',
-            'transfer_number'=> 'required_if:ruletype,transfer,numeric',
-        ]);
-        if ($validator->fails()){
-            return $this->output(false, $validator->errors()->first(), [], 409);
-        }
-        //$user = User::select()->where('company_id', $request->company_id)->first();
-		$user = \Auth::user();
-		if(!is_null($user)){
-			$BlockNumber = BlockNumber::where('digits', $request->digits)
-						->where('company_id', $request->company_id)
-						->first();
-			if(!$BlockNumber){
-				$BlockNumber = BlockNumber::create([
-						'digits'	    => $request->digits,
-						'company_id'    => $request->company_id,						
-						'subject'	    => $request->subject,					
-						'ruletype'	    => $request->ruletype,
-                        'transfer_number' => $request->transfer_number,
-						'blocktype'	    => $request->blocktype,
-						'status' 	    => isset($request->status) ? $request->status : '1',
-					]);
-				$response = $BlockNumber->toArray();
-				return $this->output(true, 'Block Number added successfully.', $response);
-			}else{
-				return $this->output(false, 'This Block Number already exist with us.');
+		try { 
+			DB::beginTransaction(); 
+			$validator = Validator::make($request->all(), [
+				'company_id'	=> 'required|numeric',
+				'digits'	    => 'required|numeric',
+				'subject'	    => 'required|in:prefix,phonenumber',
+				'ruletype'	    => 'required|in:transfer,block',
+				'blocktype'	    => 'required_if:ruletype,block,in:busy,congestion,hangup',
+				'transfer_number'=> 'required_if:ruletype,transfer,numeric',
+			]);
+			if ($validator->fails()){
+				return $this->output(false, $validator->errors()->first(), [], 409);
 			}
-		}else{
-			return $this->output(false, 'You are not authorized user.');
+			//$user = User::select()->where('company_id', $request->company_id)->first();
+			$user = \Auth::user();
+			if(!is_null($user)){
+				$BlockNumber = BlockNumber::where('digits', $request->digits)
+							->where('company_id', $request->company_id)
+							->first();
+				if(!$BlockNumber){
+					$BlockNumber = BlockNumber::create([
+							'digits'	    => $request->digits,
+							'company_id'    => $request->company_id,						
+							'subject'	    => $request->subject,					
+							'ruletype'	    => $request->ruletype,
+							'transfer_number' => $request->transfer_number,
+							'blocktype'	    => $request->blocktype,
+							'status' 	    => isset($request->status) ? $request->status : '1',
+						]);
+					$response = $BlockNumber->toArray();
+					DB::commit();
+					return $this->output(true, 'Block Number added successfully.', $response);
+				}else{
+					DB::commit();
+					return $this->output(false, 'This Block Number already exist with us.');
+				}
+			}else{
+				DB::commit();
+				return $this->output(false, 'You are not authorized user.');
+			}
+		} catch (\Exception $e) {
+			DB::rollback();
+			//return $this->output(false, $e->getMessage());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
 		}
     }
 
 	public function changeBlockNumberStatus(Request $request, $id){
-		$validator = Validator::make($request->all(), [
-            'status' => 'required',
-        ]);
-        if ($validator->fails()){
-            return $this->output(false, $validator->errors()->first(), [], 409);
-        }		
-        $BlockNumber = BlockNumber::find($id);
-		if(is_null($BlockNumber)){
-			return $this->output(false, 'This Block Number not exist with us. Please try again!.', [], 409);
-		}else{
-			if($BlockNumber->company_id == $request->user()->company_id || $request->user()->hasRole('super-admin')){
+		try { 
+			DB::beginTransaction(); 
+			$validator = Validator::make($request->all(), [
+				'status' => 'required',
+			]);
+			if ($validator->fails()){
+				DB::commit();
+				return $this->output(false, $validator->errors()->first(), [], 409);
+			}		
+			$BlockNumber = BlockNumber::find($id);
+			if(is_null($BlockNumber)){
+				DB::commit();
+				return $this->output(false, 'This Block Number not exist with us. Please try again!.', [], 409);
+			}else{				
 				$BlockNumber->status = $request->status;
 				$BlockNumbersRes = $BlockNumber->save();
 				if($BlockNumbersRes){
 					$BlockNumber = BlockNumber::where('id', $id)->first();        
 					$response = $BlockNumber->toArray();
+					DB::commit();
 					return $this->output(true, 'Block Number status updated successfully.', $response, 200);
 				}else{
+					DB::commit();
 					return $this->output(false, 'Error occurred in Block Number Updating. Please try again!.', [], 200);
 				}				
-			}else{
-				return $this->output(false, 'Sorry You are not authorized to update this Block Number!', [], 200);
 			}
+		} catch (\Exception $e) {
+			DB::rollback();
+			//return $this->output(false, $e->getMessage());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
 		}
     }
 
 	public function updateBlockNumber(Request $request, $id){
-		$BlockNumber = BlockNumber::find($id);		
-		if(is_null($BlockNumber)){
-			return $this->output(false, 'This Block Number not exist with us. Please try again!.', [], 409);
-		}
-		else
-		{
-            $validator = Validator::make($request->all(), [
-                'company_id'    => 'required|numeric',
-                'digits'	    => 'required|numeric',	
-                'subject'	    => 'required|in:prefix,phonenumber',
-                'ruletype'	    => 'required|in:transfer,block',
-                'blocktype'	    => 'required_if:ruletype,block,in:busy,congestion,hangup',
-                'transfer_number'=> 'required_if:ruletype,transfer,numeric',
-                'status'	    => 'nullable',
-            ]);
-            if ($validator->fails()){
-                return $this->output(false, $validator->errors()->first(), [], 409);
-            }
-            
-            $BlockNumberOld = BlockNumber::where('digits', $request->digits)
-                        ->where('subject', $request->subject)
-                        ->where('id','!=', $id)
-                        ->first();
-            if(!$BlockNumberOld){
-                $BlockNumber->digits    = $request->digits;
-                $BlockNumber->transfer_number = $request->transfer_number;
-                $BlockNumber->subject   = $request->subject;
-                $BlockNumber->ruletype  = $request->ruletype;
-                $BlockNumber->blocktype = $request->blocktype;
-                $BlockNumbersRes        = $BlockNumber->save();
-                if($BlockNumbersRes){
-                    $BlockNumber = BlockNumber::where('id', $id)->first();        
-                    $response = $BlockNumber->toArray();
-                    return $this->output(true, 'Block Numbre updated successfully.', $response, 200);
-                }else{
-                    return $this->output(false, 'Error occurred in Block Number Updating. Please try again!.', [], 200);
-                }					
-            }else{
-                return $this->output(false, 'This Block Number already exist with us.',[], 409);
-            }			
-		}		
+		try { 
+			DB::beginTransaction(); 
+			$BlockNumber = BlockNumber::find($id);		
+			if(is_null($BlockNumber)){
+				DB::commit();
+				return $this->output(false, 'This Block Number not exist with us. Please try again!.', [], 409);
+			}
+			else
+			{
+				$validator = Validator::make($request->all(), [
+					'company_id'    => 'required|numeric',
+					'digits'	    => 'required|numeric',	
+					'subject'	    => 'required|in:prefix,phonenumber',
+					'ruletype'	    => 'required|in:transfer,block',
+					'blocktype'	    => 'required_if:ruletype,block,in:busy,congestion,hangup',
+					'transfer_number'=> 'required_if:ruletype,transfer,numeric',
+					'status'	    => 'nullable',
+				]);
+				if ($validator->fails()){
+					return $this->output(false, $validator->errors()->first(), [], 409);
+				}
+				
+				$BlockNumberOld = BlockNumber::where('digits', $request->digits)
+							->where('subject', $request->subject)
+							->where('id','!=', $id)
+							->first();
+				if(!$BlockNumberOld){
+					$BlockNumber->digits    = $request->digits;
+					$BlockNumber->transfer_number = $request->transfer_number;
+					$BlockNumber->subject   = $request->subject;
+					$BlockNumber->ruletype  = $request->ruletype;
+					$BlockNumber->blocktype = $request->blocktype;
+					$BlockNumbersRes        = $BlockNumber->save();
+					if($BlockNumbersRes){
+						$BlockNumber = BlockNumber::where('id', $id)->first();        
+						$response = $BlockNumber->toArray();
+						DB::commit();
+						return $this->output(true, 'Block Numbre updated successfully.', $response, 200);
+					}else{
+						DB::commit();
+						return $this->output(false, 'Error occurred in Block Number Updating. Please try again!.', [], 200);
+					}					
+				}else{
+					DB::commit();
+					return $this->output(false, 'This Block Number already exist with us.',[], 409);
+				}			
+			}
+		} catch (\Exception $e) {
+			DB::rollback();
+			//return $this->output(false, $e->getMessage());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+		}	
 	}
+
+	public function deleteBlockNumber(Request $request, $id){
+        try {  
+            DB::beginTransaction();            
+            $BlockNumber = BlockNumber::where('id', $id)->first();
+            if($BlockNumber){
+                $resdelete = $BlockNumber->delete();
+                if ($resdelete) {
+                    DB::commit();
+                    return $this->output(true,'Success',200);
+                } else {
+                    DB::commit();
+                    return $this->output(false, 'Error occurred in Block Number deleting. Please try again!.', [], 209);                    
+                }
+            }else{
+                DB::commit();
+                return $this->output(false,'Block Number not exist with us.', [], 409);
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            //return $this->output(false, $e->getMessage());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
 }

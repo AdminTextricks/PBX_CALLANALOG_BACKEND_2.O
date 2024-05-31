@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Extension;
+use App\Models\VoiceMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Validator;
+use Carbon\Carbon;
 
 class ExtensionController extends Controller
 {
@@ -75,55 +78,105 @@ class ExtensionController extends Controller
 
     public function addExtensions(Request $request)
     {
-        $failover_trunk = $request->failover_trunk;
         $validator = Validator::make($request->all(), [
-            'country_id'        => 'required|in:Inbound,Outbound',
-            'company_id'        => 'required|unique:trunks',
-            'name'              => 'required|max:250',
-            'intercom'          => 'required|max:250',            
-            'accountcode'       => 'required|ip',
-            'regexten'          => 'required',
-            'amaflags'          => 'nullable|exists:trunks,id',
-            'callerid'          => 'required_if:outbound_call,1',                                    
+            'country_id'        => 'required|numeric',
+            'company_id'        => 'required|numeric',
+            'extension_name'    => 'required',
+            'callbackextension' => 'required|max:50',            
+            'accountcode'       => 'required|max:50',
+            'agent_name'        => 'required|max:150',
+            'callgroup'         => 'required', // Outbound call yes or no
+            'callerid'          => 'required_if:callgroup,1',                                    
             'secret'            => 'required',
-            'context'           => 'required',
-            'dtmfmode'          => 'required|max:250',
+            'barge'             => 'required', //Yes ro no(0,1)
+            'mailbox'           => 'required', //voice mail yes or no
+            'voice_email'       => 'required_if:mailbox,1',
         ],[
-            'trunk_name.unique'  => 'This Trunk name is already registered. Please try with different trunk.',
+            'name.unique'  => 'This Extension is already exist with us. Please try with different.',
         ]);
         if ($validator->fails()){
             return $this->output(false, $validator->errors()->first(), [], 409);
         }
         // Start transaction!
         try { 
-            DB::beginTransaction();
-            $Trunk = Extension::where('trunk_name', $request->trunk_name)->first();        
-            if(!$Trunk){
-                $Trunk = Extension::create([
-                    'trunk_type'    => $request->trunk_type,
-                    'trunk_name'    => $request->trunk_name,
-                    'trunk_prefix'	=> $request->trunk_prefix,
-                    'tech'          => $request->tech,
-                    'trunk_ip'      => $request->trunk_ip,
-                    'remove_prefix' => $request->remove_prefix,
-                    'failover_trunk'=> $request->failover_trunk,
-                    'max_use' 	    => $request->max_use,
-                    'if_max_use' 	=> $request->if_max_use,
-                    'trunk_username'=> $request->trunk_username,
-                    'trunk_password'=> $request->trunk_password,
-                    'status' 	    => $request->status,
-                ]);
-                
-                $response 	= $Trunk->toArray();               
-                DB::commit();
-                return $this->output(true, 'Trunk added successfully.', $response);
-            }else{
-                DB::commit();
-                return $this->output(false, 'This Trunk is already register with us.');
+            DB::beginTransaction();         
+            $input = $request->all();
+            $data = $VoiceMail = [];             
+            $extension_name = explode(',',$input['extension_name']);
+            if (is_array($extension_name)) {
+                foreach ($extension_name as $item) {
+                    array_push($data, [
+                        'country_id'        => $request->country_id,
+                        'company_id'        => $request->company_id,
+                        'name'	            => $item,
+                        'callbackextension' => $request->callbackextension,
+                        'accountcode'       => $request->accountcode,
+                        'agent_name'        => $request->agent_name,
+                        'callgroup'         => $request->callgroup,
+                        'callerid' 	        => $request->callerid,
+                        'secret' 	        => $request->secret,
+                        'barge'             => $request->barge,
+                        'mailbox'           => $request->mailbox,
+                        'voice_email'       => ($request->mailbox == '1') ? $request->voice_email : '',
+                        'regexten'          => $item,                        
+                        'fromdomain'        => 'NULL',
+                        'amaflags'          => 'billing',
+                        'canreinvite'       => 'no',
+                        'context'           => 'callanalog',
+                        'dtmfmode'          => 'RFC2833',
+                        'host'              => 'dynamic',
+                        'insecure'          => 'port,invite',
+                        'language'          => 'en',
+                        'nat'               => 'force_rport,comedia',
+                        'qualify'           => 'yes',
+                        'rtptimeout'        => '60',
+                        'rtpholdtimeout'    => '300',
+                        'type'              => 'friend',
+                        'username'          => $item, 
+                        'disallow'          => 'ALL',
+                        'allow'             => 'g729,g723,ulaw,gsm',
+                        'created_at'        => Carbon::now(),
+                        'updated_at'        => Carbon::now(),
+                        'status'            => isset($request->status) ? $request->status : '1',
+                    ]);
+                    if($request->mailbox == '1'){
+                        array_push($VoiceMail, [
+                            'company_id'=> $request->company_id,
+                            'context'   => 'default',
+                            'mailbox'   => $item,
+                            'fullname'  => $request->agent_name,
+                            'timezone'  => 'central',
+                            'attach'    => 'yes',
+                            'review'    => 'no',
+                            'operator'  => 'no',
+                            'envelope'  => 'no',
+                            'sayduration'   => 'no',
+                            'saydurationm'  => '1',
+                            'sendvoicemail' => 'no',
+                            'nextaftercmd'  => 'yes',
+                            'forcename'     => 'no',
+                            'forcegreetings'=> 'no',
+                            'hidefromdir'   => 'yes',
+                            'created_at'    => Carbon::now(),
+                            'updated_at'    =>Carbon::now(),
+
+                        ]);
+                    }
+                }
             }
+          //  print_r($data);
+            $Extensions = Extension::insert($data);
+            if($request->mailbox == '1'){
+                $VoiceMail = VoiceMail::insert($VoiceMail);            
+            }
+            $response 	= $Extensions;//->toArray();
+            DB::commit();
+            return $this->output(true, 'Extension added successfully.', $response);
+            
         } catch(\Exception $e)
         {
             DB::rollback();
+            Log::error('Error in Extensions Inserting : ' . $e->getMessage());
             //return response()->json(['error' => 'An error occurred while creating product: ' . $e->getMessage()], 400);
             return $this->output(false, $e->getMessage());
             //throw $e; 
