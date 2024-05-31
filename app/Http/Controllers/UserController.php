@@ -344,29 +344,30 @@ class UserController extends Controller
                 ->with('roles')   
                 ->where('email', $request->email)->first();
 		if ($user) {
-			if((isset($user->company->status) && $user->company->status == 1) || in_array($user->roles->first()->name, array('Super Admin', 'Support','NOC'))){
-                if($user->status == 1){
-                    if ($user->is_verified == 1) {
-				        if (Hash::check($request->password, $user->password)) {
+            if ($user->is_verified == 1) {
+                if((isset($user->company->status) && $user->company->status == 1) || in_array($user->roles->first()->name, array('Super Admin', 'Support','NOC'))){
+                    if($user->status == 1){                    
+                        if (Hash::check($request->password, $user->password)) {
                             $token =  $user->createToken('Callanalog API')->plainTextToken;
                             $response = $user->toArray();                            
                             $response['token'] = $token;
                             return $this->output(true, 'Login successfull', $response);						
                         }else{
                             return $this->output(false, 'Invalid password!', [], 409);
-                        } 
-                    }else{
-                        return $this->output(false, 'Email Id is not verifie!', [], 403);
+                        }                        
+                    } else {
+                        return $this->output(false, 'Your account has been suspended. Please contact with support.', [], 423);					
                     }
-				} else {
-                    return $this->output(false, 'Your account has been suspended. Please contact with support.', [], 423);					
-				}
-			}else{
-                return $this->output(false, 'Your company account has been suspended. Please contact with support.', [], 423);                
-			}
+                }else{
+                    return $this->output(false, 'Your company account has been suspended. Please contact with support.', [], 423);                
+                }
+            }else{
+                return $this->output(false, 'Email Id is not verifie!', [], 403);
+            }
         } else {
             return $this->output(false, 'Email Id dose not exist!', [], 404);
         }
+        
     }
 
     public function getProfile(Request $request){
