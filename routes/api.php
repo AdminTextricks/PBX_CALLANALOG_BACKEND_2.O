@@ -143,7 +143,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 	# Tfn Number 
 	Route::group(['prefix' => 'tfn'], function () {
-		Route::get('/search', [PurchaseTfnNumberController::class, 'searchTfn']);
+		Route::post('/search', [PurchaseTfnNumberController::class, 'searchTfn']);
 		Route::get('/active', [TfnController::class, 'getAllActiveTfns']);
 		Route::post('/', [TfnController::class, 'addAdminTfns']);
 		Route::get('/{id?}', [TfnController::class, 'getAllTfn']);
