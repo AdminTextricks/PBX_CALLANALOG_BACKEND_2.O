@@ -79,6 +79,7 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::patch('/changeStatus/{id}', [TrunkController::class, 'changeTrunkStatus']);
 		Route::put('/{id}', [TrunkController::class, 'updateTrunk']);
 		Route::delete('/{id}', [TrunkController::class, 'deleteTrunk']);
+		Route::get('/type/{type}', [TrunkController::class, 'getTrunksByType']);
 	});
 
 
@@ -151,6 +152,38 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::patch('/changeStatus/{id}', [TfnController::class, 'changeTfnsStatus']);
 		Route::delete('/{id}', [TfnController::class, 'deleteTfn']);
 		Route::post('/{id}', [TfnController::class, 'removeTfnfromTable']);
+	});
+
+	#Block number
+	Route::group(['prefix' => 'block-number'], function () {
+		Route::post('/', [BlockNumberController::class, 'addBlockNumber']);
+		Route::put('/{id}', [BlockNumberController::class, 'updateBlockNumber']);
+		Route::patch('/changeStatus/{id}', [BlockNumberController::class, 'changeBlockNumberStatus']);
+		Route::get('/active', [BlockNumberController::class, 'getAllActiveBlockNumbers']);
+		Route::get('/{id?}', [BlockNumberController::class, 'getAllBlockNumber']);		
+		Route::get('/getByCompany/{comapny_id}', [BlockNumberController::class, 'getBlockNumbersByCompany']);	
+		Route::delete('/{id}', [BlockNumberController::class, 'deleteBlockNumber']);
+	});
+
+	#Server Number Management
+	Route::group(['prefix' => 'server'], function () {
+		Route::post('/', [ServerController::class, 'addServer']);
+		Route::put('/{id}', [ServerController::class, 'updateServer']);
+		Route::patch('/changeStatus/{id}', [ServerController::class, 'changeServerStatus']);
+		Route::get('/active', [ServerController::class, 'getAllActiveServers']);
+		Route::get('/{id?}', [ServerController::class, 'getAllServers']);		
+		Route::delete('/{id}', [ServerController::class, 'deleteServer']);
+	});
+
+	# Manage Extensions
+	Route::group(['prefix' => 'extensions'], function () {
+		Route::post('/', [ExtensionController::class, 'addExtensions']);	
+		Route::post('/generate', [ExtensionController::class, 'generateExtensions']);
+		Route::get('/generatePassword', [ExtensionController::class, 'generateStrongPassword']);
+		/*
+		Route::patch('/changeStatus/{id}', [ExtensionController::class, 'changeOutboundCallRateStatus']);				
+		Route::put('/{id}', [ExtensionController::class, 'updateOutboundCallRate']);
+		Route::delete('/{id}', [ExtensionController::class, 'deleteOutboundCallRate']);*/
 	});
 });
 /*
