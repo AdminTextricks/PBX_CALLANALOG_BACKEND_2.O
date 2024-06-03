@@ -113,15 +113,14 @@ class CompanyController extends Controller
     }
 
 
-    public function getBalance(Request $request)
+    public function getBalance(Request $request, $id)
     {
-        $user = \Auth::user();
-        $balance = Company::where('id', $user->company_id)->first();
-        if ($balance !== null) {
-            $balance_result = Company::select('balance')->where('id', $user->company_id)->first();
-            return $this->output(true, 'success', $balance_result->toArray(), 200);
+        $Company = Company::find($id);
+        if (is_null($Company)) {
+                return $this->output(false, 'This Company not exist with us. Please try again!.', [], 404);
         } else {
-            return $this->output(false, 'Balance not found', 404);
+            $balance_result = Company::select('balance')->where('id', $Company->id)->first();
+            return $this->output(true, 'success', $balance_result->toArray(), 200);            
         }
     }
     
