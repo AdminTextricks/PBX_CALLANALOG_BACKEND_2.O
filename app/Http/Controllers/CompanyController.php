@@ -38,15 +38,9 @@ class CompanyController extends Controller
 
     public function getAllActiveCompany(Request $request)
     {
-        $company_id = $request->id ?? "";
-        $perPageNo = isset($request->perpage) ? $request->perpage : 5;
-        $data = Company::select()->where('status', 1)
-            ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
-
-        if (!is_null($data)) {
-            $dd = $data->toArray();
-            unset($dd['links']);
-            return $this->output(true, 'Success', $dd, 200);
+        $data = Company::select()->where('status', 1)->get();
+        if($data->isNotEmpty()){
+            return $this->output(true, 'Success', $data->toArray(), 200);
         } else {
             return $this->output(true, 'No Record Found', []);
         }

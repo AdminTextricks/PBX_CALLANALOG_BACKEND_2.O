@@ -76,4 +76,14 @@ class Controller extends BaseController
             return array_rand($array);
         }
     }
+
+
+    public function validateDomain($value): bool
+    {
+        if (stripos($value, 'localhost') !== false) {
+            return true;
+        }
+
+        return (bool) preg_match('/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu', $value);
+    }
 }

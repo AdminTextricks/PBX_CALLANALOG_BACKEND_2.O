@@ -171,7 +171,8 @@ class BlockNumberController extends Controller
 		}
     }
 
-	public function changeBlockNumberStatus(Request $request, $id){
+	public function changeBlockNumberStatus(Request $request, $id)
+	{
 		try { 
 			DB::beginTransaction(); 
 			$validator = Validator::make($request->all(), [

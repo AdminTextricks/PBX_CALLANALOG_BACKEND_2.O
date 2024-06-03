@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\Country;
 use App\Models\State;
 use App\Models\Permission;
+use App\Models\Server;
 use App\Models\EmailVerification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Validator;
 use Mail;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -91,7 +93,9 @@ class UserController extends Controller
 		}
     }
 	
-	public function registration(Request $request){
+	public function registration(Request $request)
+    {
+
         $validator = Validator::make($request->all(), [
             'parent_id'     => 'required',
             'plan_id'       => 'required',
@@ -153,6 +157,37 @@ class UserController extends Controller
                     'user_id'   => $user->id,
                     'role_id'   => 4,
                 ]);
+                $Server = false;
+                $user_registered =  DB::table('user_registered_servers')
+                            ->select(['id','server_id'])
+                            ->orderBy('id', 'DESC')
+                            ->limit(1)->first();
+                if($user_registered){
+                    $Server =   Server::select('id','domain','ip')
+                                ->where('status', '=', 1)
+                                ->where('id', '>', $user_registered->server_id)
+                                ->limit(1)->get()->toArray();
+                }
+                if(!$Server){
+                    $ServerObj = Server::select('id','domain','ip')->where('status', '=', 1)->orderBy('id', 'ASC')->first();
+                    $Server = $ServerObj->toArray();
+                    DB::table('user_registered_servers')->insert([
+                        'server_id'   => $Server['id'],
+                        'company_id'   => $company->id,
+                        'domain'   => $Server['domain'],
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
+                    ]);
+                }else{            
+                    DB::table('user_registered_servers')->insert([
+                        'server_id'   => $Server[0]['id'],
+                        'company_id'   => $company->id,
+                        'domain'   => $Server[0]['domain'],
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
+                    ]);
+                }
+                
                 $this->sendOtp($user);//OTP SEND
                 $token 		=  $user->createToken('Callanalog-API')->plainTextToken;
                 $response 	= $user->toArray();
