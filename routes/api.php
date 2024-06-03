@@ -13,6 +13,7 @@ use App\Http\Controllers\MainPriceController;
 use App\Http\Controllers\OutboundCallRateController;
 use App\Http\Controllers\ExtensionController;
 use App\Http\Controllers\BlockNumberController;
+use App\Http\Controllers\ServerController;
 use App\Http\Controllers\TariffController;
 use App\Http\Controllers\TfnController;
 use App\Http\Controllers\TfnGroupController;
@@ -163,6 +164,17 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('/getByCompany/{comapny_id}', [BlockNumberController::class, 'getBlockNumbersByCompany']);	
 		Route::delete('/{id}', [BlockNumberController::class, 'deleteBlockNumber']);
 	});
+
+	#Block Number Management
+	Route::group(['prefix' => 'server'], function () {
+		Route::post('/', [ServerController::class, 'addServer']);
+		Route::put('/{id}', [ServerController::class, 'updateServer']);
+		Route::patch('/changeStatus/{id}', [ServerController::class, 'changeServerStatus']);
+		Route::get('/active', [ServerController::class, 'getAllActiveServers']);
+		Route::get('/{id?}', [ServerController::class, 'getAllServers']);		
+		Route::delete('/{id}', [ServerController::class, 'deleteServer']);
+	});
+	
 });
 /*
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
