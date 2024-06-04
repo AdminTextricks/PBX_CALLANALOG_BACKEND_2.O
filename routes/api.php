@@ -19,6 +19,7 @@ use App\Http\Controllers\TfnController;
 use App\Http\Controllers\PurchaseTfnNumberController;
 use App\Http\Controllers\TfnGroupController;
 use App\Http\Controllers\MainPlansController;
+use App\Http\Controllers\ConfTemplateController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -184,6 +185,14 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::patch('/changeStatus/{id}', [ExtensionController::class, 'changeOutboundCallRateStatus']);				
 		Route::put('/{id}', [ExtensionController::class, 'updateOutboundCallRate']);
 		Route::delete('/{id}', [ExtensionController::class, 'deleteOutboundCallRate']);*/
+	});
+
+	#Conf Template Manage
+	Route::group(['prefix' => 'conf-template'], function () {
+		Route::post('/', [ConfTemplateController::class, 'addConfTemplate']);
+		Route::put('/{id}', [ConfTemplateController::class, 'updateConfTemplate']);
+		Route::get('/{id?}', [ConfTemplateController::class, 'getAllConfTemplate']);		
+		Route::delete('/{id}', [ConfTemplateController::class, 'deleteConfTemplate']);
 	});
 });
 /*
