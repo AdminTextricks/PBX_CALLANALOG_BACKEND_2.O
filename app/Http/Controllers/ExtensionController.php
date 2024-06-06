@@ -73,7 +73,6 @@ class ExtensionController extends Controller
         $exitArray = array_column($exitArray, 'name');
         //print_r($exitArray);
         return $final_array = array_diff($number_array,$exitArray);
-
     }
 
     public function addExtensions(Request $request)
@@ -81,7 +80,7 @@ class ExtensionController extends Controller
         $validator = Validator::make($request->all(), [
             'country_id'        => 'required|numeric',
             'company_id'        => 'required|numeric',
-            'extension_name'    => 'required',
+            'name.*'            => 'required|unique:extensions,name',
             'callbackextension' => 'required|max:50',            
             'accountcode'       => 'required|max:50',
             'agent_name'        => 'required|max:150',
@@ -92,7 +91,7 @@ class ExtensionController extends Controller
             'mailbox'           => 'required', //voice mail yes or no
             'voice_email'       => 'required_if:mailbox,1',
         ],[
-            'name.unique'  => 'This Extension is already exist with us. Please try with different.',
+            'name'  => 'This Extension is already exist with us. Please try with different.',
         ]);
         if ($validator->fails()){
             return $this->output(false, $validator->errors()->first(), [], 409);
@@ -102,7 +101,8 @@ class ExtensionController extends Controller
             DB::beginTransaction();         
             $input = $request->all();
             $data = $VoiceMail = [];             
-            $extension_name = explode(',',$input['extension_name']);
+            //$extension_name = explode(',',$input['extension_name']);
+            $extension_name = $input['name'];            
             if (is_array($extension_name)) {
                 foreach ($extension_name as $item) {
                     array_push($data, [
@@ -117,7 +117,6 @@ class ExtensionController extends Controller
                         'secret' 	        => $request->secret,
                         'barge'             => $request->barge,
                         'mailbox'           => $request->mailbox,
-                        'voice_email'       => ($request->mailbox == '1') ? $request->voice_email : '',
                         'regexten'          => $item,                        
                         'fromdomain'        => 'NULL',
                         'amaflags'          => 'billing',
@@ -145,6 +144,7 @@ class ExtensionController extends Controller
                             'context'   => 'default',
                             'mailbox'   => $item,
                             'fullname'  => $request->agent_name,
+                            'email'     => $request->voice_email,
                             'timezone'  => 'central',
                             'attach'    => 'yes',
                             'review'    => 'no',
@@ -158,13 +158,12 @@ class ExtensionController extends Controller
                             'forcegreetings'=> 'no',
                             'hidefromdir'   => 'yes',
                             'created_at'    => Carbon::now(),
-                            'updated_at'    =>Carbon::now(),
-
+                            'updated_at'    => Carbon::now(),
                         ]);
                     }
                 }
             }
-          //  print_r($data);
+            //print_r($data);exit;
             $Extensions = Extension::insert($data);
             if($request->mailbox == '1'){
                 $VoiceMail = VoiceMail::insert($VoiceMail);            
@@ -178,7 +177,8 @@ class ExtensionController extends Controller
             DB::rollback();
             Log::error('Error in Extensions Inserting : ' . $e->getMessage());
             //return response()->json(['error' => 'An error occurred while creating product: ' . $e->getMessage()], 400);
-            return $this->output(false, $e->getMessage());
+            //return $this->output(false, $e->getMessage());
+            return $this->output(false, 'Error Occurred in adding extensions. Please try with different extension', [], 406);
             //throw $e; 
         }
     }

@@ -20,6 +20,8 @@ use App\Http\Controllers\PurchaseTfnNumberController;
 use App\Http\Controllers\TfnGroupController;
 use App\Http\Controllers\MainPlansController;
 use App\Http\Controllers\ConfTemplateController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -43,7 +45,7 @@ Route::post('/forgot-password-otp', [PasswordResetTokensController::class, 'send
 Route::post('/password-reset/{otp}', [PasswordResetTokensController::class, 'reset']);
 
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	# Company Management
 	Route::group(['prefix' => 'company'], function () {
@@ -91,8 +93,8 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('/{id?}', [MainPriceController::class, 'getPriceList']);
 		Route::patch('/{id}', [MainPriceController::class, 'updatePrice']);		
 		Route::delete('/{id}', [MainPriceController::class, 'deletePrice']);
-		Route::delete('/reseller/{id}', [MainPriceController::class, 'deleteResellerPrice']);
-		Route::post('/reseller', [MainPriceController::class, 'addResellerPrice']);
+		//Route::delete('/reseller/{id}', [MainPriceController::class, 'deleteResellerPrice']);
+		//Route::post('/reseller', [MainPriceController::class, 'addResellerPrice']);
 	});
 
 	# Reseller commission Rate
@@ -193,6 +195,22 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::put('/{id}', [ConfTemplateController::class, 'updateConfTemplate']);
 		Route::get('/{id?}', [ConfTemplateController::class, 'getAllConfTemplate']);		
 		Route::delete('/{id}', [ConfTemplateController::class, 'deleteConfTemplate']);
+	});
+
+	# Role management
+	Route::group(['prefix' => 'role'], function () {
+		Route::post('/', [RoleController::class, 'addRole']);
+		Route::get('/active', [RoleController::class, 'getAllActiveRole']);
+		Route::get('/{id?}', [RoleController::class, 'getRoles']);
+		Route::put('/{id}', [RoleController::class, 'updateRole']);
+		Route::patch('/changeStatus/{id}', [RoleController::class, 'changeStatus']);
+	});
+
+	#Permission Management
+	Route::group(['prefix' => 'permission'], function () {
+		Route::get('/all/{slug}', [PermissionController::class, 'getAllPermissionByRole']);
+		Route::get('/permission-by-group/{slug}', [PermissionController::class, 'getAllPermissionByGroup']);
+		Route::put('/role-permission', [PermissionController::class, 'updateRolePermissions']);
 	});
 });
 /*
