@@ -9,7 +9,7 @@ class Tariff extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'terrif_name',
+        'tariff_name',
         'status' 
     ];
 
