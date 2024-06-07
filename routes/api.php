@@ -74,7 +74,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	});
 
 
-	# Inbound Trunks
+	# Manage Trunks
 	Route::group(['prefix' => 'trunk'], function () {
 		Route::post('/', [TrunkController::class, 'addTrunk']);
 		Route::get('/active', [TrunkController::class, 'getAllActiveTrunks']);
