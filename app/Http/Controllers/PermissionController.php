@@ -97,4 +97,33 @@ class PermissionController extends Controller
             return $this->output(false, 'You entered role not exist.', [], 409);
         }
     }
+
+    public function updateUserPermissions(Request $request){
+        //$slug = $request->slug ?? NULL;
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|numeric|exists:users,id',
+            'permission' => 'required|string',
+        ],[
+            'user_id' =>  'Selected user not exist with us.'
+        ]);
+        if ($validator->fails()){
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+        $user_id = $request->user_id ?? NULL;
+        $permission = $request->permission ?? NULL;
+        $user = User::where('id', $user_id)->first();
+        if($user){
+            $user->permissions()->detach(); 
+            $permission_arr = explode(',', $permission);        
+            foreach($permission_arr as $key => $permission){
+                $user->permissions()->attach($permission);
+            }       
+            $user_permissions = $user->permissions()->get(); 
+            $response['user_permissions'] = $user_permissions;
+            return $this->output(true, 'User Permissions has been updated successfully.', $response, 200);
+            
+        }else{
+            return $this->output(false, 'You entered role not exist.', [], 409);
+        }
+    }
 }
