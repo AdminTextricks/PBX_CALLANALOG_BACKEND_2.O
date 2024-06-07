@@ -211,6 +211,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/all/{slug}', [PermissionController::class, 'getAllPermissionByRole']);
 		Route::get('/permission-by-group/{slug}', [PermissionController::class, 'getAllPermissionByGroup']);
 		Route::put('/role-permission', [PermissionController::class, 'updateRolePermissions']);
+		Route::put('/user-permission', [PermissionController::class, 'updateUserPermissions']);
 	});
 });
 /*
