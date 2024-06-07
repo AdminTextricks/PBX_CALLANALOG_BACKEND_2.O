@@ -60,6 +60,10 @@ class User extends Authenticatable
     ];
 
 
+    public function userDocuments()
+    {
+        return $this->hasMany(UserDocuments::class);
+    }
     /**
      * Get the user that owns the User
      *

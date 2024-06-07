@@ -61,7 +61,7 @@ class UserDocumentsController extends Controller
                         $error_flag = 1;
                         $response[$key][] = array('status'=>'false', 'messange'=>'Error occurred in document uploading.');
                         //return $this->output(false, 'Error occurred in document uploading.', [], 409);
-                    }                    
+                    }
                 } else {
                     $error_flag = 1;
                     $response[$key][] = array('status'=>'false', 'messange'=>'Invalid file format.');
@@ -89,12 +89,14 @@ class UserDocumentsController extends Controller
             $user_id = $request->id ?? NULL;
             if ($user_id) {
                 $UserDocuments_data = UserDocuments::with('user:id,name,email')
+                                ->with('company:id,company_name,email')
                                 ->select('*')
                                 ->where('user_id', $user_id)
                                 ->get();
             } else {                
                 $UserDocuments_data = UserDocuments::select()                    
                     ->with('user:id,name,email')
+                    ->with('company:id,company_name,email')
                     ->paginate(
                     $perPage = $perPageNo,
                     $columns = ['*'],
@@ -108,10 +110,12 @@ class UserDocumentsController extends Controller
             $user_id = $request->id ?? NULL;
             if ($user_id) {
                 $UserDocuments_data = UserDocuments::with('user:id,name,email')->select('*')
+                                ->with('company:id,company_name,email')
                                 ->where('company_id', '=',  $user->company_id)
                                 ->where('user_id', $user_id)->get();
             } else {              
                 $UserDocuments_data = UserDocuments::select()
+                    ->with('company:id,company_name,email')
                     ->with('user:id,name,email')
                     ->where('user_id', '=',  $user->id)
                     ->paginate(

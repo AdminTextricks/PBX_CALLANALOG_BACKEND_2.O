@@ -376,7 +376,8 @@ class UserController extends Controller
         }     
         $user = User::with('country:id,country_name,phone_code,currency_symbol')
                 ->with('state:id,state_name') 
-                ->with('roles')   
+                ->with('roles')
+                ->with('userDocuments')
                 ->where('email', $request->email)->first();
 		if ($user) {
             if ($user->is_verified == 1) {

@@ -70,7 +70,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/', [UserDocumentsController::class, 'addUserDocuments']);
 		Route::get('/{userId?}', [UserDocumentsController::class, 'getUserDocuments']);
 		Route::patch('/changeStatus/{id}', [UserDocumentsController::class, 'changeDocumentStatus']);
-		Route::put('/{id}', [UserDocumentsController::class, 'updateUserDocument']);
+		//Route::put('/{id}', [UserDocumentsController::class, 'updateUserDocument']);
 	});
 
 

@@ -30,4 +30,9 @@ class Company extends Model
     {
         return $this->hasMany(BlockNumber::class);
     }
+
+    /* public function userDocuments()
+    {
+        return $this->hasMany(UserDocuments::class);
+    } */
 }
