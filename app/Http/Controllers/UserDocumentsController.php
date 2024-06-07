@@ -29,11 +29,12 @@ class UserDocumentsController extends Controller
                 return $this->output(false, 'Uploaded file not found.', [], 409);
             }
             $response = array();
+            $error_flag = 0; 
             foreach ($request->file('doc_images') as $key => $file) {
                 $allowedfileExtension = ['jpg', 'jpeg','png','pdf'];
                 $userDocuments = $request->file('doc_images');
-              
                 $extension = $file->getClientOriginalExtension();
+               
                 $check = in_array($extension, $allowedfileExtension);
                 if ($check) {                    
                     $path = public_path('userDocuments');
@@ -41,8 +42,7 @@ class UserDocumentsController extends Controller
                     $getfilenamewitoutext = pathinfo($name, PATHINFO_FILENAME); // get the file name without extension
                     $createnewFileName = time() . '_' . str_replace(' ', '_', $getfilenamewitoutext) . '.' . $extension; // create new random file name
                     $createNewFileNameWitoutEXT = time().'_'.str_replace(' ','_', $getfilenamewitoutext); 
-                    $upload = $file->move($path, $createnewFileName);
-                    
+                    $upload = $file->move($path, $createnewFileName);                    
                     if ($upload) {
                         $UserDocuments = UserDocuments::create([
                             'user_id'   => $request->user()->id,
@@ -58,17 +58,24 @@ class UserDocumentsController extends Controller
                         $response[$key][] = array('status'=>'true', 'messange'=>'User Document uploaded successfully.');
                         //return $this->output(true, 'User Document uploaded successfully.', $response, 200);
                     } else {
+                        $error_flag = 1;
                         $response[$key][] = array('status'=>'false', 'messange'=>'Error occurred in document uploading.');
                         //return $this->output(false, 'Error occurred in document uploading.', [], 409);
                     }                    
                 } else {
+                    $error_flag = 1;
                     $response[$key][] = array('status'=>'false', 'messange'=>'Invalid file format.');
                     //return $this->output(false, 'Invalid file format.', [], 409);
                 }
             }
-            return $this->output(true, 'User Document uploaded successfully.', $response, 200);
+            if($error_flag == 1){
+                return $this->output(false, 'Error occurred in User Document uploading.', $response, 200);
+            }else{
+                return $this->output(true, 'User Document uploaded successfully.', $response, 200);
+            }
+            
         } catch (\Exception $e) {
-            return response()->json(['error' => 'An error occurred while creating product: ' . $e->getMessage()], 400);
+            return response()->json(['error' => 'An error occurred while Uploading documents: ' . $e->getMessage()], 400);
         }
     }
 
@@ -176,4 +183,73 @@ class UserDocumentsController extends Controller
             }
 		} 
 	}
+
+    public function updateUserDocument(Request $request, $id)
+    {
+        
+        try {               
+            $validator = Validator::make($request->all(), [
+                'doc_images' => 'required',
+                'doc_images.*' => 'image|mimes:jpeg,png,jpg,pdf',	
+            ]);
+            if ($validator->fails()) {
+                return $this->output(false, $validator->errors()->first(), [], 409);
+            }
+
+            if ($request->type == 'file' && !$request->hasFile('doc_images')) {
+                return $this->output(false, 'Uploaded file not found.', [], 409);
+            }
+            $response = array();
+            //$UserDocuments = UserDocuments::find($id);
+            $UserDocuments = UserDocuments::where('id', $id)
+                            //->where('user_id', $request->user()->id)
+                            ->first();
+            if ($UserDocuments) {
+                $file = $request->file('doc_images');
+                $allowedfileExtension = ['jpg', 'jpeg','png','pdf'];
+                $userDocuments_file = $request->file('doc_images');
+                $extension = $file->getClientOriginalExtension();
+                
+                $check = in_array($extension, $allowedfileExtension);
+                if ($check) {                    
+                    $path = public_path('userDocuments');
+                    $name = $file->getClientOriginalName();
+                    $getfilenamewitoutext = pathinfo($name, PATHINFO_FILENAME); // get the file name without extension
+                    $createnewFileName = time() . '_' . str_replace(' ', '_', $getfilenamewitoutext) . '.' . $extension; // create new random file name
+                    $createNewFileNameWitoutEXT = time().'_'.str_replace(' ','_', $getfilenamewitoutext); 
+                    $upload = $file->move($path, $createnewFileName);                    
+                    if ($upload) {
+                        $UserDocuments->file_name   = $createNewFileNameWitoutEXT;
+                        $UserDocuments->file_ext    = $extension;
+                        $UserDocuments->status      = '0';
+                        $UserDocumentsRes = $UserDocuments->save();
+                        if($UserDocumentsRes){
+                            $User = User::find($request->user()->id);   
+                            $User->is_verified_doc = 2;
+                            $User_result = $User->save();
+                            $UserDocuments = UserDocuments::where('id', $id)->first();
+                            $response[] = $UserDocuments->toArray();
+                            $response[] = array('status'=>'true', 'messange'=>'User Document uploaded successfully.');
+                            //return $this->output(true, 'User Document uploaded successfully.', $response, 200);
+                        }else{
+                            return $this->output(false, 'Error occurred in User Documents details updating. Please try again!.', [], 200);
+                        }
+                    } else {
+                        $response[] = array('status'=>'false', 'messange'=>'Error occurred in document uploading.');
+                        //return $this->output(false, 'Error occurred in document uploading.', [], 409);
+                    }                    
+                } else {
+                    $response[] = array('status'=>'false', 'messange'=>'Invalid file format.');
+                    //return $this->output(false, 'Invalid file format.', [], 409);
+                }
+                
+                return $this->output(true, 'User Document uploaded successfully.', $response, 200);
+                
+            } else {
+                return $this->output(false, 'This User Documents details not exist with us. Please try again!.', [], 200);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'An error occurred while creating product: ' . $e->getMessage()], 400);
+        }
+    }
 }
