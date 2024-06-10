@@ -22,6 +22,7 @@ use App\Http\Controllers\MainPlansController;
 use App\Http\Controllers\ConfTemplateController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\RingGroupController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -212,6 +213,15 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/permission-by-group/{slug}', [PermissionController::class, 'getAllPermissionByGroup']);
 		Route::put('/role-permission', [PermissionController::class, 'updateRolePermissions']);
 		Route::put('/user-permission', [PermissionController::class, 'updateUserPermissions']);
+	});
+
+	# Ring Group Manage
+	Route::group(['prefix' => 'ring-group'], function () {
+		Route::post('/', [RingGroupController::class, 'addRingGroup']);
+		Route::get('/active', [RingGroupController::class, 'getAllActiveRingGroup']);
+		Route::get('/{id?}', [RingGroupController::class, 'getAllRingGroup']);
+		Route::put('/{id}', [RingGroupController::class, 'updateRingGroup']);
+		Route::patch('/changeStatus/{id}', [RingGroupController::class, 'changeRingGroupStatus']);
 	});
 });
 /*
