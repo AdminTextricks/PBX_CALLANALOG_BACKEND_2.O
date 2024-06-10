@@ -16,7 +16,7 @@ class UserDocumentsController extends Controller
     public function addUserDocuments(Request $request)
     {
 
-        try {               
+        try {
             $validator = Validator::make($request->all(), [
                 'doc_images' => 'required|array',
                 'doc_images.*' => 'image|mimes:jpeg,png,jpg,pdf',	
