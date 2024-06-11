@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('tariffs', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('terrif_name', 255)->nullable();
+            $table->string('tariff_name', 255)->nullable();
             $table->tinyInteger('status')->default('0');
             $table->timestamps();
         });
