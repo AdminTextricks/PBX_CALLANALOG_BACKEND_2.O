@@ -205,7 +205,7 @@ class RingGroupController extends Controller
 				$validator = Validator::make($request->all(), [
 					'country_id'    => 'required|numeric|exists:countries,id',
 					'company_id'	=> 'required|numeric|exists:companies,id',	
-					'ringno'	    => 'required|unique:ring_groups,ringno'.$RingGroup->id,
+					'ringno'	    => 'required|unique:ring_groups,ringno,'.$RingGroup->id,
 					'strategy'	    => 'required|string|max:200',
 					'ringtime'	    => 'required|numeric',
 					'description'   => 'required|string|max:200',
@@ -244,12 +244,14 @@ class RingGroupController extends Controller
 			}
 		} catch (\Exception $e) {
 			DB::rollback();
+            LOG::error('Error in updating ring group : '. $e->getMessage());
 			//return $this->output(false, $e->getMessage());
 			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
 		}	
 	}
 
-	public function deleteRingGroup(Request $request, $id){
+	public function deleteRingGroup(Request $request, $id)
+    {
         try {  
             DB::beginTransaction();            
             $RingGroup = RingGroup::where('id', $id)->first();
@@ -268,6 +270,7 @@ class RingGroupController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollback();
+            LOG::error('Error in Deleting ring group : '. $e->getMessage());
             //return $this->output(false, $e->getMessage());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
