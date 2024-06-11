@@ -222,6 +222,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/{id?}', [RingGroupController::class, 'getAllRingGroup']);
 		Route::put('/{id}', [RingGroupController::class, 'updateRingGroup']);
 		Route::patch('/changeStatus/{id}', [RingGroupController::class, 'changeRingGroupStatus']);
+		Route::delete('/{id}', [RingGroupController::class, 'deleteRingGroup']);
 	});
 });
 /*
