@@ -35,4 +35,17 @@ class Company extends Model
     {
         return $this->hasMany(UserDocuments::class);
     } */
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
+    }
+
+    public function state()
+    {
+        return $this->belongsTo(State::class);
+    }
+    public function user_plan()
+    {
+        return $this->belongsTo(MainPlan::class,'plan_id');
+    }
 }

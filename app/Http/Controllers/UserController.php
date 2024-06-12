@@ -30,7 +30,10 @@ class UserController extends Controller
     {
         $user_id = $request->id ?? NULL;
 		$perPageNo = isset($request->perpage) ? $request->perpage : 5;
-		$dataQuery = User::select();
+		$dataQuery = User::select()
+                    ->with('user_role:id,name')
+                    ->with('country:id,country_name')
+                    ->with('state:id,state_name,state_code');
 
 		if ($user_id) {
 			$data = $dataQuery->where('id', $user_id)->first();
