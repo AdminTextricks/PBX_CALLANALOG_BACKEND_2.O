@@ -182,4 +182,66 @@ class ExtensionController extends Controller
             //throw $e; 
         }
     }
+
+
+    public function getAllExtensions(Request $request)
+	{
+		$perPageNo = isset($request->perpage) ? $request->perpage : 25;
+		$params = $request->params ?? "";
+        $user = \Auth::user();
+		//if ($request->user()->hasRole('super-admin')) {
+        if (in_array($user->roles->first()->name, array('Super Admin', 'Support','NOC'))) {
+			$Extension_id = $request->id ?? NULL;
+			if ($Extension_id) {
+				$data = Extension::select()
+                        ->with('company:id,company_name,email,mobile')
+                        ->with('country:id,country_name')
+                        ->where('id', $Extension_id)->get();
+			} else {				
+                $data = Extension::select()
+                        ->with('company:id,company_name,email,mobile')
+                        ->with('country:id,country_name')
+                        ->paginate(
+                        $perPage = $perPageNo,
+                        $columns = ['*'],
+                        $pageName = 'page'
+                    );
+			}
+		} else {
+            $Extension_id = $request->id ?? NULL;
+			if ($Extension_id) {
+				$data = Extension::with('company:id,company_name,email,mobile')
+                    ->with('country:id,country_name')
+					->select()
+					->where('id', $Extension_id)
+					->where('company_id', '=',  $user->company_id)
+					->get();
+			} else {
+				if ($params != "") {
+					$data = Extension::with('company:id,company_name,email,mobile')	
+                        ->with('country:id,country_name')
+						->where('company_id', '=',  $user->company_id)
+						//->orWhere('did_number', 'LIKE', "%$params%")
+						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+				} else {
+					$data = Extension::with('company:id,company_name,email,mobile')
+                        ->with('country:id,country_name')
+						->where('company_id', '=',  $user->company_id)
+						->select()->paginate(
+							$perPage = $perPageNo,
+							$columns = ['*'],
+							$pageName = 'page'
+						);
+				}
+			}			
+		}
+
+		if ($data->isNotEmpty()) {
+			$dd = $data->toArray();
+			unset($dd['links']);
+			return $this->output(true, 'Success', $dd, 200);
+		} else {
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
 }
