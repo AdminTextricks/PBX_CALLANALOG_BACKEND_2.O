@@ -60,4 +60,19 @@ class Extension extends Model
         'callbackextension',
         'status'        
     ];
+
+    /**
+     * Get the user that owns the Company
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
+    }
 }

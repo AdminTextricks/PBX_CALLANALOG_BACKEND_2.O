@@ -184,6 +184,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/', [ExtensionController::class, 'addExtensions']);	
 		Route::post('/generate', [ExtensionController::class, 'generateExtensions']);
 		Route::get('/generatePassword', [ExtensionController::class, 'generateStrongPassword']);
+		Route::get('/', [ExtensionController::class, 'getAllExtensions']);
 		/*
 		Route::patch('/changeStatus/{id}', [ExtensionController::class, 'changeOutboundCallRateStatus']);				
 		Route::put('/{id}', [ExtensionController::class, 'updateOutboundCallRate']);

@@ -20,10 +20,17 @@ class CompanyController extends Controller
         $company_id = $request->id ?? "";
         $perPageNo = isset($request->perpage) ? $request->perpage : 5;
         if ($company_id) {
-            $data = Company::select('*')->where('id', $company_id)->first();
+            $data = Company::select('*')
+                    ->with('country:id,country_name')
+                    ->with('state:id,state_name,state_code')
+                    ->with('user_plan:id,name')
+                    ->where('id', $company_id)->first();
             //->where('status', 1)         
         } else {
             $data = Company::select()
+                ->with('country:id,country_name,iso3')
+                ->with('state:id,state_name,state_code')
+                ->with('user_plan:id,name')
                 ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
         }
 
