@@ -31,6 +31,7 @@ class UserController extends Controller
         $user_id = $request->id ?? NULL;
 		$perPageNo = isset($request->perpage) ? $request->perpage : 5;
 		$dataQuery = User::select()
+                    ->with('company:id,company_name')
                     ->with('user_role:id,name')
                     ->with('country:id,country_name')
                     ->with('state:id,state_name,state_code');
