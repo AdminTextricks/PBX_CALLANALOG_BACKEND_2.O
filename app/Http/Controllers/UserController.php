@@ -182,7 +182,7 @@ class UserController extends Controller
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                     ]);
-                }else{            
+                }else{
                     DB::table('user_registered_servers')->insert([
                         'server_id'   => $Server[0]['id'],
                         'company_id'   => $company->id,

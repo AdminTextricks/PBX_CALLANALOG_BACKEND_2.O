@@ -51,6 +51,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	# Company Management
 	Route::group(['prefix' => 'company'], function () {
 		//Route::post ('/', [UserController::class, 'addCompany'])->middleware('role:super-admin,add-company');
+		Route::post('/', [CompanyController::class, 'registrationByAdminOrReseller']);
 		Route::get('/get-balance/{id}', [CompanyController::class, 'getBalance']);
 		Route::get('/active', [CompanyController::class, 'getAllActiveCompany']);
 		Route::get('/{id?}', [CompanyController::class, 'getAllCompany']);
