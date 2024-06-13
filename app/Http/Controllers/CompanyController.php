@@ -6,13 +6,134 @@ use Illuminate\Http\Request;
 
 use App\Models\Company;
 use App\Models\User;
+use App\Models\Server;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Validator;
+use Mail;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class CompanyController extends Controller
 {
-
     public function __construct()
     {
+    }
+
+    public  function registrationByAdminOrReseller(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'parent_id'     => 'required',
+            'plan_id'       => 'required',
+            'company_name'  => 'required|max:500|unique:companies',
+            'account_code'  => 'required|max:500|unique:users',
+            'name'     		=> 'required|max:255',
+            'email'         => 'required|email|max:255|unique:users|unique:companies',
+            'mobile'        => 'required|string|unique:users',
+			'address'		=> 'required|max:500',
+			'country_id'	=> 'required',
+			'state_id'		=> 'required',
+			'city'			=> 'required',
+			'zip'			=> 'required',
+        ],[
+            'plan_id'       => 'Plan type is required!',
+            'parent_id'     => 'parent ID is required.',
+            'email.unique'  => 'This email ID is already registered. Please try with different email ID.',
+            'mobile.unique' => 'This mobile number is already registered. Please try with different mobile number.',
+            'company_name.unique' => 'This Company name is already registered. Please try with different Company name.',
+			'account_code.unique' => 'This Account code is already exist. Please try with different Account code.',
+        ]);
+        if ($validator->fails()){
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+        // Start transaction!
+        try { 
+            DB::beginTransaction();
+            $user = User::where('email', $request->email)->first();        
+            if(!$user){
+                $company = Company::create([
+                    'plan_id'       => $request->plan_id,
+                    'parent_id'     => $request->parent_id,
+                    'company_name'	=> $request->company_name,
+                    'email'        	=> $request->email,
+                    'mobile'       	=> $request->mobile,
+                    'billing_address' => $request->address,
+                    'country_id' 	=> $request->country_id,
+                    'state_id' 		=> $request->state_id,
+                    'city' 			=> $request->city,
+                    'zip' 			=> $request->zip,
+                    'status' 	    => '1',
+                ]);
+                //dd($company);
+                $random_pass = Str::random(10);
+                $user = User::create([
+                    'company_id' => $company->id,
+                    'account_code' => $request->account_code,
+                    'name' 		=> $request->name,
+                    'email' 	=> $request->email,
+                    'mobile' 	=> $request->mobile,
+                    'password' 	=> Hash::make($random_pass),
+                    'address' 	=> $request->address,
+                    'country_id'=> $request->country_id,
+                    'state_id' 	=> $request->state_id,
+                    'city' 		=> $request->city,
+                    'zip' 		=> $request->zip,
+                    'email_verified_at' => Carbon::now(),
+                    'is_verified' => '1',
+                    'role_id' 	=> '4',//$request->role_id,
+                    'status' 	=> '1',
+                ]);
+                DB::table('users_roles')->insert([
+                    'user_id'   => $user->id,
+                    'role_id'   => 4,
+                ]);
+                $Server = false;
+                $user_registered =  DB::table('user_registered_servers')
+                            ->select(['id','server_id'])
+                            ->orderBy('id', 'DESC')
+                            ->limit(1)->first();
+                if($user_registered){
+                    $Server =   Server::select('id','domain','ip')
+                                ->where('status', '=', 1)
+                                ->where('id', '>', $user_registered->server_id)
+                                ->limit(1)->get()->toArray();
+                }
+                if(!$Server){
+                    $ServerObj = Server::select('id','domain','ip')->where('status', '=', 1)->orderBy('id', 'ASC')->first();
+                    $Server = $ServerObj->toArray();
+                    DB::table('user_registered_servers')->insert([
+                        'server_id'   => $Server['id'],
+                        'company_id'   => $company->id,
+                        'domain'   => $Server['domain'],
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
+                    ]);
+                }else{            
+                    DB::table('user_registered_servers')->insert([
+                        'server_id'   => $Server[0]['id'],
+                        'company_id'   => $company->id,
+                        'domain'   => $Server[0]['domain'],
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
+                    ]);
+                }
+                
+                $this->sendPassword($user, $random_pass);//PASSWORD SEND
+                //$token 		=  $user->createToken('Callanalog-API')->plainTextToken;
+                $response 	= $user->toArray();
+                //$response['token'] = $token;
+                DB::commit();
+                return $this->output(true, 'User registered successfully.', $response);
+            }else{
+                DB::commit();
+                return $this->output(false, 'This email id already register with us. Please choose another email to register or login with same email.');
+            }
+        } catch(\Exception $e)
+        {
+            DB::rollback();
+            return $this->output(false, $e->getMessage());
+            //throw $e; 
+        }
     }
 
     public function getAllCompany(Request $request)
@@ -119,6 +240,20 @@ class CompanyController extends Controller
         }
     }
 
+    public function sendPassword($user, $random_pass){
+        
+		if($random_pass){
+			$data['email'] = $user->email;
+			$data['title'] = 'Mail Password';
+			$data['body'] = 'Your password is:- '.$random_pass;
+			/* Mail::send('mailVerification',['data'=>$data],function($message) use ($data){
+				$message->to($data['email'])->subject($data['title']);
+			}); */
+            dispatch(new \App\Jobs\SendEmailJob($data));
+		}else{
+			return $this->output(false, 'Error occurred in Password creation. Try after some time.');
+		}
+    }
 
     public function getBalance(Request $request, $id)
     {
