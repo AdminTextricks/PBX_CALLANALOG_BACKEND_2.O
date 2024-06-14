@@ -14,6 +14,61 @@ class PermissionController extends Controller
 
     }
 
+    public function getUserAndRolePermission(Request $request)
+    {
+        $user_permissions = array();
+        $role_permissions = array();
+        $user = \Auth::user();
+        $slug = \Auth::user()->roles[0]->slug;
+        $role = Role::where('slug',$slug)->first();
+        if ($request->user()->hasRole('super-admin')) {
+            //$allPermission = Permission::all();            
+            $allPermission = Permission::select('id','name','slug','permission_group')->get(); 
+            //$role_permissions[] = array('role_id'=>$role->id, 'role'=>$role->name, 'permissions'=>$allPermission); 
+            $response['role_permissions'] = $allPermission->toArray();
+            //$response['role_permissions'] = $role_permissions;
+        }else{            
+            $userPermissions = $user->permissions()->get(); 
+            //$user_permissions[] = array('role_id'=>$role->id, 'role'=>$role->name, 'permissions'=>$userPermissions); 
+            /***** Role Permissions */           
+            $rolePermissions =  $role->permissions()->get();        
+            //$role_permissions[] = array('role_id'=>$role->id, 'role'=>$role->name, 'permissions'=>$rolePermissions);     
+            $response['role_permissions'] = $rolePermissions;   
+            $response['user_permissions'] = $userPermissions;                
+        }
+        return $this->output(true, 'Role Permissions and User permissions.', $response, 200);
+    }
+
+    public function getRolePermissions(Request $request){
+        $slug = $request->slug ?? NULL;
+        if ($slug) {
+            //$roles = Role::select()->where('slug', $slug)->get();
+            $role = Role::select()->where('slug',$slug)->first();
+            if ($role) {
+                $role_permissions = array();
+                $permissions =  $role->permissions()->get();
+                $role_permissions[] = array('role_id'=>$role->id, 'role'=>$role->name, 'permissions'=>$permissions);
+                //$response['role_permissions'] = $role_permissions;    
+                $response = $role_permissions;            
+                return $this->output(true, 'Role Permissions.', $response, 200);
+            }else{
+                return $this->output(false, 'User Role not exist.', [], 409);            
+            }
+        }else{
+            $role_permissions = array();            
+            $roles = Role::whereNotIn('slug', ['super-admin'])->get();
+            foreach($roles as $key => $role){
+                $permissions =  $role->permissions()->get();
+                //if(count($permissions) > 0){
+                    $role_permissions[] = array('role_id'=>$role->id, 'role'=>$role->name, 'permissions'=>$permissions);                    
+                //}
+            }           
+            //$response['role_permissions'] = $role_permissions;
+            $response = $role_permissions;
+            return $this->output(true, 'Roles Permissions.', $response, 200);
+        }
+    }
+
     public function getAllPermissionByRole(Request $request){
         $slug = $request->slug ?? NULL;
         $roles = Role::select()->where('slug', $slug)->get();
