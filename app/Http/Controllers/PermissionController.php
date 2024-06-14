@@ -59,9 +59,7 @@ class PermissionController extends Controller
             $roles = Role::whereNotIn('slug', ['super-admin'])->get();
             foreach($roles as $key => $role){
                 $permissions =  $role->permissions()->get();
-                //if(count($permissions) > 0){
-                    $role_permissions[] = array('role_id'=>$role->id, 'role'=>$role->name, 'permissions'=>$permissions);                    
-                //}
+                $role_permissions[] = array('role_id'=>$role->id, 'role'=>$role->name, 'permissions'=>$permissions);                
             }           
             //$response['role_permissions'] = $role_permissions;
             $response = $role_permissions;

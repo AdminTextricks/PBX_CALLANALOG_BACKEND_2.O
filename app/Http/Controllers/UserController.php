@@ -29,18 +29,37 @@ class UserController extends Controller
     public function getUser(Request $request)
     {
         $user_id = $request->id ?? NULL;
-		$perPageNo = isset($request->perpage) ? $request->perpage : 5;
-		$dataQuery = User::select()
-                    ->with('company:id,company_name')
-                    ->with('user_role:id,name')
-                    ->with('country:id,country_name')
-                    ->with('state:id,state_name,state_code');
+		$perPageNo = isset($request->perpage) ? $request->perpage : 25;
+        $user = \Auth::user();        
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
+            $dataQuery = User::select()
+                        ->with('company:id,company_name')
+                        ->with('user_role:id,name')
+                        ->with('country:id,country_name')
+                        ->with('state:id,state_name,state_code');
 
-		if ($user_id) {
-			$data = $dataQuery->where('id', $user_id)->first();
-		} else {
-			$data = $dataQuery->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
-		}
+            if($user_id) {
+                $data = $dataQuery->where('id', $user_id)->first();
+            }else{
+                $data = $dataQuery->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+            }
+        }elseif($user->roles->first()->slug == 'admin'){
+            $dataQuery = User::select()
+                        ->with('company:id,company_name')
+                        ->with('user_role:id,name')
+                        ->with('country:id,country_name')
+                        ->with('state:id,state_name,state_code')
+                        ->where('company_id', $user->company_id);
+            $data = $dataQuery->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+        }else{
+            $dataQuery = User::select()
+                        ->with('company:id,company_name')
+                        ->with('user_role:id,name')
+                        ->with('country:id,country_name')
+                        ->with('state:id,state_name,state_code')
+                        ->where('id', $user->id);
+            $data = $dataQuery->get();
+        }
         if ($data) {
             $dd = $data->toArray();
             if (is_array($dd)) {
