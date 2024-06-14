@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('extensions', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('country_id',10);
-            $table->dateTime('startingdate');
-            $table->dateTime('expirationdate');
+            $table->dateTime('startingdate')->nullable();
+            $table->dateTime('expirationdate')->nullable();
 			$table->unsignedBigInteger('company_id');
             $table->string('name',50)->unique()->index();
             //$table->string('intercom',50)->unique()->index();
@@ -57,8 +57,8 @@ return new class extends Migration
             $table->string('fullcontact',100)->nullable();
             $table->string('agent_name',150)->nullable();
             $table->enum('barge',['0','1'])->default(0); 
-           // $table->string('setvar',100)->nullable();
-           // $table->string('regserver',100)->nullable();
+            $table->enum('sip_temp',['WEBRTC','SOFTPHONE'])->nullable();
+            $table->string('regserver',100)->nullable();
             $table->string('lastms',100)->nullable();
             $table->string('callbackextension',100)->nullable();
             $table->tinyInteger('status')->default(0);

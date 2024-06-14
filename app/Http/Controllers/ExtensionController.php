@@ -189,6 +189,7 @@ class ExtensionController extends Controller
 		$perPageNo = isset($request->perpage) ? $request->perpage : 25;
 		$params = $request->params ?? "";
         $user = \Auth::user();
+        echo $user->company_id;
 		//if ($request->user()->hasRole('super-admin')) {
         if (in_array($user->roles->first()->name, array('Super Admin', 'Support','NOC'))) {
 			$Extension_id = $request->id ?? NULL;
@@ -196,11 +197,13 @@ class ExtensionController extends Controller
 				$data = Extension::select()
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
-                        ->where('id', $Extension_id)->get();
+                        ->where('id', $Extension_id)
+                        ->orderBy('id', 'DESC')->get();
 			} else {				
-                $data = Extension::select()
+                $data = Extension::select('id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret')
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
+                        ->orderBy('id', 'DESC')
                         ->paginate(
                         $perPage = $perPageNo,
                         $columns = ['*'],
@@ -215,6 +218,7 @@ class ExtensionController extends Controller
 					->select()
 					->where('id', $Extension_id)
 					->where('company_id', '=',  $user->company_id)
+                    ->orderBy('id', 'DESC')
 					->get();
 			} else {
 				if ($params != "") {
@@ -222,12 +226,14 @@ class ExtensionController extends Controller
                         ->with('country:id,country_name')
 						->where('company_id', '=',  $user->company_id)
 						//->orWhere('did_number', 'LIKE', "%$params%")
+                        ->orderBy('id', 'DESC')
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
 					$data = Extension::with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
 						->where('company_id', '=',  $user->company_id)
-						->select()->paginate(
+						->select()->orderBy('id', 'DESC')
+                        ->paginate(
 							$perPage = $perPageNo,
 							$columns = ['*'],
 							$pageName = 'page'
