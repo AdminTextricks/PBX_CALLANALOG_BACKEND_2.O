@@ -177,19 +177,19 @@ class MainPriceController extends Controller
         $validator = Validator::make($request->all(), [            
             'country_id'    => 'required|numeric',
             'commission_type' => 'required|max:500|in:Fixed Amount,Percentage',
-            'user_id'       => 'required|numeric|exists:users,id',
+            'company_id'    => 'required|numeric|exists:companies,id',
             'product'       => 'required|max:500|in:TFN,Extension',
             'price'         => 'required|max:255',
-        ]/*,[
-            'user_id'   => 'The user field is required when user type is reseller and user should be registered with us!',           
-        ]*/);
+        ],[
+            'company_id'   => 'The company field is required and company should be registered with us!',
+        ]);
         if ($validator->fails()){
             return $this->output(false, $validator->errors()->first(), [], 409);
         }
         // Start transaction!
         try { 
             DB::beginTransaction();
-            $ResellerPrice = ResellerPrice::where('user_id', $request->user_id)
+            $ResellerPrice = ResellerPrice::where('company_id', $request->company_id)
                             ->where('product', $request->product)
                             ->where('country_id', $request->country_id)
                             ->first();
@@ -197,7 +197,7 @@ class MainPriceController extends Controller
                 $ResellerPrice = ResellerPrice::create([
                     'country_id'        => $request->country_id,
                     'commission_type'   => $request->commission_type,
-                    'user_id'	=> $request->user_id,
+                    'company_id'	    => $request->company_id,
                     'product'   => $request->product,
                     'price'     => $request->price,
                     'status'    => isset($request->status) ? $request->status : 0,
@@ -229,11 +229,13 @@ class MainPriceController extends Controller
         $trunk_id = $request->id ?? NULL;
         if($trunk_id){            
             $ResellerPrice_data = ResellerPrice::select('*')
-                            ->with(['user:id,name,email,mobile']) 
+                            ->with(['company:id,company_name,email,mobile'])
+                            ->with('country:id,country_name') 
                             ->where('id', $trunk_id)->get();;
         }else{
             $ResellerPrice_data = ResellerPrice::select('*') 
-                                ->with(['user:id,name,email,mobile']) 
+                                ->with(['company:id,company_name,email,mobile']) 
+                                ->with('country:id,country_name')
                                 ->paginate(
                                 $perPage = $perPageNo,
                                 $columns = ['*'],
