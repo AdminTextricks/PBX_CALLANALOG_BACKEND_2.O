@@ -113,7 +113,7 @@ class PermissionController extends Controller
         }
 
     }
-    public function getAllPermissionByRole(Request $request){
+        public function getAllPermissionByRole(Request $request){
         $slug = $request->slug ?? NULL;
         $roles = Role::select()->where('slug', $slug)->get();
         if ($roles->isNotEmpty()) {
