@@ -10,7 +10,7 @@ class ResellerPrice extends Model
     use HasFactory;
     protected $fillable = [
         'id',
-        'user_id',
+        'company_id',
         'country_id',
         'commission_type',
         'product',
@@ -18,8 +18,13 @@ class ResellerPrice extends Model
         'status',
     ];
 
-    public function user()
+    public function company()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Company::class);
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
     }
 }

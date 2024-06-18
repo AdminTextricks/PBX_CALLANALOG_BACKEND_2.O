@@ -88,9 +88,10 @@ class PermissionController extends Controller
             }
         }else{
             $user = \Auth::user();
-            if(in_array($user->roles->first()->slug, array('super-admin', 'admin'))){
+            if(in_array($user->roles->first()->slug, array('super-admin', 'support','noc', 'admin'))){
                 $user_permissions = array();
-                if ($request->user()->hasRole('super-admin')) {
+                //if ($request->user()->hasRole('super-admin')) {
+                if(in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))){
                     $users_permissions =  DB::table('users_permissions')
                                         ->select('user_id')->groupBy('user_id')->get()->toArray();            
                     foreach($users_permissions as $key => $user){                

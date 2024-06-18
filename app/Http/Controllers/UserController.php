@@ -424,8 +424,7 @@ class UserController extends Controller
             }
         } else {
             return $this->output(false, 'Email Id dose not exist!', [], 404);
-        }
-        
+        }        
     }
 
     public function getProfile(Request $request){
