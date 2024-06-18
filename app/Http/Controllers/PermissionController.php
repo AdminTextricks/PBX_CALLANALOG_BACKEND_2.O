@@ -112,10 +112,14 @@ class PermissionController extends Controller
             }
         }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
     }
+    
     public function getAllPermissionByRole(Request $request){
         $slug = $request->slug ?? NULL;
         $roles = Role::select()->where('slug', $slug)->get();
