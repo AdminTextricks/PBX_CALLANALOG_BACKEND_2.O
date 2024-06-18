@@ -123,7 +123,7 @@ class ExtensionController extends Controller
                         'canreinvite'       => 'no',
                         'context'           => 'callanalog',
                         'dtmfmode'          => 'RFC2833',
-                        'host'              => 'dynamic',
+                        'host'              => '',
                         'insecure'          => 'port,invite',
                         'language'          => 'en',
                         'nat'               => 'force_rport,comedia',
@@ -136,7 +136,7 @@ class ExtensionController extends Controller
                         'allow'             => 'g729,g723,ulaw,gsm',
                         'created_at'        => Carbon::now(),
                         'updated_at'        => Carbon::now(),
-                        'status'            => isset($request->status) ? $request->status : '1',
+                        'status'            => isset($request->status) ? $request->status : '0',
                     ]);
                     if($request->mailbox == '1'){
                         array_push($VoiceMail, [
@@ -191,7 +191,7 @@ class ExtensionController extends Controller
         $user = \Auth::user();
         echo $user->company_id;
 		//if ($request->user()->hasRole('super-admin')) {
-        if (in_array($user->roles->first()->name, array('Super Admin', 'Support','NOC'))) {
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
 			$Extension_id = $request->id ?? NULL;
 			if ($Extension_id) {
 				$data = Extension::select()
@@ -200,7 +200,7 @@ class ExtensionController extends Controller
                         ->where('id', $Extension_id)
                         ->orderBy('id', 'DESC')->get();
 			} else {				
-                $data = Extension::select('id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret')
+                $data = Extension::select('id','country_id', 'company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp')
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->orderBy('id', 'DESC')
