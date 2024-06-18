@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Role;
 use App\Models\Permission;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Validator;
 
 class PermissionController extends Controller
@@ -67,6 +68,54 @@ class PermissionController extends Controller
         }
     }
 
+    public function getUserPermissions(Request $request)
+    {
+        if(isset($request->user_id)){
+            $user_id = $request->user_id ?? NULL;            
+            $user = User::where('id', $user_id)->first();
+            if($user){
+                $user_permissions =  DB::table('users_permissions')->where('user_id', $user_id)->count();
+                                
+                if($user_permissions){
+                    $user_permission[] = array('Name' => $user->name, 'Email' => $user->email, 'Permissions'=>$user->permissions()->get()); 
+                    $response['user_permissions'] = $user_permission;
+                    return $this->output(true, 'User Permissions.', $response, 200);
+                }else{
+                    return $this->output(true, 'No Record Found', [], 200);
+                }            
+            }else{
+                return $this->output(false, 'User not exist.', [], 409);         
+            }
+        }else{
+            $user = \Auth::user();
+            if(in_array($user->roles->first()->slug, array('super-admin', 'admin'))){
+                $user_permissions = array();
+                if ($request->user()->hasRole('super-admin')) {
+                    $users_permissions =  DB::table('users_permissions')
+                                        ->select('user_id')->groupBy('user_id')->get()->toArray();            
+                    foreach($users_permissions as $key => $user){                
+                        $userObj = User::where('id', $user->user_id)->first();
+                        $user_permissions[] = array('Name' => $userObj->name, 'Email' => $userObj->email, 'Permissions'=>$userObj->permissions()->get());
+                    }
+                }
+
+                if ($request->user()->hasRole('admin')) {
+                    $users =  User::where('company_id', $user->company_id)->get();
+                    foreach($users as $key => $userObj){                
+                        $user_permissions[] = array('Name' => $userObj->name, 'Email' => $userObj->email, 'Permissions'=>$userObj->permissions()->get());
+                    }
+                }
+                $response['user_permissions'] = $user_permissions;
+                return $this->output(true, 'User Permissions.', $response, 200);
+            }else{
+                return $this->output(false, 'You are not authorized user.');
+            }
+        }
+<<<<<<< Updated upstream
+
+=======
+>>>>>>> Stashed changes
+    }
     public function getAllPermissionByRole(Request $request){
         $slug = $request->slug ?? NULL;
         $roles = Role::select()->where('slug', $slug)->get();

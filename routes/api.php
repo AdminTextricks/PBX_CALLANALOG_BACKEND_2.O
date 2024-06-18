@@ -213,6 +213,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'permission'], function () {
 		Route::get('/userAndRolePermission', [PermissionController::class, 'getUserAndRolePermission']);
 		Route::get('/rolesPermission/{slug?}', [PermissionController::class, 'getRolePermissions']);
+		Route::get('/userPermission/{id?}', [PermissionController::class, 'getUserPermissions']);
 		Route::get('/all/{slug}', [PermissionController::class, 'getAllPermissionByRole']);
 		Route::get('/permission-by-group/{slug}', [PermissionController::class, 'getAllPermissionByGroup']);
 		Route::put('/role-permission', [PermissionController::class, 'updateRolePermissions']);
