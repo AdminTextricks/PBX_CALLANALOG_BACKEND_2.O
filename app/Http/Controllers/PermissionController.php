@@ -111,7 +111,10 @@ class PermissionController extends Controller
                 return $this->output(false, 'You are not authorized user.');
             }
         }
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
     }
     public function getAllPermissionByRole(Request $request){
         $slug = $request->slug ?? NULL;
