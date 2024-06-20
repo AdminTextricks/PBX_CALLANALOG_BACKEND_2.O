@@ -35,7 +35,7 @@ return new class extends Migration
             $table->timestamp('expirationdate')->nullable();
             $table->tinyInteger('status')->default(0);
             $table->timestamps();
-    
+            $table->softDeletes();
 
         });
     }

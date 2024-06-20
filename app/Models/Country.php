@@ -10,10 +10,21 @@ class Country extends Model
     use HasFactory;
     protected $table = 'countries';
 
-   
-    public function ringgroup(){
-        return $this->hasMany(RingGroup::class);
+    /**
+     * Get all of the numbers for the Number
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function numbers()
+    {
+        return $this->hasMany(Tfn::class);
     }
 
+    public function createinvoice(){
+        return $this->hasMany(Invoice::class);
+    }
 
+    public function tfn(){
+        return $this->hasMany(Tfn::class);
+    }
 }
