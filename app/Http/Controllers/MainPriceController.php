@@ -42,7 +42,7 @@ class MainPriceController extends Controller
                     'user_id'	=> ($request->user_type == 'Reseller') ? $request->user_id : null,
                     'product'   => $request->product,
                     'price'     => $request->price,
-                    'status'    => isset($request->status) ? $request->status : 0,
+                    'status'    => isset($request->status) ? $request->status : 1,
                 ]);
                 
                 $response 	= $MainPrice->toArray();               
@@ -72,10 +72,12 @@ class MainPriceController extends Controller
         if($trunk_id){            
             $MainPrice_data = MainPrice::select('*') 
                             ->with(['user:id,name,email,mobile']) 
+                            ->with('country:id,country_name')
                             ->where('id', $trunk_id)->get();;
         }else{
             $MainPrice_data = MainPrice::select('*') 
                                 ->with(['user:id,name,email,mobile']) 
+                                ->with('country:id,country_name')
                                 ->paginate(
                                 $perPage = $perPageNo,
                                 $columns = ['*'],
