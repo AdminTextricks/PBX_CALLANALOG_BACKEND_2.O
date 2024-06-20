@@ -90,10 +90,10 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	# Main Price
 	Route::group(['prefix' => 'price'], function () {
-		Route::post('/', [MainPriceController::class, 'addSuperAdminPrice']);		
-		Route::patch('/changeStatus/{id}', [MainPriceController::class, 'changeMainPriceStatus']);		
+		Route::post('/', [MainPriceController::class, 'addSuperAdminPrice']);
+		Route::patch('/changeStatus/{id}', [MainPriceController::class, 'changeMainPriceStatus']);
 		Route::get('/{id?}', [MainPriceController::class, 'getPriceList']);
-		Route::patch('/{id}', [MainPriceController::class, 'updatePrice']);		
+		Route::patch('/{id}', [MainPriceController::class, 'updatePrice']);
 		Route::delete('/{id}', [MainPriceController::class, 'deletePrice']);
 		//Route::delete('/reseller/{id}', [MainPriceController::class, 'deleteResellerPrice']);
 		//Route::post('/reseller', [MainPriceController::class, 'addResellerPrice']);
@@ -137,7 +137,6 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'tfngroup'], function () {
 		Route::get('/active', [TfnGroupController::class, 'getAllActiveTfngroup']);
 		Route::get('/{id?}', [TfnGroupController::class, 'getAllTfngroup']);
-
 	});
 
 	# Add to Cart
@@ -165,8 +164,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::put('/{id}', [BlockNumberController::class, 'updateBlockNumber']);
 		Route::patch('/changeStatus/{id}', [BlockNumberController::class, 'changeBlockNumberStatus']);
 		Route::get('/active', [BlockNumberController::class, 'getAllActiveBlockNumbers']);
-		Route::get('/{id?}', [BlockNumberController::class, 'getAllBlockNumber']);		
-		Route::get('/getByCompany/{comapny_id}', [BlockNumberController::class, 'getBlockNumbersByCompany']);	
+		Route::get('/{id?}', [BlockNumberController::class, 'getAllBlockNumber']);
+		Route::get('/getByCompany/{comapny_id}', [BlockNumberController::class, 'getBlockNumbersByCompany']);
 		Route::delete('/{id}', [BlockNumberController::class, 'deleteBlockNumber']);
 	});
 
@@ -176,13 +175,13 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::put('/{id}', [ServerController::class, 'updateServer']);
 		Route::patch('/changeStatus/{id}', [ServerController::class, 'changeServerStatus']);
 		Route::get('/active', [ServerController::class, 'getAllActiveServers']);
-		Route::get('/{id?}', [ServerController::class, 'getAllServers']);		
+		Route::get('/{id?}', [ServerController::class, 'getAllServers']);
 		Route::delete('/{id}', [ServerController::class, 'deleteServer']);
 	});
 
 	# Manage Extensions
 	Route::group(['prefix' => 'extensions'], function () {
-		Route::post('/', [ExtensionController::class, 'addExtensions']);	
+		Route::post('/', [ExtensionController::class, 'addExtensions']);
 		Route::post('/generate', [ExtensionController::class, 'generateExtensions']);
 		Route::get('/generatePassword', [ExtensionController::class, 'generateStrongPassword']);
 		Route::get('/', [ExtensionController::class, 'getAllExtensions']);
@@ -196,7 +195,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'conf-template'], function () {
 		Route::post('/', [ConfTemplateController::class, 'addConfTemplate']);
 		Route::put('/{id}', [ConfTemplateController::class, 'updateConfTemplate']);
-		Route::get('/{id?}', [ConfTemplateController::class, 'getAllConfTemplate']);		
+		Route::get('/{id?}', [ConfTemplateController::class, 'getAllConfTemplate']);
 		Route::delete('/{id}', [ConfTemplateController::class, 'deleteConfTemplate']);
 	});
 
@@ -228,6 +227,20 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::put('/{id}', [RingGroupController::class, 'updateRingGroup']);
 		Route::patch('/changeStatus/{id}', [RingGroupController::class, 'changeRingGroupStatus']);
 		Route::delete('/{id}', [RingGroupController::class, 'deleteRingGroup']);
+	});
+
+	# Invoices
+	Route::group(['prefix' => 'invoice'], function () {
+		Route::post('/upload-csv', [TfnController::class, 'uploadCSVfile']);
+		Route::get('/getall', [InvoiceController::class, 'getAllInvoiceData']);
+		Route::get('/{id}', [InvoiceController::class, 'getInvoiceData']);
+		Route::post('/', [InvoiceController::class, 'createInvoice']);
+	});
+
+	# Payments Manage.
+	Route::group(['prefix' => 'payment'], function () {
+		Route::post('/pay', [PaymentController::class, 'PayNow']);
+		Route::post('/Striperefund', [PaymentController::class, 'RefundStripePayment']);
 	});
 });
 /*
