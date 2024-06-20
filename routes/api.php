@@ -1,5 +1,6 @@
 <?php
 
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -23,6 +24,8 @@ use App\Http\Controllers\ConfTemplateController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RingGroupController;
+use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\PaymentController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -148,6 +151,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	# Tfn Number 
 	Route::group(['prefix' => 'tfn'], function () {
+		Route::post('/upload-csv', [TfnController::class, 'uploadCSVfile']);
 		Route::post('/search', [PurchaseTfnNumberController::class, 'searchTfn']);
 		Route::get('/active', [TfnController::class, 'getAllActiveTfns']);
 		Route::post('/', [TfnController::class, 'addAdminTfns']);
@@ -231,7 +235,6 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	# Invoices
 	Route::group(['prefix' => 'invoice'], function () {
-		Route::post('/upload-csv', [TfnController::class, 'uploadCSVfile']);
 		Route::get('/getall', [InvoiceController::class, 'getAllInvoiceData']);
 		Route::get('/{id}', [InvoiceController::class, 'getInvoiceData']);
 		Route::post('/', [InvoiceController::class, 'createInvoice']);
