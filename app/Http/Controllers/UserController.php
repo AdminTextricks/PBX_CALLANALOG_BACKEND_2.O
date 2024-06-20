@@ -87,6 +87,64 @@ class UserController extends Controller
 		}
 	}
 
+
+
+    public function getAllResellerUsers(Request $request)
+    {
+        $user_id = $request->id ?? NULL;
+        $perPageNo = isset($request->perpage) ? $request->perpage : 25;
+        $user = \Auth::user();        
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
+            $dataQuery = User::select()
+                        ->with('company:id,company_name')
+                        ->with('user_role:id,name')
+                        ->with('country:id,country_name')
+                        ->with('state:id,state_name,state_code')
+                        ->where('role_id', 5);
+
+            if($user_id) {
+                $data = $dataQuery->where('id', $user_id)->first();
+            }else{
+                $data = $dataQuery->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+            }
+            if ($data) {
+                $dd = $data->toArray();
+                if (is_array($dd)) {
+                    unset($dd['links']);
+                    return $this->output(true, 'Success', $dd, 200);
+                }
+            } else {
+                return $this->output(true, 'No Record Found', []);
+            }
+        }else{
+            return $this->output(false, 'You are not authorized user.');
+        }
+
+        
+	}
+
+
+    /**
+     * Display a listing of the reseller Active resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+
+     public function getActiveResellerUsers(Request $request)
+     {
+        $data = User::select()
+                ->where('status', 1)
+                ->where('role_id', 5)->get();	
+		if($data->isNotEmpty()){
+			return $this->output(true, 'Success', $data->toArray());
+		}else{
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
+
+
+
+
     /**
      * Change User Status.
      *

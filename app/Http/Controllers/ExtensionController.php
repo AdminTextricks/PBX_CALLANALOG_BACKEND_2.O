@@ -250,4 +250,96 @@ class ExtensionController extends Controller
 			return $this->output(true, 'No Record Found', []);
 		}
 	}
+
+    public function updateExtension(Request $request, $id)
+    {
+		try { 
+			DB::beginTransaction(); 
+			$Extension = Extension::find($id);		
+			if(is_null($Extension)){
+				DB::commit();
+				return $this->output(false, 'This Extension not exist with us. Please try again!.', [], 409);
+			}else{
+				$validator = Validator::make($request->all(), [
+                    'country_id'    => 'required|numeric',
+                    'company_id'    => 'required|numeric',
+                    'name'          => 'required|unique:extensions,name',
+                    'callbackextension' => 'required',
+					'agent_name'    => 'required',					
+					'secret'	    => 'required',
+					'barge'	        => 'required|in:0,1',
+                    'mailbox'       => 'required|in:0,1',
+                    'voice_email'   => 'required_if:mailbox,1',
+                    'callgroup'     => 'required|in:0,1',
+                    'callerid'      => 'required_if:callgroup,1',
+                    'sip_temp'      => 'required|in:WEBRTC,SOFTPHONE',
+				]);
+				if ($validator->fails()){
+					return $this->output(false, $validator->errors()->first(), [], 409);
+				}				
+				$ExtensionOld = Extension::where('country_id', $request->country_id)
+							->where('company_id', $request->company_id)
+                            ->where('name', $request->name)
+							->where('id','!=', $id)
+							->first();
+				if(!$ExtensionOld){
+                    $VoiceMail = VoiceMail::where('mailbox', $request->name)->first();
+                    if($VoiceMail){
+                        $VoiceMail->delete();
+                    }
+                    if($request->mailbox  == 1){
+                        $VoiceMail = VoiceMail::create([
+                            'company_id'=> $request->company_id,
+                            'context'   => 'default',
+                            'mailbox'   => $request->name,
+                            'fullname'  => $request->agent_name,
+                            'email'     => $request->voice_email,
+                            'timezone'  => 'central',
+                            'attach'    => 'yes',
+                            'review'    => 'no',
+                            'operator'  => 'no',
+                            'envelope'  => 'no',
+                            'sayduration'   => 'no',
+                            'saydurationm'  => '1',
+                            'sendvoicemail' => 'no',
+                            'nextaftercmd'  => 'yes',
+                            'forcename'     => 'no',
+                            'forcegreetings'=> 'no',
+                            'hidefromdir'   => 'yes',
+                            'created_at'    => Carbon::now(),
+                            'updated_at'    => Carbon::now(),
+                        ]);
+                    }
+					$Extension->callbackextension = $request->callbackextension;
+					$Extension->agent_name  = $request->agent_name;
+					$Extension->secret      = $request->secret;
+					$Extension->barge       = $request->barge;
+					$Extension->mailbox     = $request->mailbox;
+					$Extension->callgroup   = $request->callgroup;
+                    if($request->callgroup  == 1){
+                        $Extension->callerid  = $request->callerid;    
+                    }
+                    $Extension->sip_temp    = $request->sip_temp;					
+					$ExtensionRes           = $Extension->save();
+					if($ExtensionRes){
+						$Extension = Extension::where('id', $id)->first();        
+						$response = $Extension->toArray();
+						DB::commit();
+						return $this->output(true, 'Extension updated successfully.', $response, 200);
+					}else{
+						DB::commit();
+						return $this->output(false, 'Error occurred in Extension Updating. Please try again!.', [], 200);
+					}
+				}else{
+					DB::commit();
+					return $this->output(false, 'This Extension already exist with us.',[], 409);
+				}
+			}
+		} catch (\Exception $e) {
+			DB::rollback();
+			//return $this->output(false, $e->getMessage());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+		}
+	}
+
 }
