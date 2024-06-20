@@ -59,7 +59,9 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::put('/billing-address/{id}', [CompanyController::class, 'updateCompany']);
 	});
 
-	Route::group(['prefix' => 'user'], function () {
+	Route::group(['prefix' => 'user'], function () {		
+		Route::get('reseller/active', [UserController::class, 'getActiveResellerUsers']);
+		Route::get('reseller/{id?}', [UserController::class, 'getAllResellerUsers']);		
 		Route::get('/balance', [CompanyController::class, 'getBalance']);
 		Route::post('/', [UserController::class, 'createUser']);
 		Route::get('/active', [UserController::class, 'getAllActiveUsers']);
@@ -186,9 +188,9 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/generate', [ExtensionController::class, 'generateExtensions']);
 		Route::get('/generatePassword', [ExtensionController::class, 'generateStrongPassword']);
 		Route::get('/', [ExtensionController::class, 'getAllExtensions']);
+		Route::put('/{id}', [ExtensionController::class, 'updateExtension']);
 		/*
-		Route::patch('/changeStatus/{id}', [ExtensionController::class, 'changeOutboundCallRateStatus']);				
-		Route::put('/{id}', [ExtensionController::class, 'updateOutboundCallRate']);
+		Route::patch('/changeStatus/{id}', [ExtensionController::class, 'changeOutboundCallRateStatus']);		
 		Route::delete('/{id}', [ExtensionController::class, 'deleteOutboundCallRate']);*/
 	});
 
