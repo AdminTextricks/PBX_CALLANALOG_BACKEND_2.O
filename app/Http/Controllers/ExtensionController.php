@@ -253,8 +253,10 @@ class ExtensionController extends Controller
 
     public function updateExtension(Request $request, $id)
     {
-		try { 
+        try { 
 			DB::beginTransaction(); 
+            $webrtc_template_url = config('app.webrtc_template_url');
+            $softphone_template_url = config('app.softphone_template_url');
 			$Extension = Extension::find($id);		
 			if(is_null($Extension)){
 				DB::commit();
@@ -312,8 +314,8 @@ class ExtensionController extends Controller
                     }
 
                     if($Extension->sip_temp != $request->sip_temp){
-                       // $this->addExtensionInConfFile($request->name, env(WEBRTC_TEMPLATE_URL));
-                       // $this->removeExtensionFromConfFile($request->name, env(SOFTPHONE_TEMPLATE_URL));
+                        $this->addExtensionInConfFile($request->name, $request->secret, $webrtc_template_url);
+                        $this->removeExtensionFromConfFile($request->name, $softphone_template_url);
                     }
 
 					$Extension->callbackextension = $request->callbackextension;
@@ -349,10 +351,18 @@ class ExtensionController extends Controller
 		}
 	}
 
-    protected function removeExtensionFromConfFile($extensionName){
+    protected function addExtensionInConfFile($extensionName, $conf_path){
+        // Add new user section
+        $register_string = "\n[$extensionName]\nusername=$extensionName\nsecret=$ssecret\naccountcode=$selectedaccountcode\n$template_contents\n";
+        $webrtc_conf_path = "/var/www/html/callanalog/admin/webrtc_template.conf";
+        file_put_contents($webrtc_conf_path, $register_string, FILE_APPEND | LOCK_EX);
+        //echo "Registration successful. The SIP user $nname has been added to the webrtc_template.conf file.";
+    }
+
+    protected function removeExtensionFromConfFile($extensionName, $conf_file_path){
         // Remove user section
-			$webrtc_conf_path = "webrtc_template.conf";
-			$lines = file($webrtc_conf_path);
+			//$conf_file_path = "webrtc_template.conf";
+			$lines = file($conf_file_path);
 			$output = '';
 			$found = false;
 			foreach ($lines as $line) {
@@ -367,7 +377,7 @@ class ExtensionController extends Controller
 					$output .= $line;
 				}
 			}
-			file_put_contents($webrtc_conf_path, $output, LOCK_EX);
+			file_put_contents($conf_file_path, $output, LOCK_EX);
 			//echo "Registration removed. The SIP user $nname has been removed from the webrtc_template.conf file.";
     }
 

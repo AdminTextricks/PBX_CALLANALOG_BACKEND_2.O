@@ -55,6 +55,7 @@ class CompanyController extends Controller
                     'plan_id'       => $request->plan_id,
                     'parent_id'     => $request->parent_id,
                     'company_name'	=> $request->company_name,
+                    'account_code'  => $request->account_code,
                     'email'        	=> $request->email,
                     'mobile'       	=> $request->mobile,
                     'billing_address' => $request->address,
@@ -68,7 +69,7 @@ class CompanyController extends Controller
                 $random_pass = Str::random(10);
                 $user = User::create([
                     'company_id' => $company->id,
-                    'account_code' => $request->account_code,
+                    //'account_code' => $request->account_code,
                     'name' 		=> $request->name,
                     'email' 	=> $request->email,
                     'mobile' 	=> $request->mobile,
