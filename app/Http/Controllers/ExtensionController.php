@@ -263,7 +263,7 @@ class ExtensionController extends Controller
 				$validator = Validator::make($request->all(), [
                     'country_id'    => 'required|numeric',
                     'company_id'    => 'required|numeric',
-                    'name'          => 'required|unique:extensions,name',
+                    'name'          => 'required|unique:extensions,name,'.$Extension->id,
                     'callbackextension' => 'required',
 					'agent_name'    => 'required',					
 					'secret'	    => 'required',
@@ -310,6 +310,12 @@ class ExtensionController extends Controller
                             'updated_at'    => Carbon::now(),
                         ]);
                     }
+
+                    if($Extension->sip_temp != $request->sip_temp){
+                       // $this->addExtensionInConfFile($request->name, env(WEBRTC_TEMPLATE_URL));
+                       // $this->removeExtensionFromConfFile($request->name, env(SOFTPHONE_TEMPLATE_URL));
+                    }
+
 					$Extension->callbackextension = $request->callbackextension;
 					$Extension->agent_name  = $request->agent_name;
 					$Extension->secret      = $request->secret;
@@ -321,9 +327,10 @@ class ExtensionController extends Controller
                     }
                     $Extension->sip_temp    = $request->sip_temp;					
 					$ExtensionRes           = $Extension->save();
+
 					if($ExtensionRes){
-						$Extension = Extension::where('id', $id)->first();        
-						$response = $Extension->toArray();
+						$ExtensionUpdated = Extension::where('id', $id)->first();        
+						$response = $ExtensionUpdated->toArray();                       
 						DB::commit();
 						return $this->output(true, 'Extension updated successfully.', $response, 200);
 					}else{
@@ -341,5 +348,27 @@ class ExtensionController extends Controller
 			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
 		}
 	}
+
+    protected function removeExtensionFromConfFile($extensionName){
+        // Remove user section
+			$webrtc_conf_path = "webrtc_template.conf";
+			$lines = file($webrtc_conf_path);
+			$output = '';
+			$found = false;
+			foreach ($lines as $line) {
+				if (strpos($line, "[$extensionName]") !== false) {
+					$found = true;
+					continue;
+				}
+				if ($found && strpos($line, "[") === 0) {
+					$found = false;
+				}
+				if (!$found) {
+					$output .= $line;
+				}
+			}
+			file_put_contents($webrtc_conf_path, $output, LOCK_EX);
+			//echo "Registration removed. The SIP user $nname has been removed from the webrtc_template.conf file.";
+    }
 
 }
