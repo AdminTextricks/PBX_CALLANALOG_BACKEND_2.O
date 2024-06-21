@@ -37,7 +37,9 @@ class MainPlansController extends Controller
         }
 
         if ($mainplans->isNotEmpty()) {
-            return $this->output(true, 'success', $mainplans->toArray(), 200);
+            $dd = $mainplans->toArray();
+			unset($dd['links']);
+            return $this->output(true, 'success', $dd, 200);
         } else {
             return $this->output(true, 'No Record Found', [], 200);
         }
