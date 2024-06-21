@@ -26,7 +26,7 @@ class CompanyController extends Controller
             'parent_id'     => 'required',
             'plan_id'       => 'required',
             'company_name'  => 'required|max:500|unique:companies',
-            'account_code'  => 'required|max:500|unique:users',
+            'account_code'  => 'required|max:500|unique:companies',
             'name'     		=> 'required|max:255',
             'email'         => 'required|email|max:255|unique:users|unique:companies',
             'mobile'        => 'required|string|unique:users',
