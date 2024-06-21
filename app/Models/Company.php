@@ -14,6 +14,7 @@ class Company extends Model
         'parent_id',
         'plan_id',
         'company_name',
+        'account_code',
         'email',
         'mobile',
         'billing_address',
