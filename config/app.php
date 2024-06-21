@@ -58,6 +58,9 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    'webrtc_template_url' => env('WEBRTC_TEMPLATE_URL','/var/www/html/pbxcallanalog/pbx_backend/public/sip_additional.conf'),
+    'softphone_template_url' => env('SOFTPHONE_TEMPLATE_URL','/var/www/html/pbxcallanalog/pbx_backend/public/sip_additional.conf'),
+    
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
