@@ -211,6 +211,7 @@ class UserController extends Controller
                     'plan_id'       => $request->plan_id,
                     'parent_id'     => $request->parent_id,
                     'company_name'	=> $request->company_name,
+                    'account_code'  => $request->account_code,
                     'email'        	=> $request->email,
                     'mobile'       	=> $request->mobile,
                     'billing_address' => $request->address,
@@ -222,7 +223,7 @@ class UserController extends Controller
                 //dd($company);
                 $user = User::create([
                     'company_id' => $company->id,
-                    'account_code' => $request->account_code,
+                    //'account_code' => $request->account_code,
                     'name' 		=> $request->name,
                     'email' 	=> $request->email,
                     'mobile' 	=> $request->mobile,
@@ -301,7 +302,7 @@ class UserController extends Controller
 			'city'		=> 'required',
 			'zip'		=> 'required', 
 			'role_id'	=> 'required|numeric|in:2,3,5,6',
-            'account_code'  => 'required|max:500|unique:users', 
+            //'account_code'  => 'required|max:500|unique:users', 
         ],[
             'company_id' => 'The company field is required when you are creating company user',
             'role_id' => 'The selected role is invalid!',
@@ -320,7 +321,7 @@ class UserController extends Controller
                 $random_pass = Str::random(10);
                 $user = User::create([
                     'company_id'    => $request->company_id,
-                    'account_code'  => $request->account_code,
+                    //'account_code'  => $request->account_code,
                     'name'          => $request->name,
                     'email'         => $request->email,
                     'mobile'        => $request->mobile,
