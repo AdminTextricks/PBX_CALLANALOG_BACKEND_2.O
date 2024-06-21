@@ -45,6 +45,11 @@ Route::get('/states/{country_id?}', [StateController::class, 'getStates']);
 Route::post('/forgot-password-otp', [PasswordResetTokensController::class, 'sendForgotPasswordOTP']);
 Route::post('/password-reset/{otp}', [PasswordResetTokensController::class, 'reset']);
 
+# MainPlans
+Route::group(['prefix' => 'plan'], function () {
+	Route::get('/active', [MainPlansController::class, 'getAllActivePlans']);
+	Route::get('/{id?}', [MainPlansController::class, 'getAllPlans']);
+});
 
 Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
@@ -127,12 +132,6 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/{id?}', [TariffController::class, 'getAllTariff']);
 		Route::put('/{id}', [TariffController::class, 'updateTariff']);
 		Route::patch('/changeStatus/{id}', [TariffController::class, 'changeTariffStatus']);
-	});
-
-	# MainPlans
-	Route::group(['prefix' => 'plan'], function () {
-		Route::get('/active', [MainPlansController::class, 'getAllActivePlans']);
-		Route::get('/{id?}', [MainPlansController::class, 'getAllPlans']);
 	});
 
 	# TfnGroup
