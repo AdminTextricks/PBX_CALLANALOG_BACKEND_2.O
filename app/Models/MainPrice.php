@@ -11,11 +11,11 @@ class MainPrice extends Model
 	
 	protected $fillable = [
         'id',
-        'user_id',
+        'reseller_id',
         'country_id',
-        'user_type',
-        'product',
-        'price',
+        'price_for',
+        'tfn_price',
+        'extension_price',
         'status',
     ];
 

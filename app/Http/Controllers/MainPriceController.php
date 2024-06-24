@@ -16,11 +16,12 @@ class MainPriceController extends Controller
     public function addSuperAdminPrice(Request $request)
     {
         $validator = Validator::make($request->all(), [            
-            'country_id'=> 'required',
-            'user_type' => 'required|max:500|in:Reseller,Company',
-            'user_id'   => 'bail|required_if:user_type,Reseller,exists:users,id',
-            'product'   => 'required|max:500|in:TFN,Extension',
-            'price'     => 'required|max:255',
+            'country_id'    => 'required',
+            'price_for'     => 'required|max:500|in:Reseller,Company',
+            'reseller_id'   => 'bail|required_if:price_for,Reseller,exists:users,id',
+            //'product'     => 'required|max:500|in:TFN,Extension',
+            'tfn_price'     => 'required|max:255',
+            'extension_price'   => 'required|max:255',
         ]/*,[
             'user_id'   => 'The user field is required when user type is reseller and user should be registered with us!',           
         ]*/);
@@ -30,18 +31,19 @@ class MainPriceController extends Controller
         // Start transaction!
         try { 
             DB::beginTransaction();
-            $MainPrice = MainPrice::where('user_type', $request->user_type)
-                            ->where('user_id', $request->user_id)
-                            ->where('product', $request->product)
-                            ->where('country_id', $request->country_id)
-                            ->first();
+            $MainPrice = MainPrice::where('price_for', $request->price_for)                            
+                            ->where('country_id', $request->country_id);
+                            if($request->price_for == 'Reseller'){
+                                $MainPrice = $MainPrice->where('reseller_id', $request->reseller_id);
+                            }
+                            $MainPrice = $MainPrice->first();
             if(!$MainPrice){
                 $MainPrice = MainPrice::create([
                     'country_id'=> $request->country_id,
-                    'user_type' => $request->user_type,
-                    'user_id'	=> ($request->user_type == 'Reseller') ? $request->user_id : null,
-                    'product'   => $request->product,
-                    'price'     => $request->price,
+                    'price_for' => $request->price_for,
+                    'reseller_id'	=> ($request->price_for == 'Reseller') ? $request->reseller_id : null,
+                    'tfn_price'     => $request->tfn_price,
+                    'extension_price'   => $request->extension_price,
                     'status'    => isset($request->status) ? $request->status : 1,
                 ]);
                 
@@ -50,7 +52,7 @@ class MainPriceController extends Controller
                 return $this->output(true, 'Price added successfully.', $response);
             }else{
                 DB::commit();
-                return $this->output(false, 'This Price for this user is already added with us.');
+                return $this->output(false, 'This Price for this '.$request->price_for.' is already added with us.');
             }
         } catch(\Exception $e)
         {
