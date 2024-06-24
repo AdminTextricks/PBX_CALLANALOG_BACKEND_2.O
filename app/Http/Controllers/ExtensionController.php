@@ -4,6 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Extension;
 use App\Models\VoiceMail;
+use App\Models\Company;
+use App\Models\Cart;
+use App\Models\MainPrice;
+use App\Models\ResellerPrice;
+use App\Models\ConfTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -100,12 +105,23 @@ class ExtensionController extends Controller
         try { 
             DB::beginTransaction();         
             $input = $request->all();
-            $data = $VoiceMail = [];             
             //$extension_name = explode(',',$input['extension_name']);
-            $extension_name = $input['name'];            
+            $extension_name = $input['name'];
+
+            $Company = Company::where('id', $request->company_id)->first();
+            if($Company->parent_id > 1){
+                $user_type = 'Reseller';
+                $reseller_id = $Company->parent_id;
+            }else{
+                $user_type = 'Company';
+            }
+            
+            $item_price = '0.00';//$this->getExtensionPrice($request->country_id, $user_type, $reseller_id, 'Extension');
+
             if (is_array($extension_name)) {
                 foreach ($extension_name as $item) {
-                    array_push($data, [
+                    $data = $VoiceMail = $Cart = [];
+                    $data = [
                         'country_id'        => $request->country_id,
                         'company_id'        => $request->company_id,
                         'name'	            => $item,
@@ -137,7 +153,17 @@ class ExtensionController extends Controller
                         'created_at'        => Carbon::now(),
                         'updated_at'        => Carbon::now(),
                         'status'            => isset($request->status) ? $request->status : '0',
-                    ]);
+                    ];
+                    $ids = DB::table('extensions')->insertGetId($data);
+                    $Cart = [
+                        'company_id'        => $request->company_id,
+                        'item_id'           => $ids,
+                        'item_number'       => $item,
+                        'item_type'         => 'Extension',
+                        'item_price'        => $item_price,
+                    ];
+                    $cartIds = DB::table('carts')->insertGetId($Cart);
+
                     if($request->mailbox == '1'){
                         array_push($VoiceMail, [
                             'company_id'=> $request->company_id,
@@ -164,11 +190,14 @@ class ExtensionController extends Controller
                 }
             }
             //print_r($data);exit;
-            $Extensions = Extension::insert($data);
+            // $Extensions = Extension::insert($data);
             if($request->mailbox == '1'){
                 $VoiceMail = VoiceMail::insert($VoiceMail);            
             }
-            $response 	= $Extensions;//->toArray();
+            
+            print_r($ids);
+            
+            $response 	= 1;//$Extensions;//->toArray();
             DB::commit();
             return $this->output(true, 'Extension added successfully.', $response);
             
@@ -189,7 +218,7 @@ class ExtensionController extends Controller
 		$perPageNo = isset($request->perpage) ? $request->perpage : 25;
 		$params = $request->params ?? "";
         $user = \Auth::user();
-        echo $user->company_id;
+        //echo $user->company_id;
 		//if ($request->user()->hasRole('super-admin')) {
         if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
 			$Extension_id = $request->id ?? NULL;
@@ -279,6 +308,8 @@ class ExtensionController extends Controller
 				if ($validator->fails()){
 					return $this->output(false, $validator->errors()->first(), [], 409);
 				}				
+                $Company = Company::where('id', $request->company_id)->first();
+                
 				$ExtensionOld = Extension::where('country_id', $request->country_id)
 							->where('company_id', $request->company_id)
                             ->where('name', $request->name)
@@ -312,10 +343,18 @@ class ExtensionController extends Controller
                             'updated_at'    => Carbon::now(),
                         ]);
                     }
-
+                    
                     if($Extension->sip_temp != $request->sip_temp){
-                        $this->addExtensionInConfFile($request->name, $request->secret, $webrtc_template_url);
-                        $this->removeExtensionFromConfFile($request->name, $softphone_template_url);
+                        if($request->sip_temp == 'WEBRTC'){
+                            $addExtensionFile = $webrtc_template_url;
+                            $removeExtensionFile = $softphone_template_url;
+                        }else{
+                            $addExtensionFile = $softphone_template_url;
+                            $removeExtensionFile = $webrtc_template_url;
+                        }
+                        $ConfTemplate = ConfTemplate::select()->where('template_id', $request->sip_temp)->first();
+                        $this->addExtensionInConfFile($request->name, $addExtensionFile, $request->secret, $Company->account_code,  $ConfTemplate->template_contents);
+                        $this->removeExtensionFromConfFile($request->name, $removeExtensionFile);
                     }
 
 					$Extension->callbackextension = $request->callbackextension;
@@ -329,7 +368,6 @@ class ExtensionController extends Controller
                     }
                     $Extension->sip_temp    = $request->sip_temp;					
 					$ExtensionRes           = $Extension->save();
-
 					if($ExtensionRes){
 						$ExtensionUpdated = Extension::where('id', $id)->first();        
 						$response = $ExtensionUpdated->toArray();                       
@@ -351,12 +389,12 @@ class ExtensionController extends Controller
 		}
 	}
 
-    protected function addExtensionInConfFile($extensionName, $conf_path){
+    protected function addExtensionInConfFile($extensionName, $conf_file_path, $secret, $account_code, $template_contents){
         // Add new user section
-        $register_string = "\n[$extensionName]\nusername=$extensionName\nsecret=$ssecret\naccountcode=$selectedaccountcode\n$template_contents\n";
-        $webrtc_conf_path = "/var/www/html/callanalog/admin/webrtc_template.conf";
-        file_put_contents($webrtc_conf_path, $register_string, FILE_APPEND | LOCK_EX);
-        //echo "Registration successful. The SIP user $nname has been added to the webrtc_template.conf file.";
+        $register_string = "\n[$extensionName]\nusername=$extensionName\nsecret=$secret\naccountcode=$account_code\n$template_contents\n";
+        //$webrtc_conf_path = "/var/www/html/callanalog/admin/webrtc_template.conf";
+        file_put_contents($conf_file_path, $register_string, FILE_APPEND | LOCK_EX);
+        //echo "Registration successful. The SIP user $nname has been added to the webrtc_template.conf file.";        
     }
 
     protected function removeExtensionFromConfFile($extensionName, $conf_file_path){

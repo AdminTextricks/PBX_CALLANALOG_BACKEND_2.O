@@ -86,4 +86,14 @@ class Controller extends BaseController
 
         return (bool) preg_match('/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu', $value);
     }
+
+
+    /* public function getExtensionPrice($country_id, $user_type, $reseller_id, $product){
+        MainPrice::select()
+        ->where('country_id',$country_id)
+        ->where('country_id',$country_id)
+        ->get();
+
+        
+    } */
 }
