@@ -6,8 +6,6 @@ use App\Models\Extension;
 use App\Models\VoiceMail;
 use App\Models\Company;
 use App\Models\Cart;
-use App\Models\MainPrice;
-use App\Models\ResellerPrice;
 use App\Models\ConfTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -109,98 +107,108 @@ class ExtensionController extends Controller
             $extension_name = $input['name'];
 
             $Company = Company::where('id', $request->company_id)->first();
+            $reseller_id = '';
             if($Company->parent_id > 1){
-                $user_type = 'Reseller';
+                $price_for = 'Reseller';
                 $reseller_id = $Company->parent_id;
             }else{
-                $user_type = 'Company';
+                $price_for = 'Company';
             }
             
-            $item_price = '0.00';//$this->getExtensionPrice($request->country_id, $user_type, $reseller_id, 'Extension');
+            $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'Extension');
+            print_r($item_price_arr);exit;          
+            if($item_price_arr['Status'] == 'true'){
+                echo $item_price = $item_price_arr['Price'];exit;
+                if (is_array($extension_name)) {
+                    foreach ($extension_name as $item) {
+                        $data = $VoiceMail = $Cart = [];
+                        $data = [
+                            'country_id'        => $request->country_id,
+                            'company_id'        => $request->company_id,
+                            'name'	            => $item,
+                            'callbackextension' => $request->callbackextension,
+                            'accountcode'       => $request->accountcode,
+                            'agent_name'        => $request->agent_name,
+                            'callgroup'         => $request->callgroup,
+                            'callerid' 	        => $request->callerid,
+                            'secret' 	        => $request->secret,
+                            'barge'             => $request->barge,
+                            'mailbox'           => $request->mailbox,
+                            'regexten'          => $item,                        
+                            'fromdomain'        => 'NULL',
+                            'amaflags'          => 'billing',
+                            'canreinvite'       => 'no',
+                            'context'           => 'callanalog',
+                            'dtmfmode'          => 'RFC2833',
+                            'host'              => '',
+                            'insecure'          => 'port,invite',
+                            'language'          => 'en',
+                            'nat'               => 'force_rport,comedia',
+                            'qualify'           => 'yes',
+                            'rtptimeout'        => '60',
+                            'rtpholdtimeout'    => '300',
+                            'type'              => 'friend',
+                            'username'          => $item, 
+                            'disallow'          => 'ALL',
+                            'allow'             => 'g729,g723,ulaw,gsm',
+                            'created_at'        => Carbon::now(),
+                            'updated_at'        => Carbon::now(),
+                            'status'            => isset($request->status) ? $request->status : '0',
+                        ];
+                        $ids = DB::table('extensions')->insertGetId($data);
+                        $Cart = [
+                            'company_id'        => $request->company_id,
+                            'item_id'           => $ids,
+                            'item_number'       => $item,
+                            'item_type'         => 'Extension',
+                            'item_price'        => $item_price,
+                        ];
+                        $cartIds = DB::table('carts')->insertGetId($Cart);
 
-            if (is_array($extension_name)) {
-                foreach ($extension_name as $item) {
-                    $data = $VoiceMail = $Cart = [];
-                    $data = [
-                        'country_id'        => $request->country_id,
-                        'company_id'        => $request->company_id,
-                        'name'	            => $item,
-                        'callbackextension' => $request->callbackextension,
-                        'accountcode'       => $request->accountcode,
-                        'agent_name'        => $request->agent_name,
-                        'callgroup'         => $request->callgroup,
-                        'callerid' 	        => $request->callerid,
-                        'secret' 	        => $request->secret,
-                        'barge'             => $request->barge,
-                        'mailbox'           => $request->mailbox,
-                        'regexten'          => $item,                        
-                        'fromdomain'        => 'NULL',
-                        'amaflags'          => 'billing',
-                        'canreinvite'       => 'no',
-                        'context'           => 'callanalog',
-                        'dtmfmode'          => 'RFC2833',
-                        'host'              => '',
-                        'insecure'          => 'port,invite',
-                        'language'          => 'en',
-                        'nat'               => 'force_rport,comedia',
-                        'qualify'           => 'yes',
-                        'rtptimeout'        => '60',
-                        'rtpholdtimeout'    => '300',
-                        'type'              => 'friend',
-                        'username'          => $item, 
-                        'disallow'          => 'ALL',
-                        'allow'             => 'g729,g723,ulaw,gsm',
-                        'created_at'        => Carbon::now(),
-                        'updated_at'        => Carbon::now(),
-                        'status'            => isset($request->status) ? $request->status : '0',
-                    ];
-                    $ids = DB::table('extensions')->insertGetId($data);
-                    $Cart = [
-                        'company_id'        => $request->company_id,
-                        'item_id'           => $ids,
-                        'item_number'       => $item,
-                        'item_type'         => 'Extension',
-                        'item_price'        => $item_price,
-                    ];
-                    $cartIds = DB::table('carts')->insertGetId($Cart);
-
-                    if($request->mailbox == '1'){
-                        array_push($VoiceMail, [
-                            'company_id'=> $request->company_id,
-                            'context'   => 'default',
-                            'mailbox'   => $item,
-                            'fullname'  => $request->agent_name,
-                            'email'     => $request->voice_email,
-                            'timezone'  => 'central',
-                            'attach'    => 'yes',
-                            'review'    => 'no',
-                            'operator'  => 'no',
-                            'envelope'  => 'no',
-                            'sayduration'   => 'no',
-                            'saydurationm'  => '1',
-                            'sendvoicemail' => 'no',
-                            'nextaftercmd'  => 'yes',
-                            'forcename'     => 'no',
-                            'forcegreetings'=> 'no',
-                            'hidefromdir'   => 'yes',
-                            'created_at'    => Carbon::now(),
-                            'updated_at'    => Carbon::now(),
-                        ]);
+                        if($request->mailbox == '1'){
+                            array_push($VoiceMail, [
+                                'company_id'=> $request->company_id,
+                                'context'   => 'default',
+                                'mailbox'   => $item,
+                                'fullname'  => $request->agent_name,
+                                'email'     => $request->voice_email,
+                                'timezone'  => 'central',
+                                'attach'    => 'yes',
+                                'review'    => 'no',
+                                'operator'  => 'no',
+                                'envelope'  => 'no',
+                                'sayduration'   => 'no',
+                                'saydurationm'  => '1',
+                                'sendvoicemail' => 'no',
+                                'nextaftercmd'  => 'yes',
+                                'forcename'     => 'no',
+                                'forcegreetings'=> 'no',
+                                'hidefromdir'   => 'yes',
+                                'created_at'    => Carbon::now(),
+                                'updated_at'    => Carbon::now(),
+                            ]);
+                        }
                     }
+                
+                    //print_r($data);exit;
+                    // $Extensions = Extension::insert($data);
+                    if($request->mailbox == '1'){
+                        $VoiceMail = VoiceMail::insert($VoiceMail);            
+                    }
+                    
+                    print_r($ids);
+                    
+                    $response 	= 1;//$Extensions;//->toArray();
+                    DB::commit();
+                    return $this->output(true, 'Extension added successfully.', $response);
+                }else{
+                    DB::commit();
+                    return $this->output(false, 'Wrong extension value format.');
                 }
-            }
-            //print_r($data);exit;
-            // $Extensions = Extension::insert($data);
-            if($request->mailbox == '1'){
-                $VoiceMail = VoiceMail::insert($VoiceMail);            
-            }
-            
-            print_r($ids);
-            
-            $response 	= 1;//$Extensions;//->toArray();
-            DB::commit();
-            return $this->output(true, 'Extension added successfully.', $response);
-            
+            }else{
+                DB::commit();
+                return $this->output(false, $item_price_arr['Message']);
+            } 
         } catch(\Exception $e)
         {
             DB::rollback();

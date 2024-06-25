@@ -129,13 +129,15 @@ class MainPriceController extends Controller
 			return $this->output(false, 'This Price details not exist with us. Please try again!.', [], 404);
 		} else {
 			$validator = Validator::make($request->all(), [              
-                'price'     => 'required|max:255',                
+                'tfn_price'         => 'required|max:255',
+                'extension_price'   => 'required|max:255',
             ]);
             if ($validator->fails()){
                 return $this->output(false, $validator->errors()->first(), [], 409);
             }		
-			$MainPrice->price       = $request->price;		
-			$MainPriceRes 			= $MainPrice->save();
+			$MainPrice->tfn_price       = $request->tfn_price;
+            $MainPrice->extension_price = $request->extension_price;
+			$MainPriceRes 			    = $MainPrice->save();
 			if ($MainPriceRes) {
 				$MainPrice = MainPrice::where('id', $id)->first();
 				$response = $MainPrice->toArray();
