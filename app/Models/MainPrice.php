@@ -21,7 +21,7 @@ class MainPrice extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class,'reseller_id');
     }
 
     public function country()

@@ -50,6 +50,9 @@ class UserController extends Controller
                         ->with('country:id,country_name')
                         ->with('state:id,state_name,state_code')
                         ->where('company_id', $user->company_id);
+            if($user_id) {
+                $dataQuery = $dataQuery->where('id', $user_id); 
+            }            
             $data = $dataQuery->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
         }else{
             $dataQuery = User::select()
