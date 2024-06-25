@@ -105,7 +105,6 @@ class ExtensionController extends Controller
             $input = $request->all();
             //$extension_name = explode(',',$input['extension_name']);
             $extension_name = $input['name'];
-
             $Company = Company::where('id', $request->company_id)->first();
             $reseller_id = '';
             if($Company->parent_id > 1){
@@ -113,15 +112,23 @@ class ExtensionController extends Controller
                 $reseller_id = $Company->parent_id;
             }else{
                 $price_for = 'Company';
-            }
-            
+            }            
             $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'Extension');
-            print_r($item_price_arr);exit;          
             if($item_price_arr['Status'] == 'true'){
-                echo $item_price = $item_price_arr['Price'];exit;
+                $item_price = $item_price_arr['Extension_price'];
                 if (is_array($extension_name)) {
+                    $VoiceMail = $ids = [];
+                    $status = '0';
+                    $startingdate = $expirationdate = $host = $sip_temp = '';                    
+                    if($Company->plan_id == 2){
+                        $status = '1';
+                        $startingdate = Carbon::now();
+                        $expirationdate =  $startingdate->addDays(180);
+                        $host = 'dynamic';
+                        $sip_temp = 'WEBRTC';
+                    }
                     foreach ($extension_name as $item) {
-                        $data = $VoiceMail = $Cart = [];
+                        $data = $Cart = [];
                         $data = [
                             'country_id'        => $request->country_id,
                             'company_id'        => $request->company_id,
@@ -134,13 +141,16 @@ class ExtensionController extends Controller
                             'secret' 	        => $request->secret,
                             'barge'             => $request->barge,
                             'mailbox'           => $request->mailbox,
-                            'regexten'          => $item,                        
+                            'regexten'          => $item,
+                            'startingdate'      => $startingdate,
+                            'expirationdate'    => $expirationdate,
                             'fromdomain'        => 'NULL',
                             'amaflags'          => 'billing',
                             'canreinvite'       => 'no',
                             'context'           => 'callanalog',
                             'dtmfmode'          => 'RFC2833',
-                            'host'              => '',
+                            'host'              => $host,
+                            'sip_temp'          => $sip_temp,
                             'insecure'          => 'port,invite',
                             'language'          => 'en',
                             'nat'               => 'force_rport,comedia',
@@ -153,18 +163,25 @@ class ExtensionController extends Controller
                             'allow'             => 'g729,g723,ulaw,gsm',
                             'created_at'        => Carbon::now(),
                             'updated_at'        => Carbon::now(),
-                            'status'            => isset($request->status) ? $request->status : '0',
+                            'status'            => $status,
                         ];
-                        $ids = DB::table('extensions')->insertGetId($data);
-                        $Cart = [
-                            'company_id'        => $request->company_id,
-                            'item_id'           => $ids,
-                            'item_number'       => $item,
-                            'item_type'         => 'Extension',
-                            'item_price'        => $item_price,
-                        ];
-                        $cartIds = DB::table('carts')->insertGetId($Cart);
-
+                        $id = DB::table('extensions')->insertGetId($data);
+                        $ids[] = $id;
+                        if($Company->plan_id == 1){
+                            $Cart = [
+                                'company_id'        => $request->company_id,
+                                'item_id'           => $id,
+                                'item_number'       => $item,
+                                'item_type'         => 'Extension',
+                                'item_price'        => $item_price,
+                            ];
+                            $cartIds = DB::table('carts')->insertGetId($Cart);
+                        }else{
+                            $webrtc_template_url = config('app.webrtc_template_url');
+                            $addExtensionFile = $webrtc_template_url;
+                            $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
+                            $this->addExtensionInConfFile($request->name, $addExtensionFile, $request->secret, $Company->account_code,  $ConfTemplate->template_contents);
+                        }
                         if($request->mailbox == '1'){
                             array_push($VoiceMail, [
                                 'company_id'=> $request->company_id,
@@ -189,16 +206,11 @@ class ExtensionController extends Controller
                             ]);
                         }
                     }
-                
-                    //print_r($data);exit;
                     // $Extensions = Extension::insert($data);
                     if($request->mailbox == '1'){
                         $VoiceMail = VoiceMail::insert($VoiceMail);            
-                    }
-                    
-                    print_r($ids);
-                    
-                    $response 	= 1;//$Extensions;//->toArray();
+                    }                    
+                    $response 	= count($ids);//$Extensions;//->toArray();
                     DB::commit();
                     return $this->output(true, 'Extension added successfully.', $response);
                 }else{
