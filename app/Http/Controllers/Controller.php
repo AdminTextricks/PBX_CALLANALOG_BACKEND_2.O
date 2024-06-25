@@ -110,7 +110,7 @@ class Controller extends BaseController
                             ->where('product',$product)
                             ->where('status','1')->first();
 
-            $ResellerCommission = $ResellerPrice->toArray();
+            $ResellerCommission = $ResellerPrice ? $ResellerPrice->toArray() : [];
 
             if(count($ResellerCommission) > 0 ){
 
