@@ -25,6 +25,7 @@ return new class extends Migration
 			$table->string('zip',50);
             $table->string('plan_id',5)->nullable();
             $table->decimal('balance',10, 2)->default(0);
+            $table->string('inbound_permission',50)->nullable();
             $table->tinyInteger('status')->default(0);
             $table->timestamps();
         });

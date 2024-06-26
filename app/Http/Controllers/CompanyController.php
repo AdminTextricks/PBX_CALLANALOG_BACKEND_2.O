@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\User;
 use App\Models\Server;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Validator;
 use Mail;
@@ -35,6 +36,7 @@ class CompanyController extends Controller
 			'state_id'		=> 'required',
 			'city'			=> 'required',
 			'zip'			=> 'required',
+            'inbound_permission' => 'required',
         ],[
             'plan_id'       => 'Plan type is required!',
             'parent_id'     => 'parent ID is required.',
@@ -63,6 +65,7 @@ class CompanyController extends Controller
                     'state_id' 		=> $request->state_id,
                     'city' 			=> $request->city,
                     'zip' 			=> $request->zip,
+                    'inbound_permission' => $request->inbound_permission,
                     'status' 	    => '1',
                 ]);
                 //dd($company);
@@ -132,7 +135,10 @@ class CompanyController extends Controller
         } catch(\Exception $e)
         {
             DB::rollback();
-            return $this->output(false, $e->getMessage());
+           // return $this->output(false, $e->getMessage());
+           Log::error('Error in company registration By admin or reseller : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            //return $this->output(false, $e->getMessage());
+            return $this->output(false, 'Error Occurred in adding company.', [], 406);
             //throw $e; 
         }
     }
