@@ -23,6 +23,7 @@ class Company extends Model
         'city',
         'zip',
         'balance',
+        'inbound_permission',
         'status'        
     ];
 

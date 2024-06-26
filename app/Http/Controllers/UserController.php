@@ -223,6 +223,7 @@ class UserController extends Controller
                     'state_id' 		=> $request->state_id,
                     'city' 			=> $request->city,
                     'zip' 			=> $request->zip,
+                    'inbound_permission' => '1',
                 ]);
                 //dd($company);
                 $user = User::create([
@@ -466,7 +467,8 @@ class UserController extends Controller
                 ->where('email', $request->email)->first();
 		if ($user) {
             if ($user->is_verified == 1) {
-                if((isset($user->company->status) && $user->company->status == 1) || in_array($user->roles->first()->name, array('Super Admin', 'Support','NOC'))){
+                 
+                if((isset($user->company->status) && $user->company->status == 1) || in_array($user->roles->first()->slug, array('super-admin', 'support','noc', 'reseller'))){
                     if($user->status == 1){                    
                         if (Hash::check($request->password, $user->password)) {
                             $token =  $user->createToken('Callanalog API')->plainTextToken;

@@ -119,7 +119,7 @@ class ExtensionController extends Controller
                 if (is_array($extension_name)) {
                     $VoiceMail = $ids = [];
                     $status = '0';
-                    $startingdate = $expirationdate = $host = $sip_temp = '';                    
+                    $startingdate = $expirationdate = $host = $sip_temp = NULL;
                     if($Company->plan_id == 2){
                         $status = '1';
                         $startingdate = Carbon::now();
@@ -174,13 +174,15 @@ class ExtensionController extends Controller
                                 'item_number'       => $item,
                                 'item_type'         => 'Extension',
                                 'item_price'        => $item_price,
+                                'created_at'        => Carbon::now(),
+                                'updated_at'        => Carbon::now(),
                             ];
                             $cartIds = DB::table('carts')->insertGetId($Cart);
                         }else{
                             $webrtc_template_url = config('app.webrtc_template_url');
                             $addExtensionFile = $webrtc_template_url;
                             $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
-                            $this->addExtensionInConfFile($request->name, $addExtensionFile, $request->secret, $Company->account_code,  $ConfTemplate->template_contents);
+                            $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code,  $ConfTemplate->template_contents);
                         }
                         if($request->mailbox == '1'){
                             array_push($VoiceMail, [
@@ -210,7 +212,8 @@ class ExtensionController extends Controller
                     if($request->mailbox == '1'){
                         $VoiceMail = VoiceMail::insert($VoiceMail);            
                     }                    
-                    $response 	= count($ids);//$Extensions;//->toArray();
+                    $response['total_extension'] = count($ids);//$Extensions;//->toArray();
+                    $response['plan_id'] = $Company->plan_id;
                     DB::commit();
                     return $this->output(true, 'Extension added successfully.', $response);
                 }else{
@@ -224,8 +227,7 @@ class ExtensionController extends Controller
         } catch(\Exception $e)
         {
             DB::rollback();
-            Log::error('Error in Extensions Inserting : ' . $e->getMessage());
-            //return response()->json(['error' => 'An error occurred while creating product: ' . $e->getMessage()], 400);
+            Log::error('Error in Extensions Inserting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             //return $this->output(false, $e->getMessage());
             return $this->output(false, 'Error Occurred in adding extensions. Please try with different extension', [], 406);
             //throw $e; 
