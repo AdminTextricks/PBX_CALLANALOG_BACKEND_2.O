@@ -225,6 +225,7 @@ class CompanyController extends Controller
                 'state_id'      => 'required|numeric',
                 'city'          => 'required|string|max:150',
                 'zip'           => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|min:6',
+                'inbound_permission' => 'required',
             ]);
             if ($validator->fails()) {
                 return $this->output(false, $validator->errors()->first(), [], 409);
@@ -235,7 +236,8 @@ class CompanyController extends Controller
             $Company->state_id  = $request->state_id;
             $Company->city      = $request->city;
             $Company->zip       = $request->zip;
-            $CompanysRes         = $Company->save();
+            $Company->inbound_permission  = $request->inbound_permission;
+            $CompanysRes        = $Company->save();
 
             if ($CompanysRes) {
                 $Company = Company::where('id', $id)->first();
