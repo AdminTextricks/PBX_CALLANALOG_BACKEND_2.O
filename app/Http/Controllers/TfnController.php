@@ -242,14 +242,18 @@ class TfnController extends Controller
             $tfn_id = $request->id ?? NULL;
             if ($tfn_id) {
                 $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
+                    ->with('trunks:id,type,name')
+                    ->with('company:id,company_name')
                     ->with('tfn_groups:id,tfngroup_name')
-                    ->with('truks:id,name')
+                    ->with('main_plans:id,name')
                     ->select('*')->where('id', $tfn_id)->withTrashed()->get();
             } else {
                 if ($params !== "") {
                     $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
+                        ->with('trunks:id,type,name')
+                        ->with('company:id,company_name')
                         ->with('tfn_groups:id,tfngroup_name')
-                        ->with('truks:id,name')
+                        ->with('main_plans:id,name')
                         ->where('tfn_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_type_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
@@ -257,7 +261,7 @@ class TfnController extends Controller
                 } else {
                     $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
                         ->with('tfn_groups:id,tfngroup_name')
-                        ->with('truks:id,name')
+                        ->with('trunks:id,name')
                         ->select('*')->withTrashed()->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 }
             }
