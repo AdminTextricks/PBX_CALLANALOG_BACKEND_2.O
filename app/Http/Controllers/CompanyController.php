@@ -229,6 +229,8 @@ class CompanyController extends Controller
                 'inbound_permission' => 'required',
                 'outbound_call' => 'required',
                 'tariff_id'     => 'required_if:outbound_call,1',
+            ],[
+                'tariff_id' => 'The tarrif field is required when outbound call is yes',
             ]);
             if ($validator->fails()) {
                 return $this->output(false, $validator->errors()->first(), [], 409);

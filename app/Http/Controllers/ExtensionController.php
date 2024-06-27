@@ -85,7 +85,6 @@ class ExtensionController extends Controller
             'company_id'        => 'required|numeric',
             'name.*'            => 'required|unique:extensions,name',
             'callbackextension' => 'required|max:50',            
-            'accountcode'       => 'required|max:50',
             'agent_name'        => 'required|max:150',
             'callgroup'         => 'required', // Outbound call yes or no
             'callerid'          => 'required_if:callgroup,1',                                    
@@ -134,7 +133,7 @@ class ExtensionController extends Controller
                             'company_id'        => $request->company_id,
                             'name'	            => $item,
                             'callbackextension' => $request->callbackextension,
-                            'accountcode'       => $request->accountcode,
+                            'account_code'      => $Company->account_code,
                             'agent_name'        => $request->agent_name,
                             'callgroup'         => $request->callgroup,
                             'callerid' 	        => $request->callerid,
