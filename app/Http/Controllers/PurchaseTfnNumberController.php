@@ -68,7 +68,7 @@ class PurchaseTfnNumberController extends Controller
             }
         }
         $company = Company::where('id', $user->company->id)->first();
-        $inbound_trunk = explode(',', $company->inbound_trunk);
+        $inbound_trunk = explode(',', $company->inbound_permission);
 
         $searchQry = DB::table('tfns')
             ->select('tfns.id', 'tfns.tfn_number')
