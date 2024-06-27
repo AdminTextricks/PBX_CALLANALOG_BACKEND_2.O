@@ -260,8 +260,10 @@ class TfnController extends Controller
                         ->select('*')->withTrashed()->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 } else {
                     $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
+                        ->with('trunks:id,type,name')
+                        ->with('company:id,company_name')
                         ->with('tfn_groups:id,tfngroup_name')
-                        ->with('trunks:id,name')
+                        ->with('main_plans:id,name')
                         ->select('*')->withTrashed()->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 }
             }
@@ -285,6 +287,10 @@ class TfnController extends Controller
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 } else {
                     $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
+                        ->with('trunks:id,type,name')
+                        ->with('company:id,company_name')
+                        ->with('tfn_groups:id,tfngroup_name')
+                        ->with('main_plans:id,name')
                         ->select('*')
                         ->where('company_id', '=', $user->company_id)
                         // ->withTrashed()
