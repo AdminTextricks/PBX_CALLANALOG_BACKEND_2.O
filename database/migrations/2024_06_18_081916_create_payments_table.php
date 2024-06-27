@@ -15,6 +15,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('company_id')->nullable()->default(0);
             $table->bigInteger('invoice_id');
+            $table->string('ip_address')->nullable();
             $table->string('invoice_number')->nullable();
             $table->string('order_id')->nullable();
             $table->string('item_numbers')->nullable();

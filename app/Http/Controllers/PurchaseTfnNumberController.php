@@ -7,9 +7,11 @@ use App\Models\Company;
 use App\Models\MainPrice;
 use App\Models\ResellerPrice;
 use App\Models\Tfn;
+use App\Models\Extension;
 use App\Models\User;
 use Validator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PurchaseTfnNumberController extends Controller
 {
@@ -31,12 +33,12 @@ class PurchaseTfnNumberController extends Controller
         $starting_digits = $request->starting_digits;
         $total_price = 0;
 
-        if ($user->company->parent_id != 1) {
+        if ($user->company->parent_id != "1") {
             $main_price = MainPrice::select('*')
-                ->where('user_type', 'Reseller')
+                ->where('price_for', 'Reseller')
                 ->where('product', 'TFN')
                 ->where('country_id', $country_id)
-                ->where('user_id', $user->company->parent_id)
+                ->where('reseller_id', $user->company->parent_id)
                 ->first();
             // return $main_price;
             $reseller_price = ResellerPrice::select('*')
@@ -52,11 +54,11 @@ class PurchaseTfnNumberController extends Controller
                     $total_price = $main_price->price + $reseller_price->price;
                 }
             } else {
-                return $this->output(false, "No Record Found", 200);
+                return $this->output(false, "No Record Found!", 200);
             }
         } else {
             $main_price = MainPrice::select('*')
-                ->where('user_type', 'Company')
+                ->where('price_for', 'Company')
                 ->where('product', 'TFN')
                 ->where('country_id', $country_id)
                 ->first();
@@ -65,18 +67,21 @@ class PurchaseTfnNumberController extends Controller
                 $total_price = $main_price->price;
             }
         }
+        $company = Company::where('id', $user->company->id)->first();
+        $inbound_trunk = explode(',', $company->inbound_trunk);
 
-        $searchQry = \DB::table('tfns')
+        $searchQry = DB::table('tfns')
             ->select('tfns.id', 'tfns.tfn_number')
-            // ->where('tfns.tfn_number', 'like', "%$starting_digits%")
             ->where('tfns.country_id', $country_id)
             ->where('tfns.company_id', '0')
             ->where('tfns.assign_by', '0')
+            ->where('tfns.plan_id', '0')
+            ->whereIn('tfns.tfn_provider', $inbound_trunk)
             ->where('tfns.activated', '1')
             ->where('tfns.reserved', '0')
             ->where('tfns.status', '1')
             ->distinct();
-
+        // return $trunk;
         if ($type == 'Local') {
             $data = $searchQry->paginate($perPageNo);
         } else {
@@ -93,7 +98,7 @@ class PurchaseTfnNumberController extends Controller
             unset($dd['links']);
             return $this->output(true, 'success', $dd, 200);
         } else {
-            return $this->output(true, 'No Record Found', []);
+            return $this->output(true, 'No Record Found!!', []);
         }
     }
 
@@ -102,49 +107,78 @@ class PurchaseTfnNumberController extends Controller
     {
         $user = \Auth::user();
         $validator = Validator::make($request->all(), [
-            'item_id'     => 'required|numeric',
-            'item_number' => 'required|numeric',
-            'item_price'  => 'required',
-            'item_type'   => 'required',
+            'items' => 'required|array',
+            'items.*.item_id' => 'required|numeric',
+            'items.*.item_number' => 'required|numeric',
+            'items.*.item_price' => 'required',
+            'items.*.item_type' => 'required',
         ]);
 
         if ($validator->fails()) {
             return $this->output(false, $validator->errors()->first(), [], 409);
         } else {
-            if ($request->item_type == 'TFN') {
-                $tfnNumber = Tfn::select()->where('tfn_number', '=', $request->item_number)->where('reserved', '=', 0)->first();
-                if ($tfnNumber && $tfnNumber->tfn_number == $request->item_number) {
-                    $cart = Cart::select()->where('item_number', '=', $request->item_number)
-                        ->where('company_id', '=', $user->company_id)
-                        ->first();
-                    if (!$cart) {
-                        $addCart = Cart::create([
-                            'company_id'  => $user->company_id,
-                            'item_id'     => $request->item_id,
-                            'item_number' => $request->item_number,
-                            'item_type'   => $request->item_type,
-                            'item_price'  => $request->item_price
-                        ]);
+            $responses = [];
+            foreach ($request->items as $item) {
+                if ($item['item_type'] == 'TFN') {
+                    $tfnNumber = Tfn::select()->where('id', '=', $item['item_id'])->where('reserved', '=', 0)->first();
+                    if ($tfnNumber && $tfnNumber->id == $item['item_id']) {
+                        $cart = Cart::select()->where('item_number', '=', $item['item_number'])
+                            ->where('company_id', '=', $user->company_id)
+                            ->first();
+                        if (!$cart) {
+                            $addCart = Cart::create([
+                                'company_id' => $user->company_id,
+                                'item_id' => $item['item_id'],
+                                'item_number' => $item['item_number'],
+                                'item_type' => $item['item_type'],
+                                'item_price' => $item['item_price']
+                            ]);
 
-                        if ($addCart) {
-                            $tfnNumber->company_id   = $user->company_id;
-                            $tfnNumber->reserved   = 1;
-                            $tfnNumber->reserveddate = date('Y-m-d H:i:s');
-                            $tfnNumber->reservedexpirationdate = date('Y-m-d H:i:s', strtotime('+1 day'));
-                            $tfnNumber->save();
+                            if ($addCart) {
+                                $tfnNumber->company_id = $user->company_id;
+                                $tfnNumber->reserved = 1;
+                                $tfnNumber->reserveddate = date('Y-m-d H:i:s');
+                                $tfnNumber->reservedexpirationdate = date('Y-m-d H:i:s', strtotime('+1 day'));
+                                $tfnNumber->save();
+                                $responses[] = $addCart->toArray();
+                            } else {
+                                return $this->output(false, 'Tfn Number not found.');
+                            }
                         } else {
-                            return $this->output(false, 'Tfn Number not found.');
+                            return $this->output(false, 'Tfn Number is already in the cart', 409);
                         }
-                        return $this->output(true, 'Tfn Number added to cart successfully', 200);
                     } else {
-                        return $this->output(false, 'Tfn Number is already in the cart', 409);
+                        return $this->output(false, 'Oops! Something Went Wrong Tfn number does not exist with us or values mismatch', 409);
                     }
                 } else {
-                    return $this->output(false, 'Oops! Something Went Wrong Tfn number does not exist with us or values mismatch', 409);
+                    $extNumber = Extension::select('*')->where('id', '=', $item['item_id'])->where('status', '=', 0)->first();
+                    if ($extNumber && $extNumber->id == $item['item_id']) {
+                        $cart = Cart::select()->where('item_number', '=', $item['item_number'])
+                            ->where('company_id', '=', $user->company_id)
+                            ->first();
+                        if (!$cart) {
+                            $addCart = Cart::create([
+                                'company_id' => $user->company_id,
+                                'item_id' => $item['item_id'],
+                                'item_number' => $item['item_number'],
+                                'item_type' => $item['item_type'],
+                                'item_price' => $item['item_price']
+                            ]);
+
+                            if ($addCart) {
+                                $responses[] = $addCart->toArray();
+                            } else {
+                                return $this->output(false, 'Extension Number not found.');
+                            }
+                        } else {
+                            return $this->output(false, 'Extension Number is already in the cart', 409);
+                        }
+                    } else {
+                        return $this->output(false, 'Oops! Something Went Wrong Extension number does not exist with us or values mismatch', 409);
+                    }
                 }
-            } else {
-                return $this->output(true, 'Please Check Item Type First', 200);
             }
+            return $this->output(true, 'Items added to cart successfully', $responses, 200);
         }
     }
 
@@ -156,14 +190,22 @@ class PurchaseTfnNumberController extends Controller
         if (is_null($cart)) {
             return $this->output(false, 'This Cart Number not exist with us. Please try again!.', [], 404);
         } else {
-            $tfnNumber = Tfn::select()->where('tfn_number', '=', $cart->item_number)->first();
-            if ($cart) {
-                $tfnNumber->reserved   = 0;
+            if ($cart->item_type == "TFN") {
+                $tfnNumber = Tfn::select()->where('id', '=', $cart->item_id)->first();
+            } else {
+                $extNumber = Extension::select()->where('id', '=', $cart->item_id)->first();
+            }
+            if ($tfnNumber) {
+                $tfnNumber->company_id = 0;
+                $tfnNumber->reserved    = 0;
                 $tfnNumber->reserveddate = null;
                 $tfnNumber->reservedexpirationdate = null;
                 $tfnNumber->save();
             } else {
                 return $this->output(false, 'Tfn Number not found.');
+            }
+            if (!$extNumber) {
+                return $this->output(false, 'Extension Number not found.');
             }
             $cart = Cart::where('id', '=', $id)->where('company_id', '=', $user->company_id)->delete();
             if ($cart) {

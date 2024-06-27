@@ -34,7 +34,12 @@ class Tfn extends Model
         return $this->belongsTo(TfnGroups::class, 'tfn_group_id', 'id');
     }
 
-    public function truks()
+    public function main_plans()
+    {
+        return $this->belongsTo(MainPlan::class, 'plan_id', 'id');
+    }
+
+    public function trunks()
     {
         return $this->belongsTo(Trunk::class, 'tfn_provider', 'id');
     }
