@@ -627,7 +627,7 @@ class TfnController extends Controller
 
     private function assignTfnToCompany($tfn_number, $company, $user)
     {
-        $inbound_trunk = explode(',', $company->inbound_trunk);
+        $inbound_trunk = explode(',', $company->inbound_permission);
 
         $tfn = Tfn::where('tfn_number', $tfn_number)
             ->where('company_id', 0)
@@ -642,10 +642,10 @@ class TfnController extends Controller
                     'assign_by' => $user->id,
                     'plan_id' => $company->plan_id,
                     'reserved' => 1,
-                    'reserveddate' => now(),
-                    'reservedexpirationdate' => now()->addDay(),
-                    'startingdate' => now(),
-                    'expirationdate' => now()->addDays(30),
+                    'reserveddate' => date('Y-m-d H:i:s'),
+                    'reservedexpirationdate' => date('Y-m-d H:i:s', strtotime('+1 day')),
+                    'startingdate' => date('Y-m-d H:i:s'),
+                    'expirationdate' => date('Y-m-d H:i:s', strtotime('+30 days')),
                 ]);
                 Cart::where('item_number', $tfn_number)->delete();
                 return ['success' => true];
