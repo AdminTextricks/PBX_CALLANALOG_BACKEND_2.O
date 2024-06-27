@@ -23,6 +23,7 @@ class CompanyController extends Controller
 
     public  function registrationByAdminOrReseller(Request $request)
     {
+        
         $validator = Validator::make($request->all(), [
             'parent_id'     => 'required',
             'plan_id'       => 'required',
@@ -226,18 +227,22 @@ class CompanyController extends Controller
                 'city'          => 'required|string|max:150',
                 'zip'           => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|min:6',
                 'inbound_permission' => 'required',
+                'outbound_call' => 'required',
+                'tarrif_id'     => 'required_if:outbound_call,1',
             ]);
             if ($validator->fails()) {
                 return $this->output(false, $validator->errors()->first(), [], 409);
             }
 
-            $Company->billing_address     = $request->billing_address;
+            $Company->billing_address       = $request->billing_address;
             $Company->country_id = $request->country_id;
             $Company->state_id  = $request->state_id;
             $Company->city      = $request->city;
             $Company->zip       = $request->zip;
-            $Company->inbound_permission  = $request->inbound_permission;
-            $CompanysRes        = $Company->save();
+            $Company->inbound_permission    = $request->inbound_permission;
+            $Company->outbound_call         = $request->outbound_call;
+            $Company->tarrif_id             = ($request->outbound_call == 1) ? $request->tarrif_id : NULL;
+            $CompanysRes                    = $Company->save();
 
             if ($CompanysRes) {
                 $Company = Company::where('id', $id)->first();
