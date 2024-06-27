@@ -567,8 +567,7 @@ class TfnController extends Controller
                 return $this->output(false, "TFN Number ($tfn_number) is already purchased. Please try another TFN number.", [], 409);
             }
 
-            $main_price = MainPrice::where('product', 'TFN')
-                ->where('country_id', $tfn->country_id)
+            $main_price = MainPrice::where('country_id', $tfn->country_id)
                 ->where('price_for', $company->parent_id != 1 ? 'Reseller' : 'Company')
                 ->when($company->parent_id != 1, function ($query) use ($company) {
                     return $query->where('reseller_id', $company->parent_id);
@@ -584,10 +583,10 @@ class TfnController extends Controller
             }
 
             if ($main_price) {
-                $price = $main_price->price;
+                $price = $main_price->tfn_price;
                 if ($reseller_price) {
                     $price += $reseller_price->commission_type == 'Percentage'
-                        ? ($main_price->price * $reseller_price->price) / 100
+                        ? ($main_price->tfn_price * $reseller_price->price) / 100
                         : $reseller_price->price;
                 }
                 $total_price += $price;

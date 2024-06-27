@@ -36,7 +36,6 @@ class PurchaseTfnNumberController extends Controller
         if ($user->company->parent_id != "1") {
             $main_price = MainPrice::select('*')
                 ->where('price_for', 'Reseller')
-                ->where('product', 'TFN')
                 ->where('country_id', $country_id)
                 ->where('reseller_id', $user->company->parent_id)
                 ->first();
@@ -59,7 +58,6 @@ class PurchaseTfnNumberController extends Controller
         } else {
             $main_price = MainPrice::select('*')
                 ->where('price_for', 'Company')
-                ->where('product', 'TFN')
                 ->where('country_id', $country_id)
                 ->first();
 
