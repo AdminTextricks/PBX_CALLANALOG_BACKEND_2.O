@@ -6,6 +6,8 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
+use App\Models\MainPrice;
+use App\Models\ResellerPrice;
 
 class Controller extends BaseController
 {
@@ -85,5 +87,45 @@ class Controller extends BaseController
         }
 
         return (bool) preg_match('/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu', $value);
+    }
+
+
+    public function getItemPrice($company_id, $country_id, $price_for, $reseller_id, $product){
+
+        $MainPrice = MainPrice::select()
+                    ->where('country_id',$country_id)
+                    ->where('price_for',$price_for);
+                    if($price_for == 'Reseller'){
+                        $MainPrice = $MainPrice->where('reseller_id',$reseller_id);
+                    }
+                    $MainPrice = $MainPrice->where('status','1')->first();
+                    
+        $MainPriceArr = $MainPrice ? $MainPrice->toArray() : [];
+        if(count($MainPriceArr) > 0 ){
+            $itemPrice = ($product == 'Extension') ? $MainPriceArr['extension_price'] : $MainPriceArr['tfn_price'];
+
+            $ResellerPrice = ResellerPrice::select()
+                            ->where('company_id',$company_id)
+                            ->where('country_id',$country_id)
+                            ->where('product',$product)
+                            ->where('status','1')->first();
+
+            $ResellerCommission = $ResellerPrice ? $ResellerPrice->toArray() : [];
+
+            if(count($ResellerCommission) > 0 ){
+
+                if(trim($ResellerCommission['commission_type']) == 'Fixed Amount'){
+                    $itemPrice = $itemPrice + $ResellerCommission['price'];
+                }
+
+                if(trim($ResellerCommission['commission_type']) == 'Percentage'){
+                    $pricePercentage = $itemPrice * $ResellerCommission['price']/100;
+                    $itemPrice = $itemPrice + $pricePercentage;
+                }                
+            }
+            return array('Status' => 'true', $product.'_price' => $itemPrice);
+        }else{
+            return array('Status' => 'false', 'Message' => 'Price not available for this country. Please contact with support team.');
+        }
     }
 }

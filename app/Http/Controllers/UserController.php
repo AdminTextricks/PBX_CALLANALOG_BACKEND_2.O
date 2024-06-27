@@ -50,7 +50,11 @@ class UserController extends Controller
                         ->with('country:id,country_name')
                         ->with('state:id,state_name,state_code')
                         ->where('company_id', $user->company_id);
-            $data = $dataQuery->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+            if($user_id) {
+                $data = $dataQuery->where('id', $user_id)->first(); 
+            }else{
+                $data = $dataQuery->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+            }
         }else{
             $dataQuery = User::select()
                         ->with('company:id,company_name')
@@ -86,6 +90,64 @@ class UserController extends Controller
 			return $this->output(true, 'No Record Found', []);
 		}
 	}
+
+
+
+    public function getAllResellerUsers(Request $request)
+    {
+        $user_id = $request->id ?? NULL;
+        $perPageNo = isset($request->perpage) ? $request->perpage : 25;
+        $user = \Auth::user();        
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
+            $dataQuery = User::select()
+                        ->with('company:id,company_name')
+                        ->with('user_role:id,name')
+                        ->with('country:id,country_name')
+                        ->with('state:id,state_name,state_code')
+                        ->where('role_id', 5);
+
+            if($user_id) {
+                $data = $dataQuery->where('id', $user_id)->first();
+            }else{
+                $data = $dataQuery->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+            }
+            if ($data) {
+                $dd = $data->toArray();
+                if (is_array($dd)) {
+                    unset($dd['links']);
+                    return $this->output(true, 'Success', $dd, 200);
+                }
+            } else {
+                return $this->output(true, 'No Record Found', []);
+            }
+        }else{
+            return $this->output(false, 'You are not authorized user.');
+        }
+
+        
+	}
+
+
+    /**
+     * Display a listing of the reseller Active resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+
+     public function getActiveResellerUsers(Request $request)
+     {
+        $data = User::select()
+                ->where('status', 1)
+                ->where('role_id', 5)->get();	
+		if($data->isNotEmpty()){
+			return $this->output(true, 'Success', $data->toArray());
+		}else{
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
+
+
+
 
     /**
      * Change User Status.
@@ -123,7 +185,7 @@ class UserController extends Controller
             'parent_id'     => 'required',
             'plan_id'       => 'required',
             'company_name'  => 'required|max:500|unique:companies',
-            'account_code'  => 'required|max:500|unique:users',
+            'account_code'  => 'required|max:500|unique:companies',
             'name'     		=> 'required|max:255',
             'email'         => 'required|email|max:255|unique:users|unique:companies',
             'mobile'        => 'required|string|unique:users',
@@ -153,6 +215,7 @@ class UserController extends Controller
                     'plan_id'       => $request->plan_id,
                     'parent_id'     => $request->parent_id,
                     'company_name'	=> $request->company_name,
+                    'account_code'  => $request->account_code,
                     'email'        	=> $request->email,
                     'mobile'       	=> $request->mobile,
                     'billing_address' => $request->address,
@@ -160,11 +223,12 @@ class UserController extends Controller
                     'state_id' 		=> $request->state_id,
                     'city' 			=> $request->city,
                     'zip' 			=> $request->zip,
+                    'inbound_permission' => '1',
                 ]);
                 //dd($company);
                 $user = User::create([
                     'company_id' => $company->id,
-                    'account_code' => $request->account_code,
+                    //'account_code' => $request->account_code,
                     'name' 		=> $request->name,
                     'email' 	=> $request->email,
                     'mobile' 	=> $request->mobile,
@@ -243,7 +307,7 @@ class UserController extends Controller
 			'city'		=> 'required',
 			'zip'		=> 'required', 
 			'role_id'	=> 'required|numeric|in:2,3,5,6',
-            'account_code'  => 'required|max:500|unique:users', 
+            //'account_code'  => 'required|max:500|unique:users', 
         ],[
             'company_id' => 'The company field is required when you are creating company user',
             'role_id' => 'The selected role is invalid!',
@@ -262,7 +326,7 @@ class UserController extends Controller
                 $random_pass = Str::random(10);
                 $user = User::create([
                     'company_id'    => $request->company_id,
-                    'account_code'  => $request->account_code,
+                    //'account_code'  => $request->account_code,
                     'name'          => $request->name,
                     'email'         => $request->email,
                     'mobile'        => $request->mobile,
@@ -403,7 +467,8 @@ class UserController extends Controller
                 ->where('email', $request->email)->first();
 		if ($user) {
             if ($user->is_verified == 1) {
-                if((isset($user->company->status) && $user->company->status == 1) || in_array($user->roles->first()->name, array('Super Admin', 'Support','NOC'))){
+                 
+                if((isset($user->company->status) && $user->company->status == 1) || in_array($user->roles->first()->slug, array('super-admin', 'support','noc', 'reseller'))){
                     if($user->status == 1){                    
                         if (Hash::check($request->password, $user->password)) {
                             $token =  $user->createToken('Callanalog API')->plainTextToken;

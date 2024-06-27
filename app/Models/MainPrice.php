@@ -11,16 +11,21 @@ class MainPrice extends Model
 	
 	protected $fillable = [
         'id',
-        'user_id',
+        'reseller_id',
         'country_id',
-        'user_type',
-        'product',
-        'price',
+        'price_for',
+        'tfn_price',
+        'extension_price',
         'status',
     ];
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class,'reseller_id');
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
     }
 }

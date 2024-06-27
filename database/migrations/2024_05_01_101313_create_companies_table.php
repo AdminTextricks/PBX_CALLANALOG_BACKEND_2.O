@@ -15,6 +15,7 @@ return new class extends Migration
             $table->bigIncrements('id');
 			$table->integer('parent_id')->nullable()->default(0);
             $table->string('company_name',150);
+			$table->string('account_code',50)->index();
             $table->string('email',50)->index()->unique();
             $table->string('mobile',150)->index()->unique();
             $table->string('billing_address');
@@ -24,6 +25,7 @@ return new class extends Migration
 			$table->string('zip',50);
             $table->string('plan_id',5)->nullable();
             $table->decimal('balance',10, 2)->default(0);
+            $table->string('inbound_permission',50)->nullable();
             $table->tinyInteger('status')->default(0);
             $table->timestamps();
         });

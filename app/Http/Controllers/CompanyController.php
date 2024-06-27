@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\User;
 use App\Models\Server;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Validator;
 use Mail;
@@ -26,7 +27,7 @@ class CompanyController extends Controller
             'parent_id'     => 'required',
             'plan_id'       => 'required',
             'company_name'  => 'required|max:500|unique:companies',
-            'account_code'  => 'required|max:500|unique:users',
+            'account_code'  => 'required|max:500|unique:companies',
             'name'     		=> 'required|max:255',
             'email'         => 'required|email|max:255|unique:users|unique:companies',
             'mobile'        => 'required|string|unique:users',
@@ -35,6 +36,7 @@ class CompanyController extends Controller
 			'state_id'		=> 'required',
 			'city'			=> 'required',
 			'zip'			=> 'required',
+            'inbound_permission' => 'required',
         ],[
             'plan_id'       => 'Plan type is required!',
             'parent_id'     => 'parent ID is required.',
@@ -55,6 +57,7 @@ class CompanyController extends Controller
                     'plan_id'       => $request->plan_id,
                     'parent_id'     => $request->parent_id,
                     'company_name'	=> $request->company_name,
+                    'account_code'  => $request->account_code,
                     'email'        	=> $request->email,
                     'mobile'       	=> $request->mobile,
                     'billing_address' => $request->address,
@@ -62,13 +65,14 @@ class CompanyController extends Controller
                     'state_id' 		=> $request->state_id,
                     'city' 			=> $request->city,
                     'zip' 			=> $request->zip,
+                    'inbound_permission' => $request->inbound_permission,
                     'status' 	    => '1',
                 ]);
                 //dd($company);
                 $random_pass = Str::random(10);
                 $user = User::create([
                     'company_id' => $company->id,
-                    'account_code' => $request->account_code,
+                    //'account_code' => $request->account_code,
                     'name' 		=> $request->name,
                     'email' 	=> $request->email,
                     'mobile' 	=> $request->mobile,
@@ -131,7 +135,10 @@ class CompanyController extends Controller
         } catch(\Exception $e)
         {
             DB::rollback();
-            return $this->output(false, $e->getMessage());
+           // return $this->output(false, $e->getMessage());
+           Log::error('Error in company registration By admin or reseller : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            //return $this->output(false, $e->getMessage());
+            return $this->output(false, 'Error Occurred in adding company.', [], 406);
             //throw $e; 
         }
     }
@@ -218,6 +225,7 @@ class CompanyController extends Controller
                 'state_id'      => 'required|numeric',
                 'city'          => 'required|string|max:150',
                 'zip'           => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|min:6',
+                'inbound_permission' => 'required',
             ]);
             if ($validator->fails()) {
                 return $this->output(false, $validator->errors()->first(), [], 409);
@@ -228,7 +236,8 @@ class CompanyController extends Controller
             $Company->state_id  = $request->state_id;
             $Company->city      = $request->city;
             $Company->zip       = $request->zip;
-            $CompanysRes         = $Company->save();
+            $Company->inbound_permission  = $request->inbound_permission;
+            $CompanysRes        = $Company->save();
 
             if ($CompanysRes) {
                 $Company = Company::where('id', $id)->first();

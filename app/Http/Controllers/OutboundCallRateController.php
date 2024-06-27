@@ -42,7 +42,7 @@ class OutboundCallRateController extends Controller
                     'billing_block' => $request->billing_block,
                     'start_date'    => $request->start_date,
                     'stop_date' 	=> $request->stop_date,
-                    'status' 	    => $request->status,
+                    'status' 	    => isset($request->status) ? $request->status : 1,
                 ]);
                 
                 $response 	= $OutboundCallRate->toArray();               

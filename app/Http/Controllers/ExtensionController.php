@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Extension;
 use App\Models\VoiceMail;
+use App\Models\Company;
+use App\Models\Cart;
+use App\Models\ConfTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -100,83 +103,131 @@ class ExtensionController extends Controller
         try { 
             DB::beginTransaction();         
             $input = $request->all();
-            $data = $VoiceMail = [];             
             //$extension_name = explode(',',$input['extension_name']);
-            $extension_name = $input['name'];            
-            if (is_array($extension_name)) {
-                foreach ($extension_name as $item) {
-                    array_push($data, [
-                        'country_id'        => $request->country_id,
-                        'company_id'        => $request->company_id,
-                        'name'	            => $item,
-                        'callbackextension' => $request->callbackextension,
-                        'accountcode'       => $request->accountcode,
-                        'agent_name'        => $request->agent_name,
-                        'callgroup'         => $request->callgroup,
-                        'callerid' 	        => $request->callerid,
-                        'secret' 	        => $request->secret,
-                        'barge'             => $request->barge,
-                        'mailbox'           => $request->mailbox,
-                        'regexten'          => $item,                        
-                        'fromdomain'        => 'NULL',
-                        'amaflags'          => 'billing',
-                        'canreinvite'       => 'no',
-                        'context'           => 'callanalog',
-                        'dtmfmode'          => 'RFC2833',
-                        'host'              => '',
-                        'insecure'          => 'port,invite',
-                        'language'          => 'en',
-                        'nat'               => 'force_rport,comedia',
-                        'qualify'           => 'yes',
-                        'rtptimeout'        => '60',
-                        'rtpholdtimeout'    => '300',
-                        'type'              => 'friend',
-                        'username'          => $item, 
-                        'disallow'          => 'ALL',
-                        'allow'             => 'g729,g723,ulaw,gsm',
-                        'created_at'        => Carbon::now(),
-                        'updated_at'        => Carbon::now(),
-                        'status'            => isset($request->status) ? $request->status : '0',
-                    ]);
-                    if($request->mailbox == '1'){
-                        array_push($VoiceMail, [
-                            'company_id'=> $request->company_id,
-                            'context'   => 'default',
-                            'mailbox'   => $item,
-                            'fullname'  => $request->agent_name,
-                            'email'     => $request->voice_email,
-                            'timezone'  => 'central',
-                            'attach'    => 'yes',
-                            'review'    => 'no',
-                            'operator'  => 'no',
-                            'envelope'  => 'no',
-                            'sayduration'   => 'no',
-                            'saydurationm'  => '1',
-                            'sendvoicemail' => 'no',
-                            'nextaftercmd'  => 'yes',
-                            'forcename'     => 'no',
-                            'forcegreetings'=> 'no',
-                            'hidefromdir'   => 'yes',
-                            'created_at'    => Carbon::now(),
-                            'updated_at'    => Carbon::now(),
-                        ]);
+            $extension_name = $input['name'];
+            $Company = Company::where('id', $request->company_id)->first();
+            $reseller_id = '';
+            if($Company->parent_id > 1){
+                $price_for = 'Reseller';
+                $reseller_id = $Company->parent_id;
+            }else{
+                $price_for = 'Company';
+            }            
+            $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'Extension');
+            if($item_price_arr['Status'] == 'true'){
+                $item_price = $item_price_arr['Extension_price'];
+                if (is_array($extension_name)) {
+                    $VoiceMail = $ids = [];
+                    $status = '0';
+                    $startingdate = $expirationdate = $host = $sip_temp = NULL;
+                    if($Company->plan_id == 2){
+                        $status = '1';
+                        $startingdate = Carbon::now();
+                        $expirationdate =  $startingdate->addDays(180);
+                        $host = 'dynamic';
+                        $sip_temp = 'WEBRTC';
                     }
+                    foreach ($extension_name as $item) {
+                        $data = $Cart = [];
+                        $data = [
+                            'country_id'        => $request->country_id,
+                            'company_id'        => $request->company_id,
+                            'name'	            => $item,
+                            'callbackextension' => $request->callbackextension,
+                            'accountcode'       => $request->accountcode,
+                            'agent_name'        => $request->agent_name,
+                            'callgroup'         => $request->callgroup,
+                            'callerid' 	        => $request->callerid,
+                            'secret' 	        => $request->secret,
+                            'barge'             => $request->barge,
+                            'mailbox'           => $request->mailbox,
+                            'regexten'          => $item,
+                            'startingdate'      => $startingdate,
+                            'expirationdate'    => $expirationdate,
+                            'fromdomain'        => 'NULL',
+                            'amaflags'          => 'billing',
+                            'canreinvite'       => 'no',
+                            'context'           => 'callanalog',
+                            'dtmfmode'          => 'RFC2833',
+                            'host'              => $host,
+                            'sip_temp'          => $sip_temp,
+                            'insecure'          => 'port,invite',
+                            'language'          => 'en',
+                            'nat'               => 'force_rport,comedia',
+                            'qualify'           => 'yes',
+                            'rtptimeout'        => '60',
+                            'rtpholdtimeout'    => '300',
+                            'type'              => 'friend',
+                            'username'          => $item, 
+                            'disallow'          => 'ALL',
+                            'allow'             => 'g729,g723,ulaw,gsm',
+                            'created_at'        => Carbon::now(),
+                            'updated_at'        => Carbon::now(),
+                            'status'            => $status,
+                        ];
+                        $id = DB::table('extensions')->insertGetId($data);
+                        $ids[] = $id;
+                        if($Company->plan_id == 1){
+                            $Cart = [
+                                'company_id'        => $request->company_id,
+                                'item_id'           => $id,
+                                'item_number'       => $item,
+                                'item_type'         => 'Extension',
+                                'item_price'        => $item_price,
+                                'created_at'        => Carbon::now(),
+                                'updated_at'        => Carbon::now(),
+                            ];
+                            $cartIds = DB::table('carts')->insertGetId($Cart);
+                        }else{
+                            $webrtc_template_url = config('app.webrtc_template_url');
+                            $addExtensionFile = $webrtc_template_url;
+                            $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
+                            $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code,  $ConfTemplate->template_contents);
+                        }
+                        if($request->mailbox == '1'){
+                            array_push($VoiceMail, [
+                                'company_id'=> $request->company_id,
+                                'context'   => 'default',
+                                'mailbox'   => $item,
+                                'fullname'  => $request->agent_name,
+                                'email'     => $request->voice_email,
+                                'timezone'  => 'central',
+                                'attach'    => 'yes',
+                                'review'    => 'no',
+                                'operator'  => 'no',
+                                'envelope'  => 'no',
+                                'sayduration'   => 'no',
+                                'saydurationm'  => '1',
+                                'sendvoicemail' => 'no',
+                                'nextaftercmd'  => 'yes',
+                                'forcename'     => 'no',
+                                'forcegreetings'=> 'no',
+                                'hidefromdir'   => 'yes',
+                                'created_at'    => Carbon::now(),
+                                'updated_at'    => Carbon::now(),
+                            ]);
+                        }
+                    }
+                    // $Extensions = Extension::insert($data);
+                    if($request->mailbox == '1'){
+                        $VoiceMail = VoiceMail::insert($VoiceMail);            
+                    }                    
+                    $response['total_extension'] = count($ids);//$Extensions;//->toArray();
+                    $response['plan_id'] = $Company->plan_id;
+                    DB::commit();
+                    return $this->output(true, 'Extension added successfully.', $response);
+                }else{
+                    DB::commit();
+                    return $this->output(false, 'Wrong extension value format.');
                 }
-            }
-            //print_r($data);exit;
-            $Extensions = Extension::insert($data);
-            if($request->mailbox == '1'){
-                $VoiceMail = VoiceMail::insert($VoiceMail);            
-            }
-            $response 	= $Extensions;//->toArray();
-            DB::commit();
-            return $this->output(true, 'Extension added successfully.', $response);
-            
+            }else{
+                DB::commit();
+                return $this->output(false, $item_price_arr['Message']);
+            } 
         } catch(\Exception $e)
         {
             DB::rollback();
-            Log::error('Error in Extensions Inserting : ' . $e->getMessage());
-            //return response()->json(['error' => 'An error occurred while creating product: ' . $e->getMessage()], 400);
+            Log::error('Error in Extensions Inserting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             //return $this->output(false, $e->getMessage());
             return $this->output(false, 'Error Occurred in adding extensions. Please try with different extension', [], 406);
             //throw $e; 
@@ -189,7 +240,7 @@ class ExtensionController extends Controller
 		$perPageNo = isset($request->perpage) ? $request->perpage : 25;
 		$params = $request->params ?? "";
         $user = \Auth::user();
-        echo $user->company_id;
+        //echo $user->company_id;
 		//if ($request->user()->hasRole('super-admin')) {
         if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
 			$Extension_id = $request->id ?? NULL;
@@ -250,4 +301,144 @@ class ExtensionController extends Controller
 			return $this->output(true, 'No Record Found', []);
 		}
 	}
+
+    public function updateExtension(Request $request, $id)
+    {
+        try { 
+			DB::beginTransaction(); 
+            $webrtc_template_url = config('app.webrtc_template_url');
+            $softphone_template_url = config('app.softphone_template_url');
+			$Extension = Extension::find($id);		
+			if(is_null($Extension)){
+				DB::commit();
+				return $this->output(false, 'This Extension not exist with us. Please try again!.', [], 409);
+			}else{
+				$validator = Validator::make($request->all(), [
+                    'country_id'    => 'required|numeric',
+                    'company_id'    => 'required|numeric',
+                    'name'          => 'required|unique:extensions,name,'.$Extension->id,
+                    'callbackextension' => 'required',
+					'agent_name'    => 'required',					
+					'secret'	    => 'required',
+					'barge'	        => 'required|in:0,1',
+                    'mailbox'       => 'required|in:0,1',
+                    'voice_email'   => 'required_if:mailbox,1',
+                    'callgroup'     => 'required|in:0,1',
+                    'callerid'      => 'required_if:callgroup,1',
+                    'sip_temp'      => 'required|in:WEBRTC,SOFTPHONE',
+				]);
+				if ($validator->fails()){
+					return $this->output(false, $validator->errors()->first(), [], 409);
+				}				
+                $Company = Company::where('id', $request->company_id)->first();
+                
+				$ExtensionOld = Extension::where('country_id', $request->country_id)
+							->where('company_id', $request->company_id)
+                            ->where('name', $request->name)
+							->where('id','!=', $id)
+							->first();
+				if(!$ExtensionOld){
+                    $VoiceMail = VoiceMail::where('mailbox', $request->name)->first();
+                    if($VoiceMail){
+                        $VoiceMail->delete();
+                    }
+                    if($request->mailbox  == 1){
+                        $VoiceMail = VoiceMail::create([
+                            'company_id'=> $request->company_id,
+                            'context'   => 'default',
+                            'mailbox'   => $request->name,
+                            'fullname'  => $request->agent_name,
+                            'email'     => $request->voice_email,
+                            'timezone'  => 'central',
+                            'attach'    => 'yes',
+                            'review'    => 'no',
+                            'operator'  => 'no',
+                            'envelope'  => 'no',
+                            'sayduration'   => 'no',
+                            'saydurationm'  => '1',
+                            'sendvoicemail' => 'no',
+                            'nextaftercmd'  => 'yes',
+                            'forcename'     => 'no',
+                            'forcegreetings'=> 'no',
+                            'hidefromdir'   => 'yes',
+                            'created_at'    => Carbon::now(),
+                            'updated_at'    => Carbon::now(),
+                        ]);
+                    }
+                    
+                    if($Extension->sip_temp != $request->sip_temp){
+                        if($request->sip_temp == 'WEBRTC'){
+                            $addExtensionFile = $webrtc_template_url;
+                            $removeExtensionFile = $softphone_template_url;
+                        }else{
+                            $addExtensionFile = $softphone_template_url;
+                            $removeExtensionFile = $webrtc_template_url;
+                        }
+                        $ConfTemplate = ConfTemplate::select()->where('template_id', $request->sip_temp)->first();
+                        $this->addExtensionInConfFile($request->name, $addExtensionFile, $request->secret, $Company->account_code,  $ConfTemplate->template_contents);
+                        $this->removeExtensionFromConfFile($request->name, $removeExtensionFile);
+                    }
+
+					$Extension->callbackextension = $request->callbackextension;
+					$Extension->agent_name  = $request->agent_name;
+					$Extension->secret      = $request->secret;
+					$Extension->barge       = $request->barge;
+					$Extension->mailbox     = $request->mailbox;
+					$Extension->callgroup   = $request->callgroup;
+                    if($request->callgroup  == 1){
+                        $Extension->callerid  = $request->callerid;    
+                    }
+                    $Extension->sip_temp    = $request->sip_temp;					
+					$ExtensionRes           = $Extension->save();
+					if($ExtensionRes){
+						$ExtensionUpdated = Extension::where('id', $id)->first();        
+						$response = $ExtensionUpdated->toArray();                       
+						DB::commit();
+						return $this->output(true, 'Extension updated successfully.', $response, 200);
+					}else{
+						DB::commit();
+						return $this->output(false, 'Error occurred in Extension Updating. Please try again!.', [], 200);
+					}
+				}else{
+					DB::commit();
+					return $this->output(false, 'This Extension already exist with us.',[], 409);
+				}
+			}
+		} catch (\Exception $e) {
+			DB::rollback();
+			//return $this->output(false, $e->getMessage());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+		}
+	}
+
+    protected function addExtensionInConfFile($extensionName, $conf_file_path, $secret, $account_code, $template_contents){
+        // Add new user section
+        $register_string = "\n[$extensionName]\nusername=$extensionName\nsecret=$secret\naccountcode=$account_code\n$template_contents\n";
+        //$webrtc_conf_path = "/var/www/html/callanalog/admin/webrtc_template.conf";
+        file_put_contents($conf_file_path, $register_string, FILE_APPEND | LOCK_EX);
+        //echo "Registration successful. The SIP user $nname has been added to the webrtc_template.conf file.";        
+    }
+
+    protected function removeExtensionFromConfFile($extensionName, $conf_file_path){
+        // Remove user section
+			//$conf_file_path = "webrtc_template.conf";
+			$lines = file($conf_file_path);
+			$output = '';
+			$found = false;
+			foreach ($lines as $line) {
+				if (strpos($line, "[$extensionName]") !== false) {
+					$found = true;
+					continue;
+				}
+				if ($found && strpos($line, "[") === 0) {
+					$found = false;
+				}
+				if (!$found) {
+					$output .= $line;
+				}
+			}
+			file_put_contents($conf_file_path, $output, LOCK_EX);
+			//echo "Registration removed. The SIP user $nname has been removed from the webrtc_template.conf file.";
+    }
+
 }
