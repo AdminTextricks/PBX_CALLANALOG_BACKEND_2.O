@@ -228,7 +228,7 @@ class CompanyController extends Controller
                 'zip'           => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|min:6',
                 'inbound_permission' => 'required',
                 'outbound_call' => 'required',
-                'tarrif_id'     => 'required_if:outbound_call,1',
+                'tariff_id'     => 'required_if:outbound_call,1',
             ]);
             if ($validator->fails()) {
                 return $this->output(false, $validator->errors()->first(), [], 409);
@@ -241,7 +241,7 @@ class CompanyController extends Controller
             $Company->zip       = $request->zip;
             $Company->inbound_permission    = $request->inbound_permission;
             $Company->outbound_call         = $request->outbound_call;
-            $Company->tarrif_id             = ($request->outbound_call == 1) ? $request->tarrif_id : NULL;
+            $Company->tariff_id             = ($request->outbound_call == 1) ? $request->tariff_id : NULL;
             $CompanysRes                    = $Company->save();
 
             if ($CompanysRes) {
