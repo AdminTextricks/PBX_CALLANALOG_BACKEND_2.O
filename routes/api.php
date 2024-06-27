@@ -152,6 +152,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	# Tfn Number 
 	Route::group(['prefix' => 'tfn'], function () {
+		Route::post('/assign-tfn-number', [TfnController::class, 'assignTfnMain']);
 		Route::post('/upload-csv', [TfnController::class, 'uploadCSVfile']);
 		Route::post('/search', [PurchaseTfnNumberController::class, 'searchTfn']);
 		Route::get('/active', [TfnController::class, 'getAllActiveTfns']);
@@ -245,6 +246,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'payment'], function () {
 		Route::post('/pay', [PaymentController::class, 'PayNow']);
 		Route::post('/Striperefund', [PaymentController::class, 'RefundStripePayment']);
+		Route::post('/paywithwallet', [PaymentController::class, 'PaywithWallet']);
+		Route::post('/addbalance', [PaymentController::class, 'addToWallet']);
 	});
 });
 /*
