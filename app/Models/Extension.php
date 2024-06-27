@@ -14,7 +14,7 @@ class Extension extends Model
         'company_id',
         'intercom',
         'name',
-        'accountcode',
+        'account_code',
         'regexten',
         'amaflags',
         'callgroup',

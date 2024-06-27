@@ -19,7 +19,7 @@ return new class extends Migration
 			$table->unsignedBigInteger('company_id');
             $table->string('name',50)->unique()->index();
             //$table->string('intercom',50)->unique()->index();
-            $table->string('accountcode',20)->index();            
+            $table->string('account_code',20)->index();            
             $table->string('regexten',20)->index();
             $table->string('amaflags',10)->nullable();
 			$table->enum('callgroup',['0','1'])->nullable();
