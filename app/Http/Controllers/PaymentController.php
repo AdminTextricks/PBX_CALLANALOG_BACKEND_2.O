@@ -64,8 +64,13 @@ class PaymentController extends Controller
 
             $stripe = new \Stripe\StripeClient(config('stripe.stripe.secret_test'));
             try {
+                DB::beginTransaction();
                 // Create a customer with a payment source
-                $token = 'tok_visa';
+                $token = $request->token;
+                if (!$token) {
+                    DB::rollback();
+                    return $this->output(false, 'Card Token not found.', 400);
+                }
                 $itmNumber = implode("-", $request->item_numbers);
                 $itemTpyes = implode("-", $request->item_type);
                 $customer = $stripe->customers->create([
@@ -106,7 +111,7 @@ class PaymentController extends Controller
 
                 $chargeJson = $charge->jsonSerialize();
                 if ($chargeJson['amount_refunded'] == 0 && empty($chargeJson['failure_code']) && $chargeJson['paid'] == 1 && $chargeJson['captured'] == 1) {
-                    DB::beginTransaction();
+                    // DB::beginTransaction();
                     $status = 1;
                     $price_mail = $charge->amount / 100;
 
@@ -367,8 +372,13 @@ class PaymentController extends Controller
 
         $stripe = new \Stripe\StripeClient(config('stripe.stripe.secret_test'));
         try {
+            DB::beginTransaction();
             // Create a customer with a payment source
-            $token = 'tok_visa';
+            $token = $request->token;
+            if (!$token) {
+                DB::rollback();
+                return $this->output(false, 'Card Token not found.', 400);
+            }
 
 
             $customer = $stripe->customers->create([
@@ -432,7 +442,7 @@ class PaymentController extends Controller
                 $price_mail = $charge->amount / 100;
                 $item_numbers = $price_mail . 'Added to Wallet';
                 $itemTpyes = $createinvoice->id;
-                DB::beginTransaction();
+                // DB::beginTransaction();
                 $payment = Payments::create([
                     'company_id' => $user->company_id,
                     'invoice_id'  => $createinvoice->id,
