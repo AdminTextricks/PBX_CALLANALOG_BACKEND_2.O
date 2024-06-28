@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\LOG;
 use App\Models\RingGroup;
+use App\Models\RingMember;
 use Validator;
 
 class RingGroupController extends Controller
@@ -120,10 +121,8 @@ class RingGroupController extends Controller
 							$pageName = 'page'
 						);
 				}
-			}
-			
+			}			
 		}
-
 		if ($data->isNotEmpty()) {
 			$dd = $data->toArray();
 			unset($dd['links']);
@@ -192,7 +191,8 @@ class RingGroupController extends Controller
 		}
 	}
 
-    public function updateRingGroup(Request $request, $id){
+    public function updateRingGroup(Request $request, $id)
+	{
 		try { 
 			DB::beginTransaction(); 
 			$RingGroup = RingGroup::find($id);		
@@ -275,4 +275,81 @@ class RingGroupController extends Controller
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
+
+/********   Ring Member functions ********************* */
+
+	public function addRingMember(Request $request)
+	{
+		try {
+			$validator = Validator::make($request->all(), [
+				'ring_id'	=> 'required|numeric|exists:ring_groups,id',
+				'extension'	=> 'required|numeric|exists:extensions,name',				
+			]);
+			if ($validator->fails()){
+				return $this->output(false, $validator->errors()->first(), [], 409);
+			}
+			DB::beginTransaction();
+			$RingMember = RingMember::where('ring_id', $request->ring_id)
+						->where('extension', $request->extension)->first();			
+			if(!$RingMember){
+				$RingMember = RingMember::create([
+					'ring_id'	=> $request->ring_id,					
+					'extension' => $request->extension,
+				]);
+				if($RingMember){
+					$RingMember = RingMember::where('ring_id', $request->ring_id)->get();					
+					$response = $RingMember->toArray();
+					DB::commit();
+					return $this->output(true, 'Ring Member updated successfully.', $response, 200);
+				}else{
+					DB::commit();
+					return $this->output(false, 'Error occurred in Ring Member Updating. Please try again!.', [], 200);
+				}
+			}else{
+				DB::commit();
+				return $this->output(false, 'This Ring Member already exist for this ring.',[], 409);
+			}
+		} catch (\Exception $e) {
+			DB::rollback();
+            Log::error('Error in updating ring Member : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+			//return $this->output(false, $e->getMessage());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+		}	
+	}
+
+	public function removeRingMember(Request $request, $id)
+	{
+		try {
+			DB::beginTransaction();
+			$RingMember = RingMember::where('id', $id)->first();
+			if($RingMember){
+				$resdelete = $RingMember->delete();
+                if ($resdelete) {
+                    DB::commit();
+                    return $this->output(true,'Success',200);
+                } else {
+                    DB::commit();
+                    return $this->output(false, 'Error occurred in Ring Member removing. Please try again!.', [], 209);                    
+                }
+			}else{
+				DB::commit();
+				return $this->output(false, 'This Ring Member not exist.',[], 409);
+			}
+		} catch (\Exception $e) {
+			DB::rollback();
+            Log::error('Error in removing ring Member : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+			//return $this->output(false, $e->getMessage());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+		}	
+	}
+
+	public function getRingMemberByRingId(Request $request, $ring_id)
+	{			
+		$data = RingMember::select()->where('ring_id', $ring_id)->get();        
+		if ($data->isNotEmpty()) {			
+			return $this->output(true, 'Success', $data->toArray(), 200);
+		} else {
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
 }

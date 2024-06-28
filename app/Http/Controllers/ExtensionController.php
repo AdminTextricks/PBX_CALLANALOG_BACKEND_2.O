@@ -405,6 +405,7 @@ class ExtensionController extends Controller
 			}
 		} catch (\Exception $e) {
 			DB::rollback();
+            Log::error('Error in Extensions Updating : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
 			//return $this->output(false, $e->getMessage());
 			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
 		}
@@ -440,4 +441,22 @@ class ExtensionController extends Controller
 			//echo "Registration removed. The SIP user $nname has been removed from the webrtc_template.conf file.";
     }
 
+    public function getExtensionsByCountryIdAndCompanyId(Request $request, $country_id, $company_id)
+	{
+		$data = Extension::with('company:id,company_name,email,mobile')
+            ->with('country:id,country_name')
+            ->select('id','name', 'agent_name', 'callbackextension','country_id', 'company_id')
+            ->where('country_id', $country_id)
+            ->where('company_id', $company_id)
+            ->orderBy('id', 'DESC')
+            ->get();
+      	
+		if ($data->isNotEmpty()) {
+			$dd = $data->toArray();
+			unset($dd['links']);
+			return $this->output(true, 'Success', $dd, 200);
+		} else {
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
 }

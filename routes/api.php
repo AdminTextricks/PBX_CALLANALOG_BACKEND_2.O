@@ -187,10 +187,9 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/generate', [ExtensionController::class, 'generateExtensions']);
 		Route::get('/generatePassword', [ExtensionController::class, 'generateStrongPassword']);
 		Route::get('/', [ExtensionController::class, 'getAllExtensions']);
-		Route::put('/{id}', [ExtensionController::class, 'updateExtension']);
-		/*
-		Route::patch('/changeStatus/{id}', [ExtensionController::class, 'changeOutboundCallRateStatus']);		
-		Route::delete('/{id}', [ExtensionController::class, 'deleteOutboundCallRate']);*/
+		Route::put('/{id}', [ExtensionController::class, 'updateExtension']);	
+		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ExtensionController::class, 'getExtensionsByCountryIdAndCompanyId']);
+		/*Route::delete('/{id}', [ExtensionController::class, 'deleteOutboundCallRate']);*/
 	});
 
 	#Conf Template Manage
@@ -229,6 +228,12 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::put('/{id}', [RingGroupController::class, 'updateRingGroup']);
 		Route::patch('/changeStatus/{id}', [RingGroupController::class, 'changeRingGroupStatus']);
 		Route::delete('/{id}', [RingGroupController::class, 'deleteRingGroup']);
+	});
+
+	Route::group(['prefix' => 'ring-member'], function () {
+		Route::post('/', [RingGroupController::class, 'addRingMember']);
+		Route::get('/{ring_id?}', [RingGroupController::class, 'getRingMemberByRingId']);
+		Route::delete('/{id}', [RingGroupController::class, 'removeRingMember']);
 	});
 });
 /*
