@@ -229,7 +229,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::patch('/changeStatus/{id}', [RingGroupController::class, 'changeRingGroupStatus']);
 		Route::delete('/{id}', [RingGroupController::class, 'deleteRingGroup']);
 	});
-
+	
+	# Manage Ring Member
 	Route::group(['prefix' => 'ring-member'], function () {
 		Route::post('/', [RingGroupController::class, 'addRingMember']);
 		Route::get('/{ring_id?}', [RingGroupController::class, 'getRingMemberByRingId']);
