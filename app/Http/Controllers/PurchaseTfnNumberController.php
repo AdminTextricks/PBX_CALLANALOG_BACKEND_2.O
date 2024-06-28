@@ -48,9 +48,9 @@ class PurchaseTfnNumberController extends Controller
 
             if ($main_price && $reseller_price) {
                 if ($reseller_price->commission_type == 'Percentage') {
-                    $total_price = $main_price->price + ($main_price->price * $reseller_price->price) / 100;
+                    $total_price = $main_price->tfn_price + ($main_price->tfn_price * $reseller_price->price) / 100;
                 } else {
-                    $total_price = $main_price->price + $reseller_price->price;
+                    $total_price = $main_price->tfn_price + $reseller_price->price;
                 }
             } else {
                 return $this->output(false, "No Record Found!", 200);
@@ -62,9 +62,10 @@ class PurchaseTfnNumberController extends Controller
                 ->first();
 
             if ($main_price) {
-                $total_price = $main_price->price;
+                $total_price = $main_price->tfn_price;
             }
         }
+        // return $total_price;
         $company = Company::where('id', $user->company->id)->first();
         $inbound_trunk = explode(',', $company->inbound_permission);
 
