@@ -15,7 +15,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->unsignedBigInteger('company_id');
             $table->string('context',50)->default('default');
-            $table->string('mailbox',20)->default('0');
+            $table->string('mailbox',20)->default('0')->index();
             $table->string('password',20)->default('0');
             $table->string('fullname',150)->nullable();
             $table->string('email',250)->nullable();

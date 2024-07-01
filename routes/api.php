@@ -238,7 +238,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'ring-member'], function () {
 		Route::post('/', [RingGroupController::class, 'addRingMember']);
 		Route::get('/{ring_id?}', [RingGroupController::class, 'getRingMemberByRingId']);
-		Route::delete('/{id}', [RingGroupController::class, 'removeRingMember']);
+		Route::delete('/', [RingGroupController::class, 'removeRingMember']);
 	});
 
 	# Invoices

@@ -7,8 +7,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\LOG;
 use App\Models\RingGroup;
 use App\Models\RingMember;
+use App\Models\Extension;
 use Validator;
-
+use Carbon\Carbon;
 class RingGroupController extends Controller
 {
     public function __construct(){
@@ -283,19 +284,22 @@ class RingGroupController extends Controller
 		try {
 			$validator = Validator::make($request->all(), [
 				'ring_id'	=> 'required|numeric|exists:ring_groups,id',
-				'extension'	=> 'required|numeric|exists:extensions,name',				
+				'extension.*'	=> 'required|numeric|exists:extensions,name',				
 			]);
 			if ($validator->fails()){
 				return $this->output(false, $validator->errors()->first(), [], 409);
 			}
 			DB::beginTransaction();
-			$RingMember = RingMember::where('ring_id', $request->ring_id)
-						->where('extension', $request->extension)->first();			
-			if(!$RingMember){
-				$RingMember = RingMember::create([
-					'ring_id'	=> $request->ring_id,					
-					'extension' => $request->extension,
-				]);
+			$input = $request->all();
+			$extension_name = $input['extension'];
+			if (is_array($extension_name)) {
+				$ring_members = array();
+				foreach ($extension_name as $item) {
+					$RingMember = RingMember::firstOrCreate ([
+						'ring_id'		=> $request->ring_id,					
+						'extension' 	=> $item,
+					]); 
+				}
 				if($RingMember){
 					$RingMember = RingMember::where('ring_id', $request->ring_id)->get();					
 					$response = $RingMember->toArray();
@@ -307,7 +311,7 @@ class RingGroupController extends Controller
 				}
 			}else{
 				DB::commit();
-				return $this->output(false, 'This Ring Member already exist for this ring.',[], 409);
+				return $this->output(false, 'Wrong extension value format.');
 			}
 		} catch (\Exception $e) {
 			DB::rollback();
@@ -317,23 +321,41 @@ class RingGroupController extends Controller
 		}	
 	}
 
-	public function removeRingMember(Request $request, $id)
+	public function removeRingMember(Request $request)
 	{
 		try {
+			$validator = Validator::make($request->all(), [
+				'ring_id'	=> 'required|numeric|exists:ring_groups,id',
+				'extension.*'	=> 'required|numeric|exists:extensions,name',				
+			]);
+			if ($validator->fails()){
+				return $this->output(false, $validator->errors()->first(), [], 409);
+			}
 			DB::beginTransaction();
-			$RingMember = RingMember::where('id', $id)->first();
-			if($RingMember){
-				$resdelete = $RingMember->delete();
-                if ($resdelete) {
-                    DB::commit();
-                    return $this->output(true,'Success',200);
-                } else {
-                    DB::commit();
-                    return $this->output(false, 'Error occurred in Ring Member removing. Please try again!.', [], 209);                    
-                }
+			$input = $request->all();
+			$extension_name = $input['extension'];
+			$ring_id = $input['ring_id'];
+			$RingMember = RingMember::whereIn('extension', $extension_name)
+							->where('ring_id', $ring_id)->get()->toArray();
+			
+			if(!empty($RingMember)){
+				if(is_array($extension_name)){				
+					$resdelete = RingMember::whereIn('extension', $extension_name)
+								->where('ring_id', $ring_id)->delete();
+					if($resdelete) {
+						DB::commit();
+						return $this->output(true,'Success',$resdelete,200);
+					}else{
+						DB::commit();
+						return $this->output(false, 'Error occurred in Ring Member removing. Please try again!.', [], 209);                    
+					}
+				}else{
+					DB::commit();
+					return $this->output(false, 'Wrong extension value format.');
+				}
 			}else{
 				DB::commit();
-				return $this->output(false, 'This Ring Member not exist.',[], 409);
+				return $this->output(false, 'Ring member not exist. Please select correct value.');
 			}
 		} catch (\Exception $e) {
 			DB::rollback();
@@ -344,12 +366,28 @@ class RingGroupController extends Controller
 	}
 
 	public function getRingMemberByRingId(Request $request, $ring_id)
-	{			
-		$data = RingMember::select()->where('ring_id', $ring_id)->get();        
-		if ($data->isNotEmpty()) {			
-			return $this->output(true, 'Success', $data->toArray(), 200);
-		} else {
-			return $this->output(true, 'No Record Found', []);
+	{
+		$response = array();
+		$RingData = RingGroup::select()->where('id', $ring_id)->first();
+		if($RingData){
+			$RingData->country_id;
+			$RingData->company_id;
+			$RingMember = RingMember::select()->where('ring_id', $ring_id)->get(); 
+			$response['RingMember'] = $RingMember;
+			$ringExtensions = array_column($RingMember->toArray(), 'extension');
+			$Extensions = Extension::select('id', 'name')
+						->where('company_id', $RingData->company_id)
+						->where('country_id', $RingData->country_id)
+                        ->whereNotIn('name', $ringExtensions)
+                        ->get();
+			$response['Extensions'] = $Extensions;
+			if ($response) {
+				return $this->output(true, 'Success', $response, 200);
+			} else {
+				return $this->output(true, 'No Record Found', []);
+			}
+		}else{
+			return $this->output(false,'This Ring is not exist with us. Please try again!', [],409);
 		}
 	}
 }
