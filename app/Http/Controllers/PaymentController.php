@@ -31,11 +31,9 @@ class PaymentController extends Controller
         $getstate = State::select('state_name')->where('id', $user->company->state_id)->first();
 
         if ($invoice_balance->invoice_amount === $request->payment_price) {
-            $item_numbers_array =  $request->item_numbers;
-            $item_type_array = $request->item_type;
-
-            foreach ($item_numbers_array as $index => $itemNumber) {
-                $itemType = trim($item_type_array[$index]);
+            foreach ($request->items as $item) {
+                $itemType = $item['item_type'];
+                $itemNumber = $item['item_number'];
                 $cart = Cart::select('*')->where('item_number', '=', $itemNumber)->first();
                 if (!$cart) {
                     return $this->output(false, 'Item Number ' . $itemNumber . ' is Not Added to Cart!.', 400);
@@ -52,7 +50,6 @@ class PaymentController extends Controller
                     }
                 }
             }
-            // return "Good";
             $validator = Validator::make($request->all(), [
                 'payment_price' => 'required|numeric|min:1',
                 'currency' => 'required|string',
@@ -66,13 +63,20 @@ class PaymentController extends Controller
             try {
                 DB::beginTransaction();
                 // Create a customer with a payment source
-                $token = $request->token;
-                if (!$token) {
-                    DB::rollback();
-                    return $this->output(false, 'Card Token not found.', 400);
+                $token = 'tok_visa';
+                // $token = $request->token;
+                // if (!$token) {
+                //     DB::rollback();
+                //     return $this->output(false, 'Card Token not found.', 400);
+                // }
+                $itemNumbers = [];
+                $itemTypes = [];
+
+                foreach ($request->items as $item) {
+                    $itemNumbers[] = $item['item_number'];
+                    $itemTypes[] = $item['item_type'];
                 }
-                $itmNumber = implode("-", $request->item_numbers);
-                $itemTpyes = implode("-", $request->item_type);
+
                 $customer = $stripe->customers->create([
                     'name' => $user->company->company_name,
                     'email' => $user->company->email,
@@ -83,9 +87,9 @@ class PaymentController extends Controller
                     'amount' => $request->payment_price * 100,
                     'currency' => $request->currency ?? 'USD',
                     'customer' => $customer->id,
-                    'description' => $itmNumber,
+                    'description' => implode(', ', $itemNumbers),
                     'metadata' => [
-                        'item_id' => $itmNumber,
+                        'item_ids' => implode(', ', $itemNumbers),
                         'billing_details' => json_encode([
                             'city' => $user->company->city ?? NULL,
                             'country' => $getcountry->country_name ?? NULL,
@@ -102,10 +106,10 @@ class PaymentController extends Controller
                     'customer' => $customer->id,
                     'amount' => $request->payment_price * 100,
                     'currency' => $request->currency ?? 'USD',
-                    'description' => $itmNumber,
+                    'description' => implode(', ', $itemNumbers),
                     'ip' => $request->ip(),
                     'metadata' => [
-                        'item_id' => $itmNumber,
+                        'item_ids' => implode(', ', $itemNumbers),
                     ]
                 ]);
 
@@ -121,7 +125,7 @@ class PaymentController extends Controller
                         'ip_address' => $request->ip(),
                         'invoice_number'  => $request->invoice_number,
                         'order_id'        => $request->invoice_number . '-UID-' . $user->id,
-                        'item_numbers'    => $itmNumber,
+                        'item_numbers'    => implode(', ', $itemNumbers),
                         'payment_type'    => 'Stripe Card Payment',
                         'payment_currency' => $charge->currency,
                         'payment_price' => $charge->amount / 100,
@@ -130,8 +134,9 @@ class PaymentController extends Controller
                         'status' => $status,
                     ]);
 
-                    foreach ($item_numbers_array as $index => $itemNumber) {
-                        $itemType = trim($item_type_array[$index]);
+                    foreach ($request->items as $item) {
+                        $itemType = $item['item_type'];
+                        $itemNumber = $item['item_number'];
                         if ($itemType === "TFN") {
                             $numbers_list = Tfn::where('tfn_number', $itemNumber)->first();
                             if ($numbers_list) {
@@ -155,7 +160,6 @@ class PaymentController extends Controller
                             }
                         }
                         Cart::where('item_number', $itemNumber)->delete();
-                        DB::commit();
                     }
 
                     $invoice_update = Invoice::select('*')->where('id', $request->invoice_id)->first();
@@ -165,13 +169,14 @@ class PaymentController extends Controller
                     } else {
                         $invoice_update->payment_type =  'Stripe Card Payment';
                         $invoice_update->payment_status = "Paid";
-                        $mailsend = $this->pdfmailSend($user, $itmNumber, $price_mail, $request->invoice_id, $invoice_update->invoice_id, $itemTpyes);
+                        $invoice_update->save();
+
+                        $mailsend = $this->pdfmailSend($user, $itemNumbers, $price_mail, $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
                         if ($mailsend) {
                             DB::commit();
                         } else {
                             DB::rollBack();
                         }
-                        $invoice_update->save();
                     }
 
                     DB::commit();
@@ -199,40 +204,34 @@ class PaymentController extends Controller
 
 
 
-
     // public function pdfmailSend($user, $invoice_id, $invoiceFilePath, $fileName)
     // public function pdfmailSend($user, $item_numbers, $price_mail, $invoice_id, $invoice_number)
     // public function pdfmailSend($user, $item_numbers, $price_mail, $invoice_id, $invoice_number, $itemTpyes)
-    // public function pdfmailSend(Request $request)
-    public function pdfmailSend($user, $item_numbers, $price_mail, $invoice_id, $invoice_number, $itemTpyes)
-    {
+    // public function pdfmailSend($user, $item_numbers, $price_mail, $invoice_id, $invoice_number, $itemTpyes)
 
+    public function pdfmailSend($user, $item_numbers, $price_mail, $invoice_id, $invoice_number, $itemTpyes)
+    // public function pdfmailSend(Request $request)
+    {
         $user = \Auth::user();
         $email = $user->email;
-        // $item_number = $request->item_numbers;
-        // $itemTpye = $request->item_type;
+
         // $price_mail = $request->payment_price;
         // $invoice_id =  $request->invoice_id;
         // $invoice_number =  $request->invoice_number;
-        // $item_numbers = explode('-', $item_number);
-        // $item_types = explode('-', $itemTpye);
+        // $item_numbers = [];
+        // $item_types = [];
 
-        $item_numbers = explode('-', $item_numbers);
-        $item_types = explode('-', $itemTpyes);
-        if (count($item_numbers) != count($item_types)) {
-            return $this->output(false, 'Mismatched item numbers and item types count.');
-        }
+        // foreach ($request->items as $item) {
+        //     $item_numbers[] = $item['item_number'];
+        //     $item_types[] = $item['item_type'];
+        // }
 
         $data['title'] = 'Invoice From Callanalog';
-        $data['items'] = array_map(function ($number, $type) {
-            return [
-                'item_number' => trim($number),
-                'item_type' => trim($type),
-            ];
-        }, $item_numbers, $item_types);
+        $data['item_numbers'] = $item_numbers;
+        $data['item_types'] = $itemTpyes;
         $data['price'] = $price_mail;
         $data['invoice_number'] = $invoice_number;
-        //   return $data;
+
         if ($invoice_id) {
             try {
                 Mail::send('invoice', ['data' => $data], function ($message) use ($data, $email) {
@@ -253,6 +252,7 @@ class PaymentController extends Controller
             return $this->output(false, 'Error occurred in Invoice creation. The PDF file does not exist or the path is incorrect.');
         }
     }
+
 
 
 
@@ -374,11 +374,12 @@ class PaymentController extends Controller
         try {
             DB::beginTransaction();
             // Create a customer with a payment source
-            $token = $request->token;
-            if (!$token) {
-                DB::rollback();
-                return $this->output(false, 'Card Token not found.', 400);
-            }
+            $token = 'tok_visa';
+            // $token = $request->token;
+            // if (!$token) {
+            //     DB::rollback();
+            //     return $this->output(false, 'Card Token not found.', 400);
+            // }
 
 
             $customer = $stripe->customers->create([
@@ -502,18 +503,31 @@ class PaymentController extends Controller
     public function PaywithWallet(Request $request)
     {
         $user = \Auth::user();
-        $invoice_balance = Invoice::select('invoice_amount')->where('id', $request->invoice_id)->where('payment_status', '=', 'Unpaid')->first();
-        if ($invoice_balance->invoice_amount === $request->payment_price) {
-            $balance_record = Company::select('balance')->where('id', $user->company_id)->first();
-            if ($request->payment_price > 0 && $balance_record->balance > $request->payment_price) {
-                $item_numbers_array =  $request->item_numbers;
-                $item_type_array = $request->item_type;
+        $invoice_balance = Invoice::select('invoice_amount')
+            ->where('id', $request->invoice_id)
+            ->where('payment_status', '=', 'Unpaid')
+            ->first();
 
-                foreach ($item_numbers_array as $index => $itemNumber) {
-                    $itemType = trim($item_type_array[$index]);
+        $invoice_amount = $invoice_balance->invoice_amount;
+        $payment_price = $request->payment_price;
+
+        if ($invoice_balance && $invoice_amount === $payment_price) {
+            $balance_record = Company::select('balance')->where('id', $user->company_id)->first();
+            if ($payment_price > 0 && $balance_record->balance > $payment_price) {
+
+                $itemNumbers = [];
+                $itemTypes = [];
+                foreach ($request->items as $item) {
+                    $itemNumbers[] = $item['item_number'];
+                    $itemTypes[] = $item['item_type'];
+                }
+
+                foreach ($request->items as $item) {
+                    $itemType = $item['item_type'];
+                    $itemNumber = $item['item_number'];
                     $cart = Cart::select('*')->where('item_number', '=', $itemNumber)->first();
                     if (!$cart) {
-                        return $this->output(false, 'Item Number ' . $itemNumber . ' is Not Added to Cart!.', 400);
+                        return $this->output(false, 'Item Number ' . $itemNumber . ' is Not Added to Cart!', 400);
                     }
                     if ($itemType === "TFN") {
                         $tfn_list_type = Tfn::select('*')->where('tfn_number', $itemNumber)->first();
@@ -527,6 +541,7 @@ class PaymentController extends Controller
                         }
                     }
                 }
+
                 $validator = Validator::make($request->all(), [
                     'payment_price' => 'required|numeric|min:1',
                     'currency' => 'required|string',
@@ -535,36 +550,38 @@ class PaymentController extends Controller
                 if ($validator->fails()) {
                     return $this->output(false, $validator->errors()->first(), [], 409);
                 }
+
                 $transaction_id = Str::random(10);
                 $stripe_charge_id = Str::random(30);
                 DB::beginTransaction();
-                $itmNumberM = implode("-", $request->item_numbers);
-                $itemTpyes  = implode("-", $request->item_type);
+
                 $payment = Payments::create([
                     'company_id' => $user->company_id,
                     'invoice_id'  => $request->invoice_id,
                     'ip_address' => $request->ip(),
                     'invoice_number'  => $request->invoice_number,
                     'order_id'        =>  $request->invoice_number . '-UID-' . $user->id,
-                    'item_numbers'    =>  $itmNumberM,
+                    'item_numbers'    => implode(', ', $itemNumbers),
                     'payment_type'    => 'Wallet Payment',
                     'payment_currency' => $request->currency ?? 'USD',
-                    'payment_price' => $request->payment_price,
+                    'payment_price' => $payment_price,
                     'transaction_id'  => $transaction_id,
                     'stripe_charge_id' => $stripe_charge_id,
                     'status' => 1,
                 ]);
+
                 $balance_record_main = Company::where('id', $user->company_id)->first();
                 if ($balance_record_main) {
-                    $balance_record_main->balance = $balance_record_main->balance - $request->payment_price;
+                    $balance_record_main->balance = $balance_record_main->balance - $payment_price;
                     $balance_record_main->save();
-                    DB::commit();
                 } else {
                     DB::rollback();
                     return $this->output(false, 'Company Not Found.', null, 400);
                 }
-                foreach ($item_numbers_array as $index => $itemNumber) {
-                    $itemType = trim($item_type_array[$index]);
+
+                foreach ($request->items as $item) {
+                    $itemType = $item['item_type'];
+                    $itemNumber = $item['item_number'];
                     if ($itemType === "TFN") {
                         $numbers_list = Tfn::where('tfn_number', $itemNumber)->first();
                         if ($numbers_list) {
@@ -587,8 +604,8 @@ class PaymentController extends Controller
                             return $this->output(false, 'Extension Number ' . $itemNumber . ' not found.', 400);
                         }
                     }
-                    Cart::where('item_number', $itemNumber)->delete();
                     DB::commit();
+                    Cart::where('item_number', $itemNumber)->delete();
                 }
 
                 $invoice_update = Invoice::where('id', $request->invoice_id)->first();
@@ -596,24 +613,27 @@ class PaymentController extends Controller
                     DB::rollback();
                     return $this->output(false, 'Invoice not found.');
                 } else {
-                    $itmNumber = implode("-", $request->item_numbers);
-                    $price_mail = $request->payment_price;
+                    $itmNumber = implode("-", $itemNumbers);
+                    $price_mail = $payment_price;
                     $invoice_update->payment_type =  'Wallet Payment';
                     $invoice_update->payment_status = "Paid";
-                    $this->pdfmailSend($user, $itmNumber, $price_mail, $request->invoice_id, $invoice_update->invoice_id, $itemTpyes);
-                    $invoice_result = $invoice_update->save();
+                    $invoice_update->save();
+                    $mailsend = $this->pdfmailSend($user, $itemNumbers, $price_mail, $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
+                    if ($mailsend) {
+                        DB::commit();
+                    } else {
+                        DB::rollBack();
+                        return $this->output(false, 'Failed to send mail.', 500);
+                    }
                 }
 
-                DB::commit();
                 $response['payment'] = $payment->toArray();
                 return $this->output(true, 'Payment successfully.', $response, 200);
             } else {
-                DB::rollback();
-                return $this->output(false, 'You have In sufficient balance in your Wallet. Please choose Pay Now Option.', null, 400);
+                return $this->output(false, 'You have insufficient balance in your Wallet. Please choose Pay Now Option.', null, 400);
             }
         } else {
-            DB::rollback();
-            return $this->output(false, 'Oops! Something Went Wrong. mismatch values', 409);
+            return $this->output(false, 'Oops! Something Went Wrong. Mismatch values', 409);
         }
     }
 }
