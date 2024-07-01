@@ -13,7 +13,7 @@ use App\Models\Tfn;
 
 class InvoiceController extends Controller
 {
-    public function createInvoice(Request $request)
+    public function createInvoice1(Request $request)
     {
         $user = \Auth::user();
         $validator = Validator::make($request->all(), [
@@ -49,7 +49,7 @@ class InvoiceController extends Controller
                 'invoice_amount' => $invoice_amount,
                 'payment_status' => 'Unpaid',
             ]);
-            return $createinvoice;
+            // return $createinvoice;
             foreach ($request->item_number as $key => $itemNumber) {
                 $itemType = $request->item_type[$key];
                 $itemId = $request->item_id[$key];
@@ -116,6 +116,95 @@ class InvoiceController extends Controller
                     return $this->output(false, 'This Cart Number does not belong to us', 409);
                 }
             }
+            $response = $createinvoice->toArray();
+            DB::commit();
+            return $this->output(true, 'Invoice Created Successfully!!.', $response);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->output(false, $e->getMessage());
+        }
+    }
+
+
+    public function createInvoice(Request $request)
+    {
+        $user = \Auth::user();
+        $validator = Validator::make($request->all(), [
+            'items' => 'required|array',
+            'items.*.item_id' => 'required|numeric',
+            'items.*.item_number' => 'required|numeric',
+            'items.*.item_price' => 'required',
+            'items.*.item_type' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $invoice_amount_main = array_sum(array_column($request->items, 'item_price'));
+            $invoice_amount = number_format($invoice_amount_main, 2, '.', '');
+
+            $invoicetable_id = DB::table('invoices')->max('id');
+            if (!$invoicetable_id) {
+                $invoice_id = '#INV/' . date('Y') . '/00001';
+            } else {
+                $invoice_id = "#INV/" . date('Y') . "/000" . ($invoicetable_id + 1);
+            }
+
+            $createinvoice = Invoice::create([
+                'company_id' => $user->company->id,
+                'country_id' => $user->company->country_id,
+                'state_id' => $user->company->state_id,
+                'invoice_id' => $invoice_id,
+                'invoice_currency' => 'USD',
+                'invoice_subtotal_amount' => $invoice_amount,
+                'invoice_amount' => $invoice_amount,
+                'payment_status' => 'Unpaid',
+            ]);
+
+            foreach ($request->items as $item) {
+                $itemType = $item['item_type'];
+                $itemId = $item['item_id'];
+                $itemNumber = $item['item_number'];
+                $itemPrice = $item['item_price'];
+
+                if ($itemType == "TFN") {
+                    $tfninvoicenumberTfn = Tfn::select('tfn_number')->where('tfn_number', '=', $itemNumber)->first();
+                    $tfninvoicenumber = $tfninvoicenumberTfn->tfn_number;
+                } else {
+                    $tfninvoicenumberExt = Extension::select('name')->where('name', '=', $itemNumber)->first();
+                    $tfninvoicenumber = $tfninvoicenumberExt->name;
+                }
+
+                if ($tfninvoicenumber) {
+                    $cartinvoicenumber = Cart::where('item_number', '=', $tfninvoicenumber)->first();
+
+                    if (
+                        $cartinvoicenumber &&
+                        $cartinvoicenumber->item_id == $itemId &&
+                        $cartinvoicenumber->item_number == $itemNumber &&
+                        $cartinvoicenumber->item_price == $itemPrice
+                    ) {
+                        InvoiceItems::create([
+                            'company_id' => $user->company->id,
+                            'invoice_id' => $createinvoice->id,
+                            'item_id' => $itemId,
+                            'item_number' => $itemNumber,
+                            'item_price' => $itemPrice,
+                        ]);
+                    } else {
+                        DB::rollback();
+                        return $this->output(false, 'This Cart Number does not belong to us', 409);
+                    }
+                } else {
+                    DB::rollback();
+                    return $this->output(false, 'This Cart Number does not belong to us', 409);
+                }
+            }
+
             $response = $createinvoice->toArray();
             DB::commit();
             return $this->output(true, 'Invoice Created Successfully!!.', $response);
