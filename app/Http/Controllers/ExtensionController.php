@@ -249,11 +249,12 @@ class ExtensionController extends Controller
                         ->with('country:id,country_name')
                         ->where('id', $Extension_id)
                         ->orderBy('id', 'DESC')->get();
-			} else {				
-                $data = Extension::select('id','country_id', 'company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp')
+			} else {
+                $data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email')
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
-                        ->orderBy('id', 'DESC')
+                        ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
+                        ->orderBy('extensions.id', 'DESC')
                         ->paginate(
                         $perPage = $perPageNo,
                         $columns = ['*'],
@@ -263,33 +264,38 @@ class ExtensionController extends Controller
 		} else {
             $Extension_id = $request->id ?? NULL;
 			if ($Extension_id) {
-				$data = Extension::with('company:id,company_name,email,mobile')
+				$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email')
+                    ->with('company:id,company_name,email,mobile')
                     ->with('country:id,country_name')
-					->select()
+                    ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
 					->where('id', $Extension_id)
 					->where('company_id', '=',  $user->company_id)
                     ->orderBy('id', 'DESC')
 					->get();
 			} else {
 				if ($params != "") {
-					$data = Extension::with('company:id,company_name,email,mobile')	
+					$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email')
+                        ->with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
+                        ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
 						->where('company_id', '=',  $user->company_id)
 						//->orWhere('did_number', 'LIKE', "%$params%")
                         ->orderBy('id', 'DESC')
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
-					$data = Extension::with('company:id,company_name,email,mobile')
+					$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email')
+                        ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
+                        ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
 						->where('company_id', '=',  $user->company_id)
-						->select()->orderBy('id', 'DESC')
+						->orderBy('id', 'DESC')
                         ->paginate(
 							$perPage = $perPageNo,
 							$columns = ['*'],
 							$pageName = 'page'
 						);
 				}
-			}			
+			}
 		}
 
 		if ($data->isNotEmpty()) {
