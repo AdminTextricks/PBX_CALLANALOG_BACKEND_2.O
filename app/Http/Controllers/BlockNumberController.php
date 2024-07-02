@@ -26,7 +26,7 @@ class BlockNumberController extends Controller
 		$perPageNo = isset($request->perpage) ? $request->perpage : 5;
 		$params = $request->params ?? "";
 
-		if ($request->user()->hasRole('super-admin')) {
+		if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
 			$block_number_id = $request->id ?? NULL;
 			if ($block_number_id) {
 				$data = BlockNumber::with('company:id,company_name,email,mobile')					
