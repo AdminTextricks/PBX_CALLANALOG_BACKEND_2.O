@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 
 <head>
@@ -26,20 +25,24 @@
 
 <body>
     <h1>{{ $data['title'] }}</h1>
-
+    <h2>Invoice:: {{ $data['invoice_number'] }}</h2>
     <table>
         <tr>
-            <th>Invoive </th>
-            <th>Item Numbers</th>
-            <th>Item Price</th>
+            <th>Item Type</th>
+            <th>Item Number</th>
         </tr>
+
+        @foreach($data['item_numbers'] as $index => $item_number)
         <tr>
-            <td>{{ $data['invoice_number'] }}</td>
-            <td>{{ $data['item'] }}</td>
-            <td>{{ $data['price'] }}</td>
+            <td>{{ $data['item_types'][$index] }}</td>
+            <td>{{ $item_number }}</td>
         </tr>
+        @endforeach
+
     </table>
-    <h3>You can download the invoice form our portal</h3>
+
+    <h2>Total Price :: {{ $data['price'] }}</h2>
+    <h3>You can download the invoice from our portal</h3>
 </body>
 
 </html>

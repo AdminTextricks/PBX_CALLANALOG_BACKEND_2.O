@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Mail;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Stripe\Stripe;
 use Illuminate\Support\Str;
 // use Stripe\Exception\CardException;
@@ -63,12 +64,12 @@ class PaymentController extends Controller
             try {
                 DB::beginTransaction();
                 // Create a customer with a payment source
-                $token = 'tok_visa';
-                // $token = $request->token;
-                // if (!$token) {
-                //     DB::rollback();
-                //     return $this->output(false, 'Card Token not found.', 400);
-                // }
+                // $token = 'tok_visa';
+                $token = $request->token;
+                if (!$token) {
+                    DB::rollback();
+                    return $this->output(false, 'Card Token not found.', 400);
+                }
                 $itemNumbers = [];
                 $itemTypes = [];
 
@@ -102,6 +103,7 @@ class PaymentController extends Controller
                     ],
                 ]);
 
+
                 $charge = $stripe->charges->create([
                     'customer' => $customer->id,
                     'amount' => $request->payment_price * 100,
@@ -111,6 +113,21 @@ class PaymentController extends Controller
                     'metadata' => [
                         'item_ids' => implode(', ', $itemNumbers),
                     ]
+                ]);
+
+                // Create Invoice
+                $invoiceStripe = $stripe->invoices->create([
+                    'customer' => $customer->id,
+                    'auto_advance' => false,
+                ]);
+
+                // Create Invoice Items
+                $invoice_item = $stripe->invoiceItems->create([
+                    'customer' => $customer->id,
+                    'invoice' => $invoiceStripe->id,
+                    'amount' => $request->payment_price * 100,
+                    'currency' => $request->currency,
+                    'description' => $request->item_numbers,
                 ]);
 
                 $chargeJson = $charge->jsonSerialize();
@@ -152,6 +169,10 @@ class PaymentController extends Controller
                         } else {
                             $numbers_list = Extension::where('name', $itemNumber)->first();
                             if ($numbers_list) {
+                                $numbers_list->startingdate = date('Y-m-d H:i:s');
+                                $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                                $numbers_list->host = 'dynamic';
+                                $numbers_list->sip_temp = 'WEBRTC';
                                 $numbers_list->status = 1;
                                 $numbers_list->save();
                             } else {
@@ -181,6 +202,9 @@ class PaymentController extends Controller
 
                     DB::commit();
                     $response['payment'] = $payment->toArray();
+                    // Finalize and Pay the Invoice
+                    $finalizedInvoice = $stripe->invoices->finalizeInvoice($invoiceStripe->id);
+                    $paidInvoice = $stripe->invoices->pay($finalizedInvoice->id);
                     return $this->output(true, 'Payment successfully.', $response, 200);
                 } else {
                     DB::rollback();
@@ -374,12 +398,12 @@ class PaymentController extends Controller
         try {
             DB::beginTransaction();
             // Create a customer with a payment source
-            $token = 'tok_visa';
-            // $token = $request->token;
-            // if (!$token) {
-            //     DB::rollback();
-            //     return $this->output(false, 'Card Token not found.', 400);
-            // }
+            // $token = 'tok_visa';
+            $token = $request->token;
+            if (!$token) {
+                DB::rollback();
+                return $this->output(false, 'Card Token not found.', 400);
+            }
 
 
             $customer = $stripe->customers->create([
@@ -481,6 +505,9 @@ class PaymentController extends Controller
                 }
                 $response = $payment->toArray();
                 DB::commit();
+                // Finalize and Pay the Invoice
+                $finalizedInvoice = $stripe->invoices->finalizeInvoice($invoiceStripe->id);
+                $paidInvoice = $stripe->invoices->pay($finalizedInvoice->id);
                 return $this->output(true, 'Payment Added To Wallet successfully.', $response, 200);
             } else {
                 DB::rollback();
@@ -597,6 +624,10 @@ class PaymentController extends Controller
                     } else {
                         $numbers_list = Extension::where('name', $itemNumber)->first();
                         if ($numbers_list) {
+                            $numbers_list->startingdate = date('Y-m-d H:i:s');
+                            $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                            $numbers_list->host = 'dynamic';
+                            $numbers_list->sip_temp = 'WEBRTC';
                             $numbers_list->status = 1;
                             $numbers_list->save();
                         } else {

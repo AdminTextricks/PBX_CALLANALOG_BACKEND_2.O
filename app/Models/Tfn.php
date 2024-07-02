@@ -12,7 +12,7 @@ class Tfn extends Model
 
     protected $table = 'tfns';
     protected $fillable = [
-        'company_id', 'assign_by', 'plan_id', 'tfn_number', 'tfn_provider', 'tfn_group_id', 'country_id', 'tfn_type_id', 'tfn_type_number', 'activated', 'reserved', 'reserveddate', 'reservedexpirationdate', 'monthly_rate', 'connection_charge', 'selling_rate', 'aleg_retail_min_duration', 'aleg_billing_block', 'startingdate', 'expirationdate', 'status',
+        'company_id', 'assign_by', 'plan_id', 'tfn_number', 'tfn_provider', 'tfn_group_id', 'country_id', 'time_condition', 'time_condition_id', 'activated', 'reserved', 'reserveddate', 'reservedexpirationdate', 'monthly_rate', 'connection_charge', 'selling_rate', 'aleg_retail_min_duration', 'aleg_billing_block', 'startingdate', 'expirationdate', 'status',
     ];
 
     public function users()
@@ -42,5 +42,10 @@ class Tfn extends Model
     public function trunks()
     {
         return $this->belongsTo(Trunk::class, 'tfn_provider', 'id');
+    }
+
+    public function tfn_destinations()
+    {
+        return $this->hasMany(TfnDestination::class, 'tfn_id', 'id');
     }
 }
