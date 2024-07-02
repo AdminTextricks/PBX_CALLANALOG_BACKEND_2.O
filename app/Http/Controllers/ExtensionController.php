@@ -90,6 +90,7 @@ class ExtensionController extends Controller
             'callerid'          => 'required_if:callgroup,1',                                    
             'secret'            => 'required',
             'barge'             => 'required', //Yes ro no(0,1)
+            'recording'         => 'required', //Yes ro no(0,1)
             'mailbox'           => 'required', //voice mail yes or no
             'voice_email'       => 'required_if:mailbox,1',
         ],[
@@ -105,124 +106,131 @@ class ExtensionController extends Controller
             //$extension_name = explode(',',$input['extension_name']);
             $extension_name = $input['name'];
             $Company = Company::where('id', $request->company_id)->first();
-            $reseller_id = '';
-            if($Company->parent_id > 1){
-                $price_for = 'Reseller';
-                $reseller_id = $Company->parent_id;
-            }else{
-                $price_for = 'Company';
-            }            
-            $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'Extension');
-            if($item_price_arr['Status'] == 'true'){
-                $item_price = $item_price_arr['Extension_price'];
-                if (is_array($extension_name)) {
-                    $VoiceMail = $ids = [];
-                    $status = '0';
-                    $startingdate = $expirationdate = $host = $sip_temp = NULL;
-                    if($Company->plan_id == 2){
-                        $status = '1';
-                        $startingdate = Carbon::now();
-                        $expirationdate =  $startingdate->addDays(180);
-                        $host = 'dynamic';
-                        $sip_temp = 'WEBRTC';
-                    }
-                    foreach ($extension_name as $item) {
-                        $data = $Cart = [];
-                        $data = [
-                            'country_id'        => $request->country_id,
-                            'company_id'        => $request->company_id,
-                            'name'	            => $item,
-                            'callbackextension' => $request->callbackextension,
-                            'account_code'      => $Company->account_code,
-                            'agent_name'        => $request->agent_name,
-                            'callgroup'         => $request->callgroup,
-                            'callerid' 	        => $request->callerid,
-                            'secret' 	        => $request->secret,
-                            'barge'             => $request->barge,
-                            'mailbox'           => $request->mailbox,
-                            'regexten'          => $item,
-                            'startingdate'      => $startingdate,
-                            'expirationdate'    => $expirationdate,
-                            'fromdomain'        => 'NULL',
-                            'amaflags'          => 'billing',
-                            'canreinvite'       => 'no',
-                            'context'           => 'callanalog',
-                            'dtmfmode'          => 'RFC2833',
-                            'host'              => $host,
-                            'sip_temp'          => $sip_temp,
-                            'insecure'          => 'port,invite',
-                            'language'          => 'en',
-                            'nat'               => 'force_rport,comedia',
-                            'qualify'           => 'yes',
-                            'rtptimeout'        => '60',
-                            'rtpholdtimeout'    => '300',
-                            'type'              => 'friend',
-                            'username'          => $item, 
-                            'disallow'          => 'ALL',
-                            'allow'             => 'g729,g723,ulaw,gsm',
-                            'created_at'        => Carbon::now(),
-                            'updated_at'        => Carbon::now(),
-                            'status'            => $status,
-                        ];
-                        $id = DB::table('extensions')->insertGetId($data);
-                        $ids[] = $id;
-                        if($Company->plan_id == 1){
-                            $Cart = [
+            if($Company){
+                $reseller_id = '';
+                if($Company->parent_id > 1){
+                    $price_for = 'Reseller';
+                    $reseller_id = $Company->parent_id;
+                }else{
+                    $price_for = 'Company';
+                }            
+                $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'Extension');
+                if($item_price_arr['Status'] == 'true'){
+                    $item_price = $item_price_arr['Extension_price'];
+                    if (is_array($extension_name)) {
+                        $VoiceMail = $ids = [];
+                        $status = '0';
+                        $startingdate = $expirationdate = $host = $sip_temp = NULL;
+                        if($Company->plan_id == 2){
+                            $status = '1';
+                            $startingdate = Carbon::now();
+                            $expirationdate =  $startingdate->addDays(179);
+                            $host = 'dynamic';
+                            $sip_temp = 'WEBRTC';
+                        }
+                        foreach ($extension_name as $item) {
+                            $data = $Cart = [];
+                            $data = [
+                                'country_id'        => $request->country_id,
                                 'company_id'        => $request->company_id,
-                                'item_id'           => $id,
-                                'item_number'       => $item,
-                                'item_type'         => 'Extension',
-                                'item_price'        => $item_price,
+                                'name'	            => $item,
+                                'callbackextension' => $request->callbackextension,
+                                'account_code'      => $Company->account_code,
+                                'agent_name'        => $request->agent_name,
+                                'callgroup'         => $request->callgroup,
+                                'callerid' 	        => $request->callerid,
+                                'secret' 	        => $request->secret,
+                                'barge'             => $request->barge,
+                                'recording'         => $request->recording,
+                                'mailbox'           => $request->mailbox,
+                                'regexten'          => $item,
+                                'startingdate'      => Carbon::now(),
+                                'expirationdate'    => $expirationdate,
+                                'fromdomain'        => 'NULL',
+                                'amaflags'          => 'billing',
+                                'canreinvite'       => 'no',
+                                'context'           => 'callanalog',
+                                'dtmfmode'          => 'RFC2833',
+                                'host'              => $host,
+                                'sip_temp'          => $sip_temp,
+                                'insecure'          => 'port,invite',
+                                'language'          => 'en',
+                                'nat'               => 'force_rport,comedia',
+                                'qualify'           => 'yes',
+                                'rtptimeout'        => '60',
+                                'rtpholdtimeout'    => '300',
+                                'type'              => 'friend',
+                                'username'          => $item, 
+                                'disallow'          => 'ALL',
+                                'allow'             => 'g729,g723,ulaw,gsm',
                                 'created_at'        => Carbon::now(),
                                 'updated_at'        => Carbon::now(),
+                                'status'            => $status,
                             ];
-                            $cartIds = DB::table('carts')->insertGetId($Cart);
-                        }else{
-                            $webrtc_template_url = config('app.webrtc_template_url');
-                            $addExtensionFile = $webrtc_template_url;
-                            $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
-                            $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code,  $ConfTemplate->template_contents);
+                           
+                            $id = DB::table('extensions')->insertGetId($data);
+                            $ids[] = $id;
+                            if($Company->plan_id == 1){
+                                $Cart = [
+                                    'company_id'        => $request->company_id,
+                                    'item_id'           => $id,
+                                    'item_number'       => $item,
+                                    'item_type'         => 'Extension',
+                                    'item_price'        => $item_price,
+                                    'created_at'        => Carbon::now(),
+                                    'updated_at'        => Carbon::now(),
+                                ];
+                                $cartIds = DB::table('carts')->insertGetId($Cart);
+                            }else{
+                                $webrtc_template_url = config('app.webrtc_template_url');
+                                $addExtensionFile = $webrtc_template_url;
+                                $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
+                                $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code,  $ConfTemplate->template_contents);
+                            }
+                            if($request->mailbox == '1'){
+                                array_push($VoiceMail, [
+                                    'company_id'=> $request->company_id,
+                                    'context'   => 'default',
+                                    'mailbox'   => $item,
+                                    'fullname'  => $request->agent_name,
+                                    'email'     => $request->voice_email,
+                                    'timezone'  => 'central',
+                                    'attach'    => 'yes',
+                                    'review'    => 'no',
+                                    'operator'  => 'no',
+                                    'envelope'  => 'no',
+                                    'sayduration'   => 'no',
+                                    'saydurationm'  => '1',
+                                    'sendvoicemail' => 'no',
+                                    'nextaftercmd'  => 'yes',
+                                    'forcename'     => 'no',
+                                    'forcegreetings'=> 'no',
+                                    'hidefromdir'   => 'yes',
+                                    'created_at'    => Carbon::now(),
+                                    'updated_at'    => Carbon::now(),
+                                ]);
+                            }
                         }
+                        // $Extensions = Extension::insert($data);
                         if($request->mailbox == '1'){
-                            array_push($VoiceMail, [
-                                'company_id'=> $request->company_id,
-                                'context'   => 'default',
-                                'mailbox'   => $item,
-                                'fullname'  => $request->agent_name,
-                                'email'     => $request->voice_email,
-                                'timezone'  => 'central',
-                                'attach'    => 'yes',
-                                'review'    => 'no',
-                                'operator'  => 'no',
-                                'envelope'  => 'no',
-                                'sayduration'   => 'no',
-                                'saydurationm'  => '1',
-                                'sendvoicemail' => 'no',
-                                'nextaftercmd'  => 'yes',
-                                'forcename'     => 'no',
-                                'forcegreetings'=> 'no',
-                                'hidefromdir'   => 'yes',
-                                'created_at'    => Carbon::now(),
-                                'updated_at'    => Carbon::now(),
-                            ]);
-                        }
+                            $VoiceMail = VoiceMail::insert($VoiceMail);            
+                        }                    
+                        $response['total_extension'] = count($ids);//$Extensions;//->toArray();
+                        $response['plan_id'] = $Company->plan_id;
+                        DB::commit();
+                        return $this->output(true, 'Extension added successfully.', $response);
+                    }else{
+                        DB::commit();
+                        return $this->output(false, 'Wrong extension value format.');
                     }
-                    // $Extensions = Extension::insert($data);
-                    if($request->mailbox == '1'){
-                        $VoiceMail = VoiceMail::insert($VoiceMail);            
-                    }                    
-                    $response['total_extension'] = count($ids);//$Extensions;//->toArray();
-                    $response['plan_id'] = $Company->plan_id;
-                    DB::commit();
-                    return $this->output(true, 'Extension added successfully.', $response);
                 }else{
                     DB::commit();
-                    return $this->output(false, 'Wrong extension value format.');
-                }
+                    return $this->output(false, $item_price_arr['Message']);
+                } 
             }else{
                 DB::commit();
-                return $this->output(false, $item_price_arr['Message']);
-            } 
+                return $this->output(false, 'Company not exist with us.');
+            }
         } catch(\Exception $e)
         {
             DB::rollback();
@@ -250,7 +258,7 @@ class ExtensionController extends Controller
                         ->where('id', $Extension_id)
                         ->orderBy('id', 'DESC')->get();
 			} else {
-                $data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email')
+                $data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording')
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
@@ -264,7 +272,7 @@ class ExtensionController extends Controller
 		} else {
             $Extension_id = $request->id ?? NULL;
 			if ($Extension_id) {
-				$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email')
+				$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording')
                     ->with('company:id,company_name,email,mobile')
                     ->with('country:id,country_name')
                     ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
@@ -274,7 +282,7 @@ class ExtensionController extends Controller
 					->get();
 			} else {
 				if ($params != "") {
-					$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email')
+					$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording')
                         ->with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
@@ -283,7 +291,7 @@ class ExtensionController extends Controller
                         ->orderBy('id', 'DESC')
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
-					$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email')
+					$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording')
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
@@ -326,6 +334,7 @@ class ExtensionController extends Controller
 					'agent_name'    => 'required',					
 					'secret'	    => 'required',
 					'barge'	        => 'required|in:0,1',
+					'recording'     => 'required|in:0,1',
                     'mailbox'       => 'required|in:0,1',
                     'voice_email'   => 'required_if:mailbox,1',
                     'callgroup'     => 'required|in:0,1',
@@ -390,6 +399,7 @@ class ExtensionController extends Controller
 					$Extension->barge       = $request->barge;
 					$Extension->mailbox     = $request->mailbox;
 					$Extension->callgroup   = $request->callgroup;
+					$Extension->recording   = $request->recording;
                     if($request->callgroup  == 1){
                         $Extension->callerid  = $request->callerid;    
                     }
@@ -454,6 +464,7 @@ class ExtensionController extends Controller
             ->select('id','name', 'agent_name', 'callbackextension','country_id', 'company_id')
             ->where('country_id', $country_id)
             ->where('company_id', $company_id)
+            ->where('status', 1)
             ->orderBy('id', 'DESC')
             ->get();
       	

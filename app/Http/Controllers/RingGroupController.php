@@ -68,7 +68,7 @@ class RingGroupController extends Controller
 			}
 		} catch (\Exception $e) {
 			DB::rollback();
-            Log::error('Error in Adding Ring Group : ' . $e->getMessage());
+           	Log::error('Error in Ring Group Inserting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
 			//return $this->output(false, $e->getMessage());
 			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
 		}
@@ -79,7 +79,7 @@ class RingGroupController extends Controller
 		$perPageNo = isset($request->perpage) ? $request->perpage : 25;
 		$params = $request->params ?? "";
         $user = \Auth::user();
-		if ($request->user()->hasRole('super-admin')) {
+		if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
 			$RingGroup_id = $request->id ?? NULL;
 			if ($RingGroup_id) {
 				$data = RingGroup::select()
@@ -164,7 +164,7 @@ class RingGroupController extends Controller
 		} catch (\Exception $e) {
 			DB::rollback();
 			//return $this->output(false, $e->getMessage());
-            LOG::error('Error in status updating : '  . $e->getMessage());
+            Log::error('Error occurred in Ring Group status updating : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
 			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
 		}
     }
@@ -172,7 +172,7 @@ class RingGroupController extends Controller
     public function getAllActiveRingGroup(Request $request)
     {
 		$user = \Auth::user();
-		if ($request->user()->hasRole('super-admin')) {
+		if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
 				$data = RingGroup::select('*')
 						->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
@@ -182,6 +182,32 @@ class RingGroupController extends Controller
 					->with('company:id,company_name,email,mobile')
                     ->with('country:id,country_name')
 					->where('company_id', '=',  $user->company_id)
+					->where('status', 1)->get();
+		}
+
+		if($data->isNotEmpty()){
+			return $this->output(true, 'Success', $data->toArray());
+		}else{
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
+
+	public function getAllActiveByCompanyAndCountry(Request $request, $country_id, $company_id)
+    {
+		$user = \Auth::user();
+		if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
+				$data = RingGroup::select('*')
+						->with('company:id,company_name,email,mobile')
+                        ->with('country:id,country_name')
+						->where('country_id', $country_id)
+            			->where('company_id', $company_id)
+						->where('status', 1)->get();
+		}else{
+			$data = RingGroup::select('*')
+					->with('company:id,company_name,email,mobile')
+                    ->with('country:id,country_name')
+					->where('company_id', '=',  $user->company_id)
+					->where('country_id', $country_id)            		
 					->where('status', 1)->get();
 		}
 
@@ -245,7 +271,7 @@ class RingGroupController extends Controller
 			}
 		} catch (\Exception $e) {
 			DB::rollback();
-            LOG::error('Error in updating ring group : '. $e->getMessage());
+            Log::error('Error occurred in Ring Group updating : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
 			//return $this->output(false, $e->getMessage());
 			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
 		}	
@@ -271,7 +297,7 @@ class RingGroupController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollback();
-            LOG::error('Error in Deleting ring group : '. $e->getMessage());
+            Log::error('Error occurred in Ring Group Deleting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             //return $this->output(false, $e->getMessage());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
@@ -379,6 +405,7 @@ class RingGroupController extends Controller
 						->where('company_id', $RingData->company_id)
 						->where('country_id', $RingData->country_id)
                         ->whereNotIn('name', $ringExtensions)
+						->where('status' , 1)
                         ->get();
 			$response['Extensions'] = $Extensions;
 			if ($response) {

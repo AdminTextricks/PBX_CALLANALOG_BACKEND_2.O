@@ -26,6 +26,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RingGroupController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\QueueController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -230,6 +231,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'ring-group'], function () {
 		Route::post('/', [RingGroupController::class, 'addRingGroup']);
 		Route::get('/active', [RingGroupController::class, 'getAllActiveRingGroup']);
+		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [RingGroupController::class, 'getAllActiveByCompanyAndCountry']);
 		Route::get('/{id?}', [RingGroupController::class, 'getAllRingGroup']);
 		Route::put('/{id}', [RingGroupController::class, 'updateRingGroup']);
 		Route::patch('/changeStatus/{id}', [RingGroupController::class, 'changeRingGroupStatus']);
@@ -257,6 +259,18 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/paywithwallet', [PaymentController::class, 'PaywithWallet']);
 		Route::post('/addbalance', [PaymentController::class, 'addToWallet']);
 	});	
+
+
+	# Ring Group Manage
+	Route::group(['prefix' => 'queue'], function () {
+		Route::post('/', [QueueController::class, 'addQueue']);
+		Route::get('/active', [QueueController::class, 'getAllActiveQueue']);
+		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [QueueController::class, 'getAllActiveByCompanyAndCountry']);
+		Route::get('/{id?}', [QueueController::class, 'getAllQueue']);
+		Route::put('/{id}', [QueueController::class, 'updateQueue']);
+		Route::patch('/changeStatus/{id}', [QueueController::class, 'changeQueueStatus']);
+		Route::delete('/{id}', [QueueController::class, 'deleteQueue']);
+	});
 	
 });
 /*
