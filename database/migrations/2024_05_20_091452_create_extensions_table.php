@@ -18,7 +18,6 @@ return new class extends Migration
             $table->dateTime('expirationdate')->nullable();
 			$table->unsignedBigInteger('company_id');
             $table->string('name',50)->unique()->index();
-            //$table->string('intercom',50)->unique()->index();
             $table->string('account_code',20)->index();            
             $table->string('regexten',20)->index();
             $table->string('amaflags',10)->nullable();
@@ -57,6 +56,7 @@ return new class extends Migration
             $table->string('fullcontact',100)->nullable();
             $table->string('agent_name',150)->nullable();
             $table->enum('barge',['0','1'])->default(0); 
+            $table->enum('recording',['0','1'])->default(1);
             $table->enum('sip_temp',['WEBRTC','SOFTPHONE'])->nullable();
             $table->string('regserver',100)->nullable();
             $table->string('lastms',100)->nullable();
