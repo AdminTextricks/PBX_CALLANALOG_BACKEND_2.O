@@ -152,7 +152,9 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	# Tfn Number 
 	Route::group(['prefix' => 'tfn'], function () {
+		Route::get('/destination-type', [TfnController::class, 'destinationType']);
 		Route::post('/assign-tfn-number', [TfnController::class, 'assignTfnMain']);
+		Route::post('/assign-destination', [TfnController::class, 'assignDestinationType']);
 		Route::post('/upload-csv', [TfnController::class, 'uploadCSVfile']);
 		Route::post('/search', [PurchaseTfnNumberController::class, 'searchTfn']);
 		Route::get('/active', [TfnController::class, 'getAllActiveTfns']);

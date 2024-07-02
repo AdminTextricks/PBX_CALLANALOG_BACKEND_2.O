@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Company;
+use App\Models\DestinationType;
 use App\Models\MainPrice;
 use App\Models\RemovedTfn;
 use App\Models\ResellerPrice;
@@ -722,6 +723,18 @@ class TfnController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return $this->output(false, 'An error occurred while assigning the destination. Please try again!', [], 500);
+        }
+    }
+
+
+    public function destinationType(Request $request)
+    {
+        $user = \Auth::user();
+        $destinationtypes = DestinationType::get();
+        if ($destinationtypes->isNotEmpty()) {
+            return $this->output(true, 'success', $destinationtypes->toArray(), 200);
+        } else {
+            return $this->output(false, "No price record found!", 200);
         }
     }
 }
