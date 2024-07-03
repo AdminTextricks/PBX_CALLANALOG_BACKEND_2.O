@@ -47,10 +47,10 @@ class TfnDestination extends Model
         return $this->belongsTo(VoiceMail::class, 'destination_id', 'id');
     }
 
-    // public function queues()
-    // {
-    //     return $this->belongsTo(Queue::class, 'destination_id', 'id');
-    // }
+    public function queues()
+    {
+        return $this->belongsTo(Queue::class, 'destination_id', 'id');
+    }
 
     // public function ivrs()
     // {
