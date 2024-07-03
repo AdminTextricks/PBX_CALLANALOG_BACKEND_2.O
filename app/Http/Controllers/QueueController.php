@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\LOG;
 use App\Models\Queue;
+use App\Models\QueueMember;
 use App\Models\Extension;
 use Validator;
 use Carbon\Carbon;
@@ -297,4 +298,119 @@ class QueueController extends Controller
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
+
+	/*******   Manage Queue Members ********** */
+
+	public function addQueueMember(Request $request)
+	{
+		try {
+			$validator = Validator::make($request->all(), [
+				'queue_id'	=> 'required|numeric|exists:queues,id',
+				'extension.*'	=> 'required|numeric|exists:extensions,name',				
+			]);
+			if ($validator->fails()){
+				return $this->output(false, $validator->errors()->first(), [], 409);
+			}
+			DB::beginTransaction();
+			$input = $request->all();
+			$extension_name = $input['extension'];
+			if (is_array($extension_name)) {
+				$ring_members = array();
+				foreach ($extension_name as $item) {
+					$QueueMember = QueueMember::firstOrCreate ([
+						'queue_id'		=> $request->queue_id,					
+						'membername' 	=> $item,
+						'interface'		=> 'SIP/'.$item,
+					]); 
+				}
+				if($QueueMember){
+					$QueueMember = QueueMember::where('queue_id', $request->queue_id)->get();					
+					$response = $QueueMember->toArray();
+					DB::commit();
+					return $this->output(true, 'Queue Member updated successfully.', $response, 200);
+				}else{
+					DB::commit();
+					return $this->output(false, 'Error occurred in Queue Member Updating. Please try again!.', [], 200);
+				}
+			}else{
+				DB::commit();
+				return $this->output(false, 'Wrong extension value format.');
+			}
+		} catch (\Exception $e) {
+			DB::rollback();
+            Log::error('Error in Adding Queue Member : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+			//return $this->output(false, $e->getMessage());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+		}	
+	}
+
+	public function removeQueueMember(Request $request)
+	{
+		try {
+			$validator = Validator::make($request->all(), [
+				'queue_id'	=> 'required|numeric|exists:queues,id',
+				'extension.*'	=> 'required|numeric|exists:extensions,name',				
+			]);
+			if ($validator->fails()){
+				return $this->output(false, $validator->errors()->first(), [], 409);
+			}
+			DB::beginTransaction();
+			$input = $request->all();
+			$extension_name = $input['extension'];
+			$queue_id = $input['queue_id'];
+			$QueueMember = QueueMember::whereIn('membername', $extension_name)
+							->where('queue_id', $queue_id)->get()->toArray();
+			
+			if(!empty($QueueMember)){
+				if(is_array($extension_name)){				
+					$resdelete = QueueMember::whereIn('membername', $extension_name)
+								->where('queue_id', $queue_id)->delete();
+					if($resdelete) {
+						DB::commit();
+						return $this->output(true,'Success',$resdelete,200);
+					}else{
+						DB::commit();
+						return $this->output(false, 'Error occurred in Queue Member removing. Please try again!.', [], 209);                    
+					}
+				}else{
+					DB::commit();
+					return $this->output(false, 'Wrong extension value format.');
+				}
+			}else{
+				DB::commit();
+				return $this->output(false, 'Queue Member not exist. Please select correct value.');
+			}
+		} catch (\Exception $e) {
+			DB::rollback();
+            Log::error('Error in removing Queue Member : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+		}	
+	}
+
+	public function getQueueMemberByQueueId(Request $request, $queue_id)
+	{
+		$response = array();
+		$QueueData = Queue::select()->where('id', $queue_id)->first();
+		if($QueueData){
+			$QueueData->country_id;
+			$QueueData->company_id;
+			$QueueMember = QueueMember::select()->where('queue_id', $queue_id)->get(); 
+			$response['QueueMember'] = $QueueMember;
+			$queueExtensions = array_column($QueueMember->toArray(), 'membername');
+			$Extensions = Extension::select('id', 'name')
+						->where('company_id', $QueueData->company_id)
+						->where('country_id', $QueueData->country_id)
+                        ->whereNotIn('name', $queueExtensions)
+						->where('status' , 1)
+                        ->get();
+			$response['Extensions'] = $Extensions;
+			if ($response) {
+				return $this->output(true, 'Success', $response, 200);
+			} else {
+				return $this->output(true, 'No Record Found', []);
+			}
+		}else{
+			return $this->output(false,'This Queue is not exist with us. Please try again!', [],409);
+		}
+	}
 }

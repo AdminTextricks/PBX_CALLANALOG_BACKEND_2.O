@@ -86,12 +86,12 @@ class ExtensionController extends Controller
             'name.*'            => 'required|unique:extensions,name',
             'callbackextension' => 'required|max:50',            
             'agent_name'        => 'required|max:150',
-            'callgroup'         => 'required', // Outbound call yes or no
+            'callgroup'         => 'required|in:0,1', // Outbound call yes or no
             'callerid'          => 'required_if:callgroup,1',                                    
             'secret'            => 'required',
-            'barge'             => 'required', //Yes ro no(0,1)
-            'recording'         => 'required', //Yes ro no(0,1)
-            'mailbox'           => 'required', //voice mail yes or no
+            'barge'             => 'required|in:0,1', //Yes ro no(0,1)
+            'recording'         => 'required|in:0,1', //Yes ro no(0,1)
+            'mailbox'           => 'required|in:0,1', //voice mail yes or no
             'voice_email'       => 'required_if:mailbox,1',
         ],[
             'name'  => 'This Extension is already exist with us. Please try with different.',
@@ -113,7 +113,7 @@ class ExtensionController extends Controller
                     $reseller_id = $Company->parent_id;
                 }else{
                     $price_for = 'Company';
-                }            
+                }
                 $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'Extension');
                 if($item_price_arr['Status'] == 'true'){
                     $item_price = $item_price_arr['Extension_price'];
@@ -258,7 +258,7 @@ class ExtensionController extends Controller
                         ->where('id', $Extension_id)
                         ->orderBy('id', 'DESC')->get();
 			} else {
-                $data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording')
+                $data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording','dial_timeout')
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
@@ -272,7 +272,7 @@ class ExtensionController extends Controller
 		} else {
             $Extension_id = $request->id ?? NULL;
 			if ($Extension_id) {
-				$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording')
+				$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording','dial_timeout')
                     ->with('company:id,company_name,email,mobile')
                     ->with('country:id,country_name')
                     ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
@@ -282,7 +282,7 @@ class ExtensionController extends Controller
 					->get();
 			} else {
 				if ($params != "") {
-					$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording')
+					$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording','dial_timeout')
                         ->with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
@@ -291,7 +291,7 @@ class ExtensionController extends Controller
                         ->orderBy('id', 'DESC')
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
-					$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording')
+					$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording','dial_timeout')
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
@@ -340,6 +340,7 @@ class ExtensionController extends Controller
                     'callgroup'     => 'required|in:0,1',
                     'callerid'      => 'required_if:callgroup,1',
                     'sip_temp'      => 'required|in:WEBRTC,SOFTPHONE',
+                    'dial_timeout'  => 'required',
 				]);
 				if ($validator->fails()){
 					return $this->output(false, $validator->errors()->first(), [], 409);
@@ -400,6 +401,7 @@ class ExtensionController extends Controller
 					$Extension->mailbox     = $request->mailbox;
 					$Extension->callgroup   = $request->callgroup;
 					$Extension->recording   = $request->recording;
+					$Extension->dial_timeout   = $request->dial_timeout;
                     if($request->callgroup  == 1){
                         $Extension->callerid  = $request->callerid;    
                     }

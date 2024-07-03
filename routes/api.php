@@ -239,7 +239,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	# Manage Ring Member
 	Route::group(['prefix' => 'ring-member'], function () {
 		Route::post('/', [RingGroupController::class, 'addRingMember']);
-		Route::get('/{ring_id?}', [RingGroupController::class, 'getRingMemberByRingId']);
+		Route::get('/{ring_id}', [RingGroupController::class, 'getRingMemberByRingId']);
 		Route::delete('/', [RingGroupController::class, 'removeRingMember']);
 	});
 
@@ -268,6 +268,13 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::put('/{id}', [QueueController::class, 'updateQueue']);
 		Route::patch('/changeStatus/{id}', [QueueController::class, 'changeQueueStatus']);
 		Route::delete('/{id}', [QueueController::class, 'deleteQueue']);
+	});
+
+	# Manage Queue Member
+	Route::group(['prefix' => 'queue-member'], function () {
+		Route::post('/', [QueueController::class, 'addQueueMember']);
+		Route::get('/{queue_id}', [QueueController::class, 'getQueueMemberByQueueId']);
+		Route::delete('/', [QueueController::class, 'removeQueueMember']);
 	});
 	
 });

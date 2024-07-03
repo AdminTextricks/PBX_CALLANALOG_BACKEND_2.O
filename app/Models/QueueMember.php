@@ -10,10 +10,9 @@ class QueueMember extends Model
     use HasFactory;
 
     protected $fillable = [
-        'uniqueid',
+        'id',
         'queue_id',
         'membername',
-        'queue_name',
         'interface',
         'penalty',
         'paused',
