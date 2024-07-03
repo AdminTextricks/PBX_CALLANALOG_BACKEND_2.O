@@ -399,6 +399,7 @@ class RingGroupController extends Controller
 			$RingData->country_id;
 			$RingData->company_id;
 			$RingMember = RingMember::select()->where('ring_id', $ring_id)->get(); 
+			$response['Ringno'] = $RingData->ringno;
 			$response['RingMember'] = $RingMember;
 			$ringExtensions = array_column($RingMember->toArray(), 'extension');
 			$Extensions = Extension::select('id', 'name')
