@@ -336,7 +336,7 @@ class TfnController extends Controller
             $tfn->tfn_destinations->each(function ($destination) {
                 switch ($destination->destination_type_id) {
                     case 1:
-                        $destination->load('queues:id');
+                        $destination->load('queues:id,name');
                         break;
                     case 2:
                         $destination->load('extensions:id,name');
@@ -409,7 +409,7 @@ class TfnController extends Controller
             $tfn->tfn_destinations->each(function ($destination) {
                 switch ($destination->destination_type_id) {
                     case 1:
-                        $destination->load('queues:id');
+                        $destination->load('queues:id,name');
                         break;
                     case 2:
                         $destination->load('extensions:id,name');
