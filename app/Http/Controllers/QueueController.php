@@ -395,6 +395,7 @@ class QueueController extends Controller
 			$QueueData->country_id;
 			$QueueData->company_id;
 			$QueueMember = QueueMember::select()->where('queue_id', $queue_id)->get(); 
+			$response['QueueName'] = $QueueData->name;
 			$response['QueueMember'] = $QueueMember;
 			$queueExtensions = array_column($QueueMember->toArray(), 'membername');
 			$Extensions = Extension::select('id', 'name')
