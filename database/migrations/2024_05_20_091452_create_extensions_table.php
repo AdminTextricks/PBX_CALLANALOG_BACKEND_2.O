@@ -61,6 +61,7 @@ return new class extends Migration
             $table->string('regserver',100)->nullable();
             $table->string('lastms',100)->nullable();
             $table->string('callbackextension',100)->nullable();
+            $table->string('dial_timeout ',10)->default(20);
             $table->tinyInteger('status')->default(0);
             $table->timestamps();
             $table->foreign('company_id')->references('id')->on('companies');

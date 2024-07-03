@@ -341,7 +341,7 @@ class RingGroupController extends Controller
 			}
 		} catch (\Exception $e) {
 			DB::rollback();
-            Log::error('Error in updating ring Member : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            Log::error('Error in adding Ring Member : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
 			//return $this->output(false, $e->getMessage());
 			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
 		}	
