@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('mailbox',20)->default('0')->index();
             $table->string('password',20)->default('0');
             $table->string('fullname',150)->nullable();
-            $table->string('email',250)->nullable();
+            $table->string('email',250)->nullable()->index();
             $table->string('pager',50)->nullable();
             $table->string('timezone',100)->default('central');
             $table->string('attach',10)->default('yes');

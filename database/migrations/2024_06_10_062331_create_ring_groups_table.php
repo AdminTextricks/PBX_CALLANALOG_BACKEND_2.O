@@ -15,7 +15,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->string('country_id',100)->index()->nullable()->default(0);
             $table->unsignedBigInteger('company_id');
-            $table->string('ringno',150)->nullable();
+            $table->string('ringno',150)->nullable()->index();
             $table->string('strategy',150)->nullable();
             $table->string('ringtime',50)->nullable();
             $table->string('description',250)->nullable();

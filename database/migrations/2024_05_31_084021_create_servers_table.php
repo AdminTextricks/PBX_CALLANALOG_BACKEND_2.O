@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('servers', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name')->nullable();
-            $table->string('ip')->nullable();
+            $table->string('ip')->nullable()->index();
             $table->string('domain')->nullable();
             $table->tinyInteger('status')->nullable()->default(1);
             $table->timestamps();            

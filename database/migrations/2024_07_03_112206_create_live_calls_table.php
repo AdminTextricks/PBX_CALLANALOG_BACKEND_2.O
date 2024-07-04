@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('live_calls', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->integer('company_id')->nullable()->index();
-            $table->integer('account_code')->nullable()->index();
+            $table->string('account_code',20)->nullable()->index();
             $table->integer('country_id')->nullable();
             $table->string('agent_channel', 200)->nullable();
             $table->string('agent_name', 200)->nullable();

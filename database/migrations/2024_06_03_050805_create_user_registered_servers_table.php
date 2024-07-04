@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('user_registered_servers', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('server_id')->nullable();
+            $table->string('server_id')->nullable()->index();
             $table->unsignedBigInteger('company_id');
-            $table->string('domain')->nullable();
+            $table->string('domain')->nullable()->index();
             $table->string('sip_port')->nullable();
             $table->timestamps();    
             $table->foreign('company_id')->references('id')->on('companies');
