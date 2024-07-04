@@ -262,7 +262,7 @@ class ExtensionController extends Controller
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-                        ->orderBy('extensions.id', 'DESC')
+                        ->orderBy('extensions.extensions.id', 'DESC')
                         ->paginate(
                         $perPage = $perPageNo,
                         $columns = ['*'],
@@ -277,7 +277,7 @@ class ExtensionController extends Controller
                     ->with('country:id,country_name')
                     ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
 					->where('id', $Extension_id)
-					->where('company_id', '=',  $user->company_id)
+					->where('extensions.company_id', '=',  $user->company_id)
                     ->orderBy('id', 'DESC')
 					->get();
 			} else {
@@ -286,7 +286,7 @@ class ExtensionController extends Controller
                         ->with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-						->where('company_id', '=',  $user->company_id)
+						->where('extensions.company_id', '=',  $user->company_id)
 						//->orWhere('did_number', 'LIKE', "%$params%")
                         ->orderBy('id', 'DESC')
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
@@ -295,7 +295,7 @@ class ExtensionController extends Controller
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-						->where('company_id', '=',  $user->company_id)
+						->where('extensions.company_id', '=',  $user->company_id)
 						->orderBy('id', 'DESC')
                         ->paginate(
 							$perPage = $perPageNo,

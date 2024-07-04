@@ -167,12 +167,12 @@ class QueueController extends Controller
     {
 		$user = \Auth::user();
 		if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
-				$data = Queue::select('company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context')
+				$data = Queue::select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context')
 						->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
 						->where('status', 1)->get();
 		}else{
-			$data = Queue::select('company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context')
+			$data = Queue::select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context')
 					->with('company:id,company_name,email,mobile')
                     ->with('country:id,country_name')
 					->where('company_id', '=',  $user->company_id)

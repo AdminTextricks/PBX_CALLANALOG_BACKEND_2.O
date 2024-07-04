@@ -27,6 +27,7 @@ use App\Http\Controllers\RingGroupController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\QueueController;
+use App\Http\Controllers\ConferenceController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -259,7 +260,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	});	
 
 
-	# Ring Group Manage
+	# Queue Manage
 	Route::group(['prefix' => 'queue'], function () {
 		Route::post('/', [QueueController::class, 'addQueue']);
 		Route::get('/active', [QueueController::class, 'getAllActiveQueue']);
@@ -275,6 +276,17 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/', [QueueController::class, 'addQueueMember']);
 		Route::get('/{queue_id}', [QueueController::class, 'getQueueMemberByQueueId']);
 		Route::delete('/', [QueueController::class, 'removeQueueMember']);
+	});
+
+	# Conferences Manage
+	Route::group(['prefix' => 'conference'], function () {
+		Route::post('/', [ConferenceController::class, 'addConference']);
+		Route::get('/active', [ConferenceController::class, 'getAllActiveConference']);
+		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [QueueController::class, 'getAllActiveByCompanyAndCountry']);
+		Route::get('/{id?}', [ConferenceController::class, 'getAllConference']);
+		Route::put('/{id}', [ConferenceController::class, 'updateQueue']);
+		Route::patch('/changeStatus/{id}', [ConferenceController::class, 'changeConferenceStatus']);
+		Route::delete('/{id}', [ConferenceController::class, 'deleteQueue']);
 	});
 	
 });

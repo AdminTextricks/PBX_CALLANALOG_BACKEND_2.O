@@ -15,7 +15,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->string('uniqueid', 100)->nullable();
             $table->integer('company_id')->nullable()->index();
-            $table->integer('account_code')->nullable()->index();
+            $table->string('account_code',20)->nullable()->index();
             $table->integer('country_id')->nullable();
             $table->dateTime('call_date')->nullable()->index();
             $table->dateTime('call_start_time')->nullable();
