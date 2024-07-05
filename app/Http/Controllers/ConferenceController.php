@@ -206,4 +206,85 @@ class ConferenceController extends Controller
 			return $this->output(true, 'No Record Found', []);
 		}
 	}
+
+    public function updateConference(Request $request, $id)
+	{
+		try { 
+			DB::beginTransaction(); 
+			$Conference = Conference::find($id);		
+			if(is_null($Conference)){
+				DB::commit();
+				return $this->output(false, 'This Conference not exist with us. Please try again!.', [], 409);
+			}
+			else
+			{
+				$validator = Validator::make($request->all(), [
+					'country_id'    => 'required|numeric|exists:countries,id',
+					'company_id'	=> 'required|numeric|exists:companies,id',	
+					'confno'	    => 'required|unique:conferences,confno,'.$Conference->id,
+					'conf_name'     => 'required|string|max:200',
+				    'pin'           => 'required|numeric',
+				    'adminpin'      => 'required|string|max:20',
+				    'maxusers'      => 'required|numeric',
+				]);
+				if ($validator->fails()){
+					return $this->output(false, $validator->errors()->first(), [], 409);
+				}				
+				$ConferenceOld = Conference::where('confno', $request->confno)
+							->where('company_id', $request->company_id)
+							->where('country_id', $request->country_id)
+							->where('id','!=', $id)
+							->first();
+				if(!$ConferenceOld){
+					$Conference->conf_name  = $request->conf_name;
+					$Conference->pin        = $request->pin;
+					$Conference->adminpin   = $request->adminpin;
+					$Conference->maxusers   = $request->maxusers;
+					$ConferencesRes          = $Conference->save();
+					if($ConferencesRes){
+						$Conference = Conference::where('id', $id)->first();        
+						$response = $Conference->toArray();
+						DB::commit();
+						return $this->output(true, 'Conference updated successfully.', $response, 200);
+					}else{
+						DB::commit();
+						return $this->output(false, 'Error occurred in Conference Updating. Please try again!.', [], 200);
+					}					
+				}else{
+					DB::commit();
+					return $this->output(false, 'This Conference already exist with us.',[], 409);
+				}			
+			}
+		} catch (\Exception $e) {
+			DB::rollback();
+            Log::error('Error occurred in Conference updating : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+		}	
+	}
+
+    public function deleteConference(Request $request, $id)
+    {
+        try {  
+            DB::beginTransaction();            
+            $Conference = Conference::where('id', $id)->first();
+            if($Conference){
+                $resdelete = $Conference->delete();
+                if ($resdelete) {
+                    DB::commit();
+                    return $this->output(true,'Success',200);
+                } else {
+                    DB::commit();
+                    return $this->output(false, 'Error occurred in Conference deleting. Please try again!.', [], 209);                    
+                }
+            }else{
+                DB::commit();
+                return $this->output(false,'Conference not exist with us.', [], 409);
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error occurred in Conference Deleting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            //return $this->output(false, $e->getMessage());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
 }
