@@ -737,4 +737,32 @@ class TfnController extends Controller
             return $this->output(false, "No price record found!", 200);
         }
     }
+    public function getAllActiveTFNByCompanyAndCountry(Request $request, $country_id, $company_id)
+    {
+		$user = \Auth::user();
+		if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
+				$data = Tfn::select('id','tfn_number','country_id', 'company_id')
+						/*->with('company:id,company_name,email,mobile')
+                        ->with('country:id,country_name')*/
+						->where('country_id', $country_id)
+            			->where('company_id', $company_id)
+						->where('status', 1)
+                        ->where('activated' , 1)->get();
+		}else{
+			$data = Tfn::select('id','tfn_number','country_id', 'company_id')
+					/*->with('company:id,company_name,email,mobile')
+                    ->with('country:id,country_name')*/
+					->where('company_id', '=',  $user->company_id)
+					->where('country_id', $country_id)            		
+					->where('status', 1)
+                    ->where('activated' , 1)->get();
+		}
+
+		if($data->isNotEmpty()){
+			return $this->output(true, 'Success', $data->toArray());
+		}else{
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
+    
 }
