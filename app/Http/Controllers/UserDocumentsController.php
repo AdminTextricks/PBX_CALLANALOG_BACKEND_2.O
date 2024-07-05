@@ -256,4 +256,63 @@ class UserDocumentsController extends Controller
             return response()->json(['error' => 'An error occurred while creating product: ' . $e->getMessage()], 400);
         }
     }
+
+
+    public function changeMultipleDocumentStatus(Request $request)
+	{
+		$validator = Validator::make($request->all(), [
+            'id_array' => 'required|array',
+			'status' => 'required',
+		]);
+		if ($validator->fails()) {
+			return $this->output(false, $validator->errors()->first(), [], 409);
+		}
+        $id_array = $request->input('id_array');
+        $response = array();
+        foreach($id_array as $key => $id){
+            $userDocument = UserDocuments::find($id);
+            if (is_null($userDocument)) {
+                return $this->output(false, 'This User Documents details not exist with us. Please try again!.', [], 200);
+            } else {
+                $userDocument->status = $request->status;
+                $UserDocumentsRes = $userDocument->save();
+                if ($UserDocumentsRes) {
+                    $user_id = $userDocument->user_id;
+                    $UserDocuments = UserDocuments::where('user_id', $user_id)->get();
+                    //dd($UserDocuments[0]->user_id);
+                    
+                    $UserDetails = User::find($user_id);
+                    $docStatusPending   = 0;
+                    $docStatusRejected  = 0;
+                    $docStatusApproved  = 0;
+                    foreach($UserDocuments as $key => $value){
+                        if($value->status == 2){
+                            $docStatusRejected  = 1;
+                        }
+                        if($value->status == 1){
+                            $docStatusApproved  = 1;                       
+                        }
+                        if($value->status == 0){
+                            $docStatusPending   = 1;                      
+                        }
+                    }
+                    if($docStatusRejected == 1){
+                        $UserDetails->is_verified_doc = 3;
+                        $UserDetails->save();
+                    }elseif($docStatusRejected == 0 && $docStatusPending == 0 && $docStatusApproved == 1 ){
+                        $UserDetails->is_verified_doc = 1;
+                        $UserDetails->save();
+                    }else{
+                        $UserDetails->is_verified_doc = 2;
+                        $UserDetails->save();
+                    }                
+                    $response[] = $userDocument->toArray();
+                    //return $this->output(true, 'User Documents details updated successfully.', $response, 200);
+                } else {
+                    return $this->output(false, 'Error occurred in User Documents details updating. Please try again!.', [], 200);
+                }
+            } 
+        }
+        return $this->output(true, 'User Documents details updated successfully.', $response, 200);
+	}
 }
