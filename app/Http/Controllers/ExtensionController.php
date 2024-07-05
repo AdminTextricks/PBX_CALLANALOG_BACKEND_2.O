@@ -262,7 +262,7 @@ class ExtensionController extends Controller
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-                        ->orderBy('extensions.extensions.id', 'DESC')
+                        ->orderBy('extensions.id', 'DESC')
                         ->paginate(
                         $perPage = $perPageNo,
                         $columns = ['*'],
