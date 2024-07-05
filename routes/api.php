@@ -81,10 +81,12 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	});
 
 	Route::group(['prefix' => 'user-documents'], function () {
+		Route::post('/changeMultipleStatus', [UserDocumentsController::class, 'changeMultipleDocumentStatus']);
 		Route::post('/', [UserDocumentsController::class, 'addUserDocuments']);
 		Route::get('/{userId?}', [UserDocumentsController::class, 'getUserDocuments']);
 		Route::patch('/changeStatus/{id}', [UserDocumentsController::class, 'changeDocumentStatus']);
 		Route::put('/{id}', [UserDocumentsController::class, 'updateUserDocument']);
+
 	});
 
 
