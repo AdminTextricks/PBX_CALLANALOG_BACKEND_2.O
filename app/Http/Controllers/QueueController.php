@@ -281,6 +281,7 @@ class QueueController extends Controller
             DB::beginTransaction();            
             $Queue = Queue::where('id', $id)->first();
             if($Queue){
+				QueueMember::where('queue_id', $id)->delete();
                 $resdelete = $Queue->delete();
                 if ($resdelete) {
                     DB::commit();
