@@ -81,12 +81,12 @@ class QueueController extends Controller
 		if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
 			$Queue_id = $request->id ?? NULL;
 			if ($Queue_id) {
-				$data = Queue::select()
+				$data = Queue::select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context')
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->where('id', $Queue_id)->get();
 			} else {
-                $data = Queue::select()
+                $data = Queue::select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context')
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
@@ -96,13 +96,14 @@ class QueueController extends Controller
 			if ($Queue_id) {
 				$data = Queue::with('company:id,company_name,email,mobile')
                     ->with('country:id,country_name')
-					->select()
+					->select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context')
 					->where('id', $Queue_id)
 					->where('company_id', '=',  $user->company_id)
 					->get();
 			} else {
 				if ($params != "") {
-					$data = Queue::with('company:id,company_name,email,mobile')	
+					$data = Queue::select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context')
+						->with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
 						->where('company_id', '=',  $user->company_id)
 						//->orWhere('did_number', 'LIKE', "%$params%")
@@ -111,7 +112,8 @@ class QueueController extends Controller
 					$data = Queue::with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
 						->where('company_id', '=',  $user->company_id)
-						->select()->paginate(
+						->select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context')
+						->paginate(
 							$perPage = $perPageNo,
 							$columns = ['*'],
 							$pageName = 'page'
@@ -190,14 +192,14 @@ class QueueController extends Controller
     {
 		$user = \Auth::user();
 		if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
-				$data = Queue::select('*')
+				$data = Queue::select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context')
 						->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
 						->where('country_id', $country_id)
             			->where('company_id', $company_id)
 						->where('status', 1)->get();
 		}else{
-			$data = Queue::select('*')
+			$data = Queue::select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context')
 					->with('company:id,company_name,email,mobile')
                     ->with('country:id,country_name')
 					->where('company_id', '=',  $user->company_id)

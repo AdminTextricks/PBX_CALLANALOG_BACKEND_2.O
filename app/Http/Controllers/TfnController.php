@@ -4,16 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Company;
+use App\Models\DestinationType;
 use App\Models\MainPrice;
 use App\Models\RemovedTfn;
 use App\Models\ResellerPrice;
+use App\Models\RingGroup;
 use App\Models\Tfn;
+use App\Models\TfnDestination;
 use App\Models\User;
 use Illuminate\Auth\Events\Validated;
 use Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\FacadesDB;
 
 use function Laravel\Prompts\select;
 
@@ -28,6 +30,7 @@ class TfnController extends Controller
                 'tfn_provider'              => 'required|numeric',
                 'tfn_group_id'              => 'required|numeric',
                 'country_id'                => 'required|numeric',
+                'activated'                 => 'required',
                 'monthly_rate'              => 'required',
                 'connection_charge'         => 'required',
                 'selling_rate'              => 'required',
@@ -48,7 +51,7 @@ class TfnController extends Controller
                             'tfn_provider'             => $request->tfn_provider,
                             'tfn_group_id'             => $request->tfn_group_id,
                             'country_id'               => $request->country_id,
-                            'activated'                => 1,
+                            'activated'                => $request->activated,
                             'monthly_rate'             => $request->monthly_rate,
                             'connection_charge'        => $request->connection_charge,
                             'selling_rate'             => $request->selling_rate,
@@ -92,6 +95,7 @@ class TfnController extends Controller
                 'tfn_provider'              => 'required|numeric',
                 'tfn_group_id'              => 'required|numeric',
                 'country_id'                => 'required|numeric',
+                'activated'                 => 'required',
                 'monthly_rate'              => 'required',
                 'connection_charge'         => 'required',
                 'selling_rate'              => 'required',
@@ -110,7 +114,7 @@ class TfnController extends Controller
                 $updateTfns->tfn_provider             = $request->tfn_provider;
                 $updateTfns->tfn_group_id             = $request->tfn_group_id;
                 $updateTfns->country_id               = $request->country_id;
-                $updateTfns->activated                = 1;
+                $updateTfns->activated                = $request->activated;
                 $updateTfns->monthly_rate             = $request->monthly_rate;
                 $updateTfns->connection_charge        = $request->connection_charge;
                 $updateTfns->selling_rate             = $request->selling_rate;
@@ -241,29 +245,41 @@ class TfnController extends Controller
         if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
             $tfn_id = $request->id ?? NULL;
             if ($tfn_id) {
-                $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
-                    ->with('trunks:id,type,name')
-                    ->with('company:id,company_name')
-                    ->with('tfn_groups:id,tfngroup_name')
-                    ->with('main_plans:id,name')
+                $tfngetAll = Tfn::with([
+                    'countries:id,country_name,phone_code,currency_symbol',
+                    'trunks:id,type,name',
+                    'company:id,company_name',
+                    'tfn_groups:id,tfngroup_name',
+                    'main_plans:id,name',
+                    'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
+                    'tfn_destinations.destinationType:id,destination_type'
+                ])
                     ->select('*')->where('id', $tfn_id)->withTrashed()->get();
             } else {
                 if ($params !== "") {
-                    $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
-                        ->with('trunks:id,type,name')
-                        ->with('company:id,company_name')
-                        ->with('tfn_groups:id,tfngroup_name')
-                        ->with('main_plans:id,name')
+                    $tfngetAll = Tfn::with([
+                        'countries:id,country_name,phone_code,currency_symbol',
+                        'trunks:id,type,name',
+                        'company:id,company_name',
+                        'tfn_groups:id,tfngroup_name',
+                        'main_plans:id,name',
+                        'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
+                        'tfn_destinations.destinationType:id,destination_type'
+                    ])
                         ->where('tfn_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_type_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
                         ->select('*')->withTrashed()->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 } else {
-                    $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
-                        ->with('trunks:id,type,name')
-                        ->with('company:id,company_name')
-                        ->with('tfn_groups:id,tfngroup_name')
-                        ->with('main_plans:id,name')
+                    $tfngetAll = Tfn::with([
+                        'countries:id,country_name,phone_code,currency_symbol',
+                        'trunks:id,type,name',
+                        'company:id,company_name',
+                        'tfn_groups:id,tfngroup_name',
+                        'main_plans:id,name',
+                        'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
+                        'tfn_destinations.destinationType:id,destination_type'
+                    ])
                         ->select('*')->withTrashed()->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 }
             }
@@ -271,27 +287,44 @@ class TfnController extends Controller
 
             $tfn_id = $request->id ?? NULL;
             if ($tfn_id) {
-                $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
-                    ->select('*')
+                $tfngetAll = Tfn::with([
+                    'countries:id,country_name,phone_code,currency_symbol',
+                    'trunks:id,type,name',
+                    'company:id,company_name',
+                    'tfn_groups:id,tfngroup_name',
+                    'main_plans:id,name',
+                    'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
+                    'tfn_destinations.destinationType:id,destination_type'
+                ])
                     ->where('company_id', '=', $user->company_id)
                     ->where('id', $tfn_id)->withTrashed()->get();
             } else {
                 if ($params !== "") {
-                    $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
+                    $tfngetAll = Tfn::with([
+                        'countries:id,country_name,phone_code,currency_symbol',
+                        'trunks:id,type,name',
+                        'company:id,company_name',
+                        'tfn_groups:id,tfngroup_name',
+                        'main_plans:id,name',
+                        'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
+                        'tfn_destinations.destinationType:id,destination_type'
+                    ])
                         ->where('tfn_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_type_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
-                        ->select('*')
                         ->where('company_id', '=', $user->company_id)
                         ->withTrashed()
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 } else {
-                    $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
-                        ->with('trunks:id,type,name')
-                        ->with('company:id,company_name')
-                        ->with('tfn_groups:id,tfngroup_name')
-                        ->with('main_plans:id,name')
-                        ->select('*')
+                    $tfngetAll = Tfn::with([
+                        'countries:id,country_name,phone_code,currency_symbol',
+                        'trunks:id,type,name',
+                        'company:id,company_name',
+                        'tfn_groups:id,tfngroup_name',
+                        'main_plans:id,name',
+                        'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
+                        'tfn_destinations.destinationType:id,destination_type'
+                    ])
                         ->where('company_id', '=', $user->company_id)
                         // ->withTrashed()
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
@@ -299,6 +332,38 @@ class TfnController extends Controller
             }
         }
 
+        $tfngetAll->each(function ($tfn) {
+            $tfn->tfn_destinations->each(function ($destination) {
+                switch ($destination->destination_type_id) {
+                    case 1:
+                        $destination->load('queues:id,name');
+                        break;
+                    case 2:
+                        $destination->load('extensions:id,name');
+                        break;
+                    case 3:
+                        $destination->load('voiceMail:id,mailbox,fullname,email');
+                        break;
+                    case 4:
+                        // $externalNumber = $destination->getExternalNumber($destination->destination_id);
+                        // $destination['External Number'] = $externalNumber;
+                        break;
+                    case 5:
+                        $destination->load('conferences:id');
+                        break;
+                    case 6:
+                        $destination->load('ringGroups:id,ringno');
+                        break;
+                    case 7:
+                        // $pbxIP = $destination->getPbxIP($destination->destination_id); 
+                        // $destination['PbxIP'] = $pbxIP;
+                        break;
+                    case 8:
+                        $destination->load('ivrs:id');
+                        break;
+                }
+            });
+        });
         if ($tfngetAll->isNotEmpty()) {
             $tfngetAll_data = $tfngetAll->toArray();
             unset($tfngetAll_data['links']);
@@ -312,31 +377,73 @@ class TfnController extends Controller
     {
         $user = \Auth::user();
         if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
-            $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
-                ->with('trunks:id,type,name')
-                ->with('company:id,company_name')
-                ->with('tfn_groups:id,tfngroup_name')
-                ->with('main_plans:id,name')
-                ->select('id', 'tfn_number', 'tfn_provider', 'tfn_group_id', 'plan_id', 'company_id', 'country_id')
-                ->where('status', "=", 1)
+            $tfngetAll = Tfn::with([
+                'countries:id,country_name,phone_code,currency_symbol',
+                'trunks:id,type,name',
+                'company:id,company_name',
+                'tfn_groups:id,tfngroup_name',
+                'main_plans:id,name',
+                'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
+                'tfn_destinations.destinationType:id,destination_type'
+            ])
+                // ->where('tfn_destinations.destination_id', '=', 'destination_types.id')
+                ->where('tfns.status', "=", 1)
                 ->get();
         } else {
-            $tfngetAll = Tfn::with('countries:id,country_name,phone_code,currency_symbol')
-                ->with('trunks:id,type,name')
-                ->with('company:id,company_name')
-                ->with('tfn_groups:id,tfngroup_name')
-                ->with('main_plans:id,name')
-                ->select('id', 'tfn_number', 'tfn_provider', 'tfn_group_id', 'plan_id', 'company_id', 'country_id')
-                ->where('company_id', '=',  $user->company_id)
-                ->where('status', "=", 1)
+
+            $tfngetAll = Tfn::with([
+                'countries:id,country_name,phone_code,currency_symbol',
+                'trunks:id,type,name',
+                'company:id,company_name',
+                'tfn_groups:id,tfngroup_name',
+                'main_plans:id,name',
+                'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
+                'tfn_destinations.destinationType:id,destination_type'
+            ])
+                ->where('company_id', $user->company_id)
+                ->where('status', 1)
                 ->get();
         }
+
+        $tfngetAll->each(function ($tfn) {
+            $tfn->tfn_destinations->each(function ($destination) {
+                switch ($destination->destination_type_id) {
+                    case 1:
+                        $destination->load('queues:id,name');
+                        break;
+                    case 2:
+                        $destination->load('extensions:id,name');
+                        break;
+                    case 3:
+                        $destination->load('voiceMail:id,mailbox,fullname,email');
+                        break;
+                    case 4:
+                        // $externalNumber = $destination->getExternalNumber($destination->destination_id);
+                        // $destination['External Number'] = $externalNumber;
+                        break;
+                    case 5:
+                        $destination->load('conferences:id');
+                        break;
+                    case 6:
+                        $destination->load('ringGroups:id,ringno');
+                        break;
+                    case 7:
+                        // $pbxIP = $destination->getPbxIP($destination->destination_id); 
+                        // $destination['PbxIP'] = $pbxIP;
+                        break;
+                    case 8:
+                        $destination->load('ivrs:id');
+                        break;
+                }
+            });
+        });
         if ($tfngetAll->isNotEmpty()) {
             return $this->output(true, 'Success', $tfngetAll->toArray());
         } else {
             return $this->output(true, 'No Record Found', []);
         }
     }
+
 
     public function uploadCSVfile(Request $request)
     {
@@ -413,128 +520,6 @@ class TfnController extends Controller
             $tfncsv->save();
         }
     }
-
-
-    public function assignTfn(Request $request)
-    {
-        $user = \Auth::user();
-        $validator = Validator::make($request->all(), [
-            'company_id' => 'required|numeric',
-            'tfn_number' => 'required|array',
-            'tfn_type'   => 'required',
-        ], [
-            'company_id' => 'The company is required.',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->output(false, $validator->errors()->first(), [], 409);
-        } else {
-            $company_details = Company::select('*')->where('id', '=', $request->company_id)->first();
-            $company_user_details = User::select('*')->where('company_id', '=', $request->company_id)->first();
-
-            if ($company_details) {
-                $total_price = 0;
-
-                foreach ($request->tfn_number as $TfnNumber) {
-                    $tfnassign = Tfn::select('*')->where('tfn_number', '=', $TfnNumber)->where('company_id', '=', 0)->where('plan_id', '=', 0)->first();
-
-                    if (!$tfnassign) {
-                        return $this->output(false, 'This TFN Number ( ' . $TfnNumber . ' ) is already Purchased!!. Please try  again with another Tfn number!', [], 409);
-                    }
-
-                    $countryIID = Tfn::select('*')->where('tfn_number', '=', $TfnNumber)->where('company_id', '=', 0)->where('plan_id', '=', 0)->first();
-                    if ($company_details->parent_id != "1") {
-                        $main_price = MainPrice::select('*')
-                            ->where('price_for', 'Reseller')
-                            ->where('product', 'TFN')
-                            ->where('country_id', $countryIID->country_id)
-                            ->where('reseller_id', $company_details->parent_id)
-                            ->first();
-
-                        $reseller_price = ResellerPrice::select('*')
-                            ->where('product', 'TFN')
-                            ->where('country_id', $countryIID->country_id)
-                            ->where('company_id', $company_details->id)
-                            ->first();
-
-                        if ($main_price && $reseller_price) {
-                            if ($reseller_price->commission_type == 'Percentage') {
-                                $total_price += $main_price->price + ($main_price->price * $reseller_price->price) / 100;
-                            } else {
-                                $total_price += $main_price->price + $reseller_price->price;
-                            }
-                        } else {
-                            return $this->output(false, "No Record Found!", 200);
-                        }
-                    } else {
-                        $main_price = MainPrice::select('*')
-                            ->where('price_for', 'Company')
-                            ->where('product', 'TFN')
-                            ->where('country_id', $countryIID->country_id)
-                            ->first();
-
-                        if ($main_price) {
-                            $total_price += $main_price->price;
-                        }
-                    }
-                }
-
-                if ($request->tfn_type == "Free") {
-                    foreach ($request->tfn_number as $TfnNumber) {
-                        $tfnassign = Tfn::where('tfn_number', '=', $TfnNumber)->whrer('company_id', '=', 0)->first();
-                        if ($tfnassign) {
-                            $tfnassign->company_id = $company_details->id;
-                            $tfnassign->assign_by = $user->id;
-                            $tfnassign->plan_id = $company_details->plan_id;
-                            $tfnassign->reserved = 1;
-                            $tfnassign->reserveddate = date('Y-m-d H:i:s');
-                            $tfnassign->reservedexpirationdate = date('Y-m-d H:i:s', strtotime('+1 day'));
-                            $tfnassign->startingdate = date('Y-m-d H:i:s');
-                            $tfnassign->expirationdate = date('Y-m-d H:i:s', strtotime('+30 days'));
-                            $tfnassign->save();
-                        } else {
-                            return $this->output(false, 'This TFN Number does not exist with us. Please try again!', [], 409);
-                        }
-                    }
-                } else {
-                    if ($total_price > 0 && $company_details->balance > $total_price) {
-                        $company_details->balance -= $total_price;
-                        $company_detect_balance = $company_details->save();
-
-                        if ($company_detect_balance) {
-                            foreach ($request->tfn_number as $TfnNumber) {
-                                $tfnassign = Tfn::where('tfn_number', '=', $TfnNumber)->whrer('company_id', '=', 0)->first();
-                                if ($tfnassign) {
-                                    $tfnassign->company_id = $company_details->id;
-                                    $tfnassign->assign_by = $user->id;
-                                    $tfnassign->plan_id = $company_details->plan_id;
-                                    $tfnassign->reserved = 1;
-                                    $tfnassign->reserveddate = date('Y-m-d H:i:s');
-                                    $tfnassign->reservedexpirationdate = date('Y-m-d H:i:s', strtotime('+1 day'));
-                                    $tfnassign->startingdate = date('Y-m-d H:i:s');
-                                    $tfnassign->expirationdate = date('Y-m-d H:i:s', strtotime('+30 days'));
-                                    $tfnassign->save();
-                                } else {
-                                    return $this->output(false, 'TFN Number ' . $TfnNumber . ' not found.', 400);
-                                }
-                            }
-                        } else {
-                            return $this->output(false, 'Something Went Wrong! Balance not Credited!!', null, 400);
-                        }
-                    } else {
-                        return $this->output(false, 'You have insufficient balance in your wallet. Please choose the Pay Now option.', null, 400);
-                    }
-                }
-
-                return $this->output(true, 'TFN Numbers assigned successfully.', null, 200);
-            } else {
-                return $this->output(false, 'Company Not Found. Please try again!', [], 409);
-            }
-        }
-    }
-
-
-
     public function assignTfnMain(Request $request)
     {
         $user = \Auth::user();
@@ -573,7 +558,6 @@ class TfnController extends Controller
                     return $query->where('reseller_id', $company->parent_id);
                 })
                 ->first();
-
             $reseller_price = null;
             if ($company->parent_id != 1) {
                 $reseller_price = ResellerPrice::where('product', 'TFN')
@@ -622,7 +606,7 @@ class TfnController extends Controller
                     }
                 } else {
                     DB::rollBack();
-                    return $this->output(false, 'Insufficient balance. Please choose the Pay Now option.', null, 400);
+                    return $this->output(false, 'Insufficient balance. Please Add balance in Wallet First.', null, 400);
                 }
             }
 
@@ -652,7 +636,7 @@ class TfnController extends Controller
                     'plan_id' => $company->plan_id,
                     'reserved' => 1,
                     'reserveddate' => date('Y-m-d H:i:s'),
-                    'reservedexpirationdate' => date('Y-m-d H:i:s', strtotime('+1 day')),
+                    'reservedexpirationdate' => NULL,
                     'startingdate' => date('Y-m-d H:i:s'),
                     'expirationdate' => date('Y-m-d H:i:s', strtotime('+30 days')),
                 ]);
@@ -665,4 +649,120 @@ class TfnController extends Controller
             return ['success' => false, 'message' => "TFN Number ($tfn_number) not found"];
         }
     }
+
+
+    public function assignDestinationType(Request $request)
+    {
+        $user = \Auth::user();
+        $validator = Validator::make($request->all(), [
+            'company_id'              => 'required|numeric',
+            'tfn_id'                  => 'required|numeric',
+            'destination_type_id'     => 'required',
+            'destination_id'          => 'required'
+        ], [
+            'company_id' => 'Company field is Required',
+            'tfn_id' => 'Please Select Tfn First.',
+            'destination_type_id' => 'Please Select Destination First',
+            'destination_id' => 'Please Select Destination Number First'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+
+        try {
+            DB::beginTransaction();
+            $isAdmin = $request->user()->hasRole('super-admin') || $user->company_id == 0;
+            $tfnnumberDataQuery = Tfn::where('id', $request->tfn_id);
+            if ($isAdmin) {
+                $tfnnumberDataQuery->where('plan_id', '!=', 0);
+            }
+
+            $tfnnumberData = $tfnnumberDataQuery->first();
+
+            if (!$tfnnumberData) {
+                DB::rollBack();
+                return $this->output(false, "Tfn Number is not Purchased! Please assign Tfn Number First!", [], 400);
+            }
+
+            if ($isAdmin && $tfnnumberData->company_id != $request->company_id) {
+                DB::rollBack();
+                return $this->output(false, "This Tfn Number does not belongs to the designated company!", [], 400);
+            }
+
+            if ($tfnnumberData->country_id != $request->country_id) {
+                DB::rollBack();
+                return $this->output(false, "This Destination number does not belongs to the designated country!", [], 400);
+            }
+            if ($tfnnumberData->id == $request->tfn_id) {
+                $tfn_destinations = TfnDestination::select("*")->where('tfn_id', '=', $request->tfn_id)->first();
+                if (!$tfn_destinations) {
+                    $tfn_destinations = TfnDestination::create([
+                        'company_id'                => $request->company_id,
+                        'tfn_id'                    => $request->tfn_id,
+                        'destination_type_id'        => $request->destination_type_id,
+                        'destination_id'             => $request->destination_id,
+                        'country_id'                 => $request->country_id,
+                        'priority'                   => $request->priority,
+                    ]);
+                    $response = $tfn_destinations->toArray();
+                    DB::commit();
+                    return $this->output(true, 'Destination Type added successfully.', $response);
+                } else {
+                    $tfn_destinations->destination_type_id = $request->destination_type_id;
+                    $tfn_destinations->destination_id = $request->destination_id;
+                    $tfn_destinations->destination_id = $request->destination_id;
+                    $tfn_destinations->priority      = $request->priority;
+
+                    $response = $tfn_destinations->save();
+                    DB::commit();
+                    return $this->output(true, 'Destination Assigned Successfully!', $response);
+                }
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->output(false, 'An error occurred while assigning the destination. Please try again!', [], 500);
+        }
+    }
+
+
+    public function destinationType(Request $request)
+    {
+        $user = \Auth::user();
+        $destinationtypes = DestinationType::get();
+        if ($destinationtypes->isNotEmpty()) {
+            return $this->output(true, 'success', $destinationtypes->toArray(), 200);
+        } else {
+            return $this->output(false, "No price record found!", 200);
+        }
+    }
+    public function getAllActiveTFNByCompanyAndCountry(Request $request, $country_id, $company_id)
+    {
+		$user = \Auth::user();
+		if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
+				$data = Tfn::select('id','tfn_number','country_id', 'company_id')
+						/*->with('company:id,company_name,email,mobile')
+                        ->with('country:id,country_name')*/
+						->where('country_id', $country_id)
+            			->where('company_id', $company_id)
+						->where('status', 1)
+                        ->where('activated' , 1)->get();
+		}else{
+			$data = Tfn::select('id','tfn_number','country_id', 'company_id')
+					/*->with('company:id,company_name,email,mobile')
+                    ->with('country:id,country_name')*/
+					->where('company_id', '=',  $user->company_id)
+					->where('country_id', $country_id)            		
+					->where('status', 1)
+                    ->where('activated' , 1)->get();
+		}
+
+		if($data->isNotEmpty()){
+			return $this->output(true, 'Success', $data->toArray());
+		}else{
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
+    
 }
