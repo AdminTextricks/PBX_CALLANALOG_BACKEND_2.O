@@ -262,6 +262,7 @@ class ConferenceController extends Controller
 		}	
 	}
 
+
     public function deleteConference(Request $request, $id)
     {
         try {  
@@ -283,8 +284,8 @@ class ConferenceController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Error occurred in Conference Deleting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
-            //return $this->output(false, $e->getMessage());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
+
 }

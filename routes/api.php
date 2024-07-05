@@ -278,7 +278,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::delete('/', [QueueController::class, 'removeQueueMember']);
 	});
 
-	# Conferences Manage
+	# Conferences Manage test
 	Route::group(['prefix' => 'conference'], function () {
 		Route::post('/', [ConferenceController::class, 'addConference']);
 		Route::get('/active', [ConferenceController::class, 'getAllActiveConference']);
