@@ -282,11 +282,11 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'conference'], function () {
 		Route::post('/', [ConferenceController::class, 'addConference']);
 		Route::get('/active', [ConferenceController::class, 'getAllActiveConference']);
-		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [QueueController::class, 'getAllActiveByCompanyAndCountry']);
+		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ConferenceController::class, 'getAllActiveByCompanyAndCountry']);
 		Route::get('/{id?}', [ConferenceController::class, 'getAllConference']);
-		Route::put('/{id}', [ConferenceController::class, 'updateQueue']);
+		Route::put('/{id}', [ConferenceController::class, 'updateConference']);
 		Route::patch('/changeStatus/{id}', [ConferenceController::class, 'changeConferenceStatus']);
-		Route::delete('/{id}', [ConferenceController::class, 'deleteQueue']);
+		Route::delete('/{id}', [ConferenceController::class, 'deleteConference']);
 	});
 	
 });
