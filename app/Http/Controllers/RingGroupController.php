@@ -283,6 +283,7 @@ class RingGroupController extends Controller
             DB::beginTransaction();            
             $RingGroup = RingGroup::where('id', $id)->first();
             if($RingGroup){
+				RingMember::where('ring_id', $id)->delete();
                 $resdelete = $RingGroup->delete();
                 if ($resdelete) {
                     DB::commit();
