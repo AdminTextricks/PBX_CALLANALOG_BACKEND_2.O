@@ -29,6 +29,7 @@ class UserController extends Controller
     public function getUser(Request $request)
     {
         $user_id = $request->id ?? NULL;
+        $params = $request->params ?? "";
 		$perPageNo = isset($request->perpage) ? $request->perpage : 25;
         $user = \Auth::user();        
         if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
@@ -37,6 +38,15 @@ class UserController extends Controller
                         ->with('user_role:id,name')
                         ->with('country:id,country_name')
                         ->with('state:id,state_name,state_code');
+
+            if ($params != "") {
+                $dataQuery = $dataQuery->whereHas('company', function ($query) use ($params) {
+                    $query->where('company_name', 'like', "%{$params}%");
+                });
+                $dataQuery = $dataQuery->orWhere('email', 'LIKE', "%$params%")
+                        ->orWhere('mobile', 'LIKE', "%$params%")
+                        ->orWhere('name', 'LIKE', "%$params%"); 
+            }
 
             if($user_id) {
                 $data = $dataQuery->where('id', $user_id)->first();
@@ -50,6 +60,14 @@ class UserController extends Controller
                         ->with('country:id,country_name')
                         ->with('state:id,state_name,state_code')
                         ->where('company_id', $user->company_id);
+            if ($params != "") {
+                $dataQuery = $dataQuery->whereHas('company', function ($query) use ($params) {
+                    $query->where('company_name', 'like', "%{$params}%");
+                });
+                $dataQuery = $dataQuery->orWhere('email', 'LIKE', "%$params%")
+                        ->orWhere('mobile', 'LIKE', "%$params%")
+                        ->orWhere('name', 'LIKE', "%$params%"); 
+            }
             if($user_id) {
                 $data = $dataQuery->where('id', $user_id)->first(); 
             }else{
