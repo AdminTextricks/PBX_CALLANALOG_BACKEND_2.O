@@ -164,9 +164,7 @@ class CompanyController extends Controller
                     ->with('user_plan:id,name')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             }
-        }
-
-        if ($user->roles->first()->slug == 'reseller') {
+        }elseif ($user->roles->first()->slug == 'reseller') {
            
             if ($company_id) {
                 $data = Company::select('*')
