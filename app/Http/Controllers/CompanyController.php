@@ -146,21 +146,50 @@ class CompanyController extends Controller
 
     public function getAllCompany(Request $request)
     {
+        $user = \Auth::user();
         $company_id = $request->id ?? "";
-        $perPageNo = isset($request->perpage) ? $request->perpage : 5;
-        if ($company_id) {
+        $perPageNo = isset($request->perpage) ? $request->perpage : 25;
+		if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {            
+            if ($company_id) {
+                $data = Company::select('*')
+                        ->with('country:id,country_name')
+                        ->with('state:id,state_name,state_code')
+                        ->with('user_plan:id,name')
+                        ->where('id', $company_id)->first();
+                //->where('status', 1)         
+            } else {
+                $data = Company::select()
+                    ->with('country:id,country_name,iso3')
+                    ->with('state:id,state_name,state_code')
+                    ->with('user_plan:id,name')
+                    ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+            }
+        }
+
+        if ($user->roles->first()->slug == 'reseller') {
+           
+            if ($company_id) {
+                $data = Company::select('*')
+                        ->with('country:id,country_name')
+                        ->with('state:id,state_name,state_code')
+                        ->with('user_plan:id,name')
+                        ->where('id', $company_id)
+                        ->where('parent_id', $user->id)->first();
+                //->where('status', 1)         
+            } else {
+                $data = Company::select()
+                    ->with('country:id,country_name,iso3')
+                    ->with('state:id,state_name,state_code')
+                    ->with('user_plan:id,name')
+                    ->where('parent_id', $user->id)
+                    ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+            }
+        }else{
             $data = Company::select('*')
                     ->with('country:id,country_name')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
-                    ->where('id', $company_id)->first();
-            //->where('status', 1)         
-        } else {
-            $data = Company::select()
-                ->with('country:id,country_name,iso3')
-                ->with('state:id,state_name,state_code')
-                ->with('user_plan:id,name')
-                ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+                    ->where('id', $user->company_id)->first();
         }
 
         if (!is_null($data)) {
