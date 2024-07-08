@@ -282,4 +282,15 @@ class CompanyController extends Controller
         }
     }
     
+    public function getAllActiveCompanyOfReseller(Request $request, $id)
+    {
+        $data = Company::select('id','company_name','account_code','email')
+                ->where('parent_id', $id)
+                ->where('status', 1)->get();
+        if($data->isNotEmpty()){
+            return $this->output(true, 'Success', $data->toArray(), 200);
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
+    }
 }

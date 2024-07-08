@@ -67,6 +67,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/{id?}', [CompanyController::class, 'getAllCompany']);
 		Route::patch('/changeStatus/{id}', [CompanyController::class, 'changeStatus']);
 		Route::put('/billing-address/{id}', [CompanyController::class, 'updateCompany']);
+
+		Route::get('/activeReseller/{id}', [CompanyController::class, 'getAllActiveCompanyOfReseller']);
 	});
 
 	Route::group(['prefix' => 'user'], function () {		
