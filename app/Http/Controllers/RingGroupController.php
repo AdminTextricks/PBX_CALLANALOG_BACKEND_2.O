@@ -24,7 +24,6 @@ class RingGroupController extends Controller
     public function addRingGroup(Request $request)
     { 
 		try {
-			DB::beginTransaction(); 
 			$validator = Validator::make($request->all(), [
 				'country_id'    => 'required|numeric|exists:countries,id', 
 				'company_id'    => 'required|numeric|exists:companies,id',
@@ -39,7 +38,7 @@ class RingGroupController extends Controller
 			if ($validator->fails()){
 				return $this->output(false, $validator->errors()->first(), [], 409);
 			}
-			
+			DB::beginTransaction(); 
 			$user = \Auth::user();
 			if(!is_null($user)){
 				$RingGroup = RingGroup::where('ringno', $request->ringno)

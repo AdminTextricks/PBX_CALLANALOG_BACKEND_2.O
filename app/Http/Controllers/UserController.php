@@ -5,16 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Company;
-use App\Models\Country;
-use App\Models\State;
-use App\Models\Permission;
 use App\Models\Server;
 use App\Models\EmailVerification;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Validation\Rule;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\LOG;
 use Validator;
 use Mail;
 use Illuminate\Support\Str;
@@ -375,7 +370,8 @@ class UserController extends Controller
         } catch(\Exception $e)
         {
             DB::rollback();
-            return $this->output(false, $e->getMessage());
+            Log::error('Error in User Creating : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong in user creation, Please try after some time.', [], 409);
             //throw $e;
         }
     }
@@ -521,22 +517,31 @@ class UserController extends Controller
     }
 
     public function passwordChange(Request $request){
-		
-        $validator = Validator::make($request->all(), [
-            'current_password' => 'required',
-            'password' => 'required|confirmed',
-        ]);
-        if ($validator->fails()){
-            return $this->output(false, $validator->errors()->first(), [], 409);
+		try{
+            DB::beginTransaction();
+            $validator = Validator::make($request->all(), [
+                'current_password' => 'required',
+                'password' => 'required|confirmed',
+            ]);
+            if ($validator->fails()){
+                return $this->output(false, $validator->errors()->first(), [], 409);
+            }
+            
+            if(!Hash::check($request->current_password, auth()->user()->password)){
+                return $this->output(false, "Current Password Doesn't match!", [], 409);
+            }
+            User::whereId(auth()->user()->id)->update([
+            'password' => Hash::make($request->password)
+            ]);
+            DB::commit();
+            return $this->output(true, 'Password has updated successfully');
+        } catch(\Exception $e)
+        {
+            DB::rollback();
+            Log::error('Error in User Creating : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong in user creation, Please try after some time.', [], 409);
+            //throw $e;
         }
-		
-        if(!Hash::check($request->current_password, auth()->user()->password)){
-            return $this->output(false, "Current Password Doesn't match!", [], 409);
-        }
-        User::whereId(auth()->user()->id)->update([
-        'password' => Hash::make($request->password)
-        ]);
-        return $this->output(true, 'Password has updated successfully');
     }
 	
 
