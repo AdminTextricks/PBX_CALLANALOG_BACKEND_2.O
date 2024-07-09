@@ -538,12 +538,46 @@ class UserController extends Controller
         } catch(\Exception $e)
         {
             DB::rollback();
-            Log::error('Error in User Creating : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
-            return $this->output(false, 'Something went wrong in user creation, Please try after some time.', [], 409);
+            Log::error('Error in self change password : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong in chnage password, Please try after some time.', [], 409);
             //throw $e;
         }
     }
-	
+
+    public function changePasswordBySuperadmin(Request $request){
+        try{
+            DB::beginTransaction();
+            $validator = Validator::make($request->all(), [
+                'user_id' => 'required',
+                'password' => 'required|confirmed',
+            ]);
+            if ($validator->fails()){
+                return $this->output(false, $validator->errors()->first(), [], 409);
+            }
+            $AuthUser = \Auth::user();  
+            if(in_array($AuthUser->roles->first()->slug, array('super-admin', 'support','noc'))){
+                $user = User::where('id', $request->user_id)->first();
+                if ($user) {
+                    $user->whereId($request->user_id)->update([
+                    'password' => Hash::make($request->password)
+                    ]);
+                    DB::commit();
+                    return $this->output(true, 'Password has updated successfully');
+                }else{
+                    DB::commit();
+                    return $this->output(false, 'User dose not exist with us!', [], 404);
+                }
+            }else{
+                DB::commit();
+                return $this->output(false, 'You are not authorized user.', [], 409);
+            }
+        } catch(\Exception $e)
+        {
+            DB::rollback();
+            Log::error('Error in change password By Auth(supperadmin, NOC, Support): ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong in change password, Please try after some time.', [], 409);
+        }
+    }	
 
     public function updateUser(Request $request, $id){
 		$User = User::find($id);
