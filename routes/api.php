@@ -28,6 +28,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\QueueController;
 use App\Http\Controllers\ConferenceController;
+use App\Http\Controllers\IvrMediaController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -296,7 +297,21 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::patch('/changeStatus/{id}', [ConferenceController::class, 'changeConferenceStatus']);
 		Route::delete('/{id}', [ConferenceController::class, 'deleteConference']);
 	});
+
+	Route::group(['prefix'=> 'chnage-password'], function () {
+		Route::post('/', [UserController::class,'changePasswordBySuperadmin']);
+		Route::post('/self', [UserController::class,'passwordChange']);
+	});
 	
+	#IVR Media Manage
+	Route::group(['prefix'=> 'ivr-media'], function () {
+		Route::post('/', [IvrMediaController::class,'addIvrMedia']);
+		Route::patch('/changeStatus/{id}', [IvrMediaController::class,'changeIVRMediaStatus']);
+		Route::put('/{id}', [IvrMediaController::class,'updateIvrMedia']);
+		Route::get('/active', [IvrMediaController::class, 'getAllActiveIvrMediaList']);
+		Route::get('/{id?}', [IvrMediaController::class, 'getAllIvrMedia']);	
+	});	
+
 });
 /*
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
