@@ -200,7 +200,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/', [ExtensionController::class, 'addExtensions']);
 		Route::post('/generate', [ExtensionController::class, 'generateExtensions']);
 		Route::get('/generatePassword', [ExtensionController::class, 'generateStrongPassword']);
-		Route::get('/', [ExtensionController::class, 'getAllExtensions']);
+		Route::get('/{id?}', [ExtensionController::class, 'getAllExtensions']);
 		Route::put('/{id}', [ExtensionController::class, 'updateExtension']);	
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ExtensionController::class, 'getExtensionsByCountryIdAndCompanyId']);
 		/*Route::delete('/{id}', [ExtensionController::class, 'deleteOutboundCallRate']);*/

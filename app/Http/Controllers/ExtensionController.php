@@ -258,16 +258,31 @@ class ExtensionController extends Controller
                         ->where('id', $Extension_id)
                         ->orderBy('id', 'DESC')->get();
 			} else {
-                $data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording','dial_timeout')
-                        ->with('company:id,company_name,email,mobile')
+                if ($params != "") {
+					$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording','dial_timeout')
+                        ->with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-                        ->orderBy('extensions.id', 'DESC')
-                        ->paginate(
-                        $perPage = $perPageNo,
-                        $columns = ['*'],
-                        $pageName = 'page'
-                    );
+						->orWhere('agent_name', 'LIKE', "%$params%")
+                        ->orWhere('name', 'LIKE', "%$params%")
+                        ->orWhere('callbackextension', 'LIKE', "%$params%")
+                        ->orWhereHas('company', function ($query) use ($params) {
+                            $query->where('company_name', 'like', "%{$params}%");
+                        })
+                        ->orderBy('id', 'DESC')
+                      	->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+				} else {
+                    $data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording','dial_timeout')
+                            ->with('company:id,company_name,email,mobile')
+                            ->with('country:id,country_name')
+                            ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
+                            ->orderBy('extensions.id', 'DESC')
+                            ->paginate(
+                            $perPage = $perPageNo,
+                            $columns = ['*'],
+                            $pageName = 'page'
+                        );
+                }
 			}
 		} else {
             $Extension_id = $request->id ?? NULL;
@@ -287,9 +302,14 @@ class ExtensionController extends Controller
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
 						->where('extensions.company_id', '=',  $user->company_id)
-						//->orWhere('did_number', 'LIKE', "%$params%")
+						->orWhere('agent_name', 'LIKE', "%$params%")
+                        ->orWhere('name', 'LIKE', "%$params%")
+                        ->orWhere('callbackextension', 'LIKE', "%$params%")
+                        ->orWhereHas('company', function ($query) use ($params) {
+                            $query->where('company_name', 'like', "%{$params}%");
+                        })
                         ->orderBy('id', 'DESC')
-						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+                      	->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
 					$data = Extension::select('extensions.id','extensions.country_id', 'extensions.company_id','callbackextension', 'agent_name', 'name','host','expirationdate','status','secret','sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box','voice_mails.mailbox','barge','voice_mails.email', 'recording','dial_timeout')
                         ->with('company:id,company_name,email,mobile')
