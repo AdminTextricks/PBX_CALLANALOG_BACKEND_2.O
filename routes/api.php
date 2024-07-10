@@ -69,13 +69,13 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::patch('/changeStatus/{id}', [CompanyController::class, 'changeStatus']);
 		Route::put('/billing-address/{id}', [CompanyController::class, 'updateCompany']);
 
-		Route::get('/activeReseller/{id}', [CompanyController::class, 'getAllActiveCompanyOfReseller']);
+		Route::get('/activeReseller/{reseller_id}', [CompanyController::class, 'getAllActiveCompanyOfReseller']);
 	});
 
 	Route::group(['prefix' => 'user'], function () {		
 		Route::get('reseller/active', [UserController::class, 'getActiveResellerUsers']);
 		Route::get('reseller/{id?}', [UserController::class, 'getAllResellerUsers']);		
-		Route::get('/balance', [CompanyController::class, 'getBalance']);
+		//Route::get('/balance', [CompanyController::class, 'getBalance']);
 		Route::post('/', [UserController::class, 'createUser']);
 		Route::get('/active', [UserController::class, 'getAllActiveUsers']);
 		Route::get('/{id?}', [UserController::class, 'getUser']);
@@ -307,7 +307,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::patch('/changeStatus/{id}', [IvrMediaController::class,'changeIVRMediaStatus']);
 		Route::put('/{id}', [IvrMediaController::class,'updateIvrMedia']);
 		Route::get('/active', [IvrMediaController::class, 'getAllActiveIvrMediaList']);
-		Route::get('/{id?}', [IvrMediaController::class, 'getAllIvrMedia']);	
+		Route::get('/{id?}', [IvrMediaController::class, 'getAllIvrMedia']);
+		Route::get('/getByCompany/{company_id}', [IvrMediaController::class, 'getAllIvrMediaByCompany']);	
 	});	
 
 });
