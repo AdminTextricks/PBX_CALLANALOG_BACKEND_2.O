@@ -86,8 +86,7 @@ class IvrMediaController extends Controller
                 $newaudiofile= file_put_contents($file, $audio);
                 if($newaudiofile){
                     $IvrMedia = IvrMedia::create([
-                        'user_id'   => $request->user()->id,
-                        'company_id'=> $request->user()->company_id,
+                        'company_id'=> $request->company_id,
                         'name'      => $request->name,
                         'media_file'=> $createNewFileNameWitoutEXT,
                         'file_ext'  => $extension,
@@ -197,7 +196,8 @@ class IvrMediaController extends Controller
 
     public function getAllActiveIvrMediaList(Request $request)
     {
-        if ($request->user()->hasRole('super-admin') || $request->user()->company_id == 0) {
+        $user = \Auth::user();
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
             $IvrMedia = IvrMedia::where('status',   1)->get();
         } else {
             $IvrMedia = IvrMedia::where('status',   1)->where('company_id', $request->user()->company_id)->get();
@@ -217,19 +217,19 @@ class IvrMediaController extends Controller
         $params = $request->params ?? "";
         $IvrMedia_id = $request->id ?? NULL;
 
-        if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
             $IvrMedia_id = $request->id ?? NULL;
             if ($IvrMedia_id) {
-                $data = IvrMedia::with('user:id,name,email,mobile')
+                $data = IvrMedia::with('company:id,company_name,email,mobile')
                     ->select()->where('id', $IvrMedia_id)->get();
             } else {
                 if ($params != "") {
-                    $data = IvrMedia::with('user:id,name,email,mobile')
+                    $data = IvrMedia::with('company:id,company_name,email,mobile')
                         ->where('name', 'LIKE', "%$params%")
                         ->orWhere('file_ext', 'LIKE', "%$params%")
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
                 } else {
-                    $data = IvrMedia::with('user:id,name,email,mobile')
+                    $data = IvrMedia::with('company:id,company_name,email,mobile')
                         ->select()->paginate(
                             $perPage = $perPageNo,
                             $columns = ['*'],
@@ -241,17 +241,17 @@ class IvrMediaController extends Controller
 
             $IvrMedia_id = $request->id ?? NULL;
             if ($IvrMedia_id) {
-                $data = IvrMedia::with('user:id,name,email,mobile')
+                $data = IvrMedia::with('company:id,company_name,email,mobile')
                     ->select()->where('id', $IvrMedia_id)->get();
             } else {
                 if ($params != "") {
-                    $data = IvrMedia::with('user:id,name,email,mobile')
+                    $data = IvrMedia::with('company:id,company_name,email,mobile')
                         ->where('company_id', '=',  $user->company_id)
                         ->orWhere('name', 'LIKE', "%$params%")
                         ->orWhere('file_ext', 'LIKE', "%$params%")
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
                 } else {
-                    $data = IvrMedia::with('user:id,name,email,mobile')
+                    $data = IvrMedia::with('company:id,company_name,email,mobile')
                         ->where('company_id', '=',  $user->company_id)
                         ->select()->paginate(
                             $perPage = $perPageNo,
@@ -268,6 +268,17 @@ class IvrMediaController extends Controller
             return $this->output(true, 'Success', $dd, 200);
         } else {
             return $this->output(true, 'No Record Found', []);
+        }
+    }
+
+    public function getAllIvrMediaByCompany(Request $request, $id)
+    {
+        $IvrMedia = IvrMedia::where('status',   1)->where('company_id', $id)->get();        
+        if (is_null($IvrMedia)) {
+            return $this->output(false, 'No Recode found', [], 200);
+        } else {
+            $IvrMediaRes = $IvrMedia->toArray();
+            return $this->output(true, 'Success',   $IvrMediaRes, 200);
         }
     }
 }
