@@ -323,6 +323,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/active', [IvrController::class, 'getAllActiveIvrList']);
 		Route::get('/{id?}', [IvrController::class, 'getAllIvrList']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [IvrController::class, 'getIvrListByCompanyAndCountry']);
+		Route::delete('/{id}', [IvrController::class,'deleteIvr']);
 	});
 
 });
