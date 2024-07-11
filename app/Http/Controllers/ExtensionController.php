@@ -216,11 +216,7 @@ class ExtensionController extends Controller
                             $VoiceMail = VoiceMail::insert($VoiceMail);            
                         }
                         if($Company->plan_id == 1){
-                            if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
-                                
-                            } else {
-                                $cartIds = Cart::insert($Cart);     
-                            }                            
+                            $cartIds = Cart::insert($Cart);
                         }
 
                         $response['total_extension'] = count($ids);//$Extensions;//->toArray();
