@@ -10,13 +10,17 @@ use Validator;
 
 class IvrMediaController extends Controller
 {
+    public function __construct(){
+
+    }
     public function addIvrMedia(Request $request)
     {
         try {
 			$validator = Validator::make($request->all(), [
-                'name'  => 'required|string|unique:ivr_media',
-                'type'  => 'required|string|in:file,text',
-                'media_file' => [
+                'company_id'=> 'required|numeric',
+                'name'      => 'required|string|unique:ivr_media',
+                'type'      => 'required|string|in:file,text',
+                'media_file'=> [
                     'required_if:type,file',
                     File::types(['mp3', 'wav'])
                 ],
@@ -279,6 +283,26 @@ class IvrMediaController extends Controller
         } else {
             $IvrMediaRes = $IvrMedia->toArray();
             return $this->output(true, 'Success',   $IvrMediaRes, 200);
+        }
+    }
+
+    public function deleteIvrMedia(Request $request, $id)
+    {
+        try {
+            $IvrMedia = IvrMedia::where('id', $id)->first();
+            if($IvrMedia){
+				$resdelete = $IvrMedia->delete();
+                if ($resdelete) {
+                    return $this->output(true,'Success',200);
+                } else {
+                    return $this->output(false, 'Error occurred in Ivr-Media deleting. Please try again!.', [], 209);                    
+                }
+            }else{
+                return $this->output(false,'Ivr-Media not exist with us.', [], 409);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error occurred in Ivr-Media Deleting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
 }
