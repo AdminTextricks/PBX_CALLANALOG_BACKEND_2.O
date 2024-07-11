@@ -15,15 +15,15 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('company_id')->index()->nullable()->default(0);
             $table->integer('assign_by')->nullable()->default(0);
-            $table->bigInteger('plan_id')->nullable();
-            $table->bigInteger('tfn_number')->unique();
+            $table->integer('plan_id')->nullable()->default(0);
+            $table->integer('tfn_number')->unique();
             $table->string('tfn_provider')->nullable();
-            $table->bigInteger('tfn_group_id')->nullable();
-            $table->bigInteger('country_id')->nullable();
-            $table->bigInteger('tfn_type_id')->nullable();
-            $table->string('tfn_type_number')->nullable();
-            $table->bigInteger('activated')->default(0);
-            $table->bigInteger('reserved')->default(0);
+            $table->integer('tfn_group_id')->nullable();
+            $table->integer('country_id')->nullable();
+            $table->integer('time_condition')->nullable()->default(0);
+            $table->integer('time_condition_id')->nullable()->default(0);
+            $table->integer('activated')->default(0);
+            $table->integer('reserved')->default(0);
             $table->timestamp('reserveddate')->nullable();
             $table->timestamp('reservedexpirationdate')->nullable();
             $table->float('monthly_rate')->nullable()->default(0);
@@ -33,10 +33,11 @@ return new class extends Migration
             $table->bigInteger('aleg_billing_block')->nullable()->default(0);
             $table->timestamp('startingdate')->nullable();
             $table->timestamp('expirationdate')->nullable();
+            $table->enum('call_screen_action', ['0', '1'])->nullable()->default(1);
+            // $table->tinyInteger('call_screen_action')->nullable();
             $table->tinyInteger('status')->default(0);
             $table->timestamps();
             $table->softDeletes();
-
         });
     }
 

@@ -201,40 +201,43 @@ class TfnController extends Controller
     // ReMove TFN from one table to another table (removed_tnfs)
     public function removeTfnfromTable(Request $request, $id)
     {
-        $tfnnumbermove = Tfn::select('*')->where('id', $id)->first();
+        $tfnnumbermove = Tfn::find($id);
+
+        if (!$tfnnumbermove) {
+            return $this->output(false, 'This TFN Number does not exist with us. Please try again!', [], 200);
+        }
 
         try {
-            if ($tfnnumbermove) {
-                $removedTfn = RemovedTfn::select()->where('tfn_number', '=', $tfnnumbermove->tfn_number)->first();
-                $cartTfn    = Cart::select()->where('item_number', '=', $tfnnumbermove->tfn_number)->first();
-                DB::beginTransaction();
-                if (!$removedTfn) {
-                    $removedTfn = RemovedTfn::create([
-                        'tfn_number' => $tfnnumbermove->tfn_number,
-                        'country_id' => $tfnnumbermove->country_id,
-                        'status'     => isset($tfnnumbermove->status) ? $tfnnumbermove->status : 1
-                    ]);
-                    // return $tfnnumbermove->tfn_number;
-                    $tfndelete = $tfnnumbermove->delete();
-                    if ($cartTfn) {
-                        $cartTfn1   = $cartTfn->delete();
-                    }
-                    DB::commit();
-                    return $this->output(true, 'This Tfn Number Removed Successfully!.', 200);
-                } else {
-                    DB::rollback();
-                    return $this->output(true, 'This Tfn Number already removed!.', 200);
-                }
-            } else {
-                DB::rollback();
-                return $this->output(false, 'This Tfn Number not exist with us. Please try again!.', [], 200);
+            DB::beginTransaction();
+
+            $removedTfn = RemovedTfn::where('tfn_number', $tfnnumbermove->tfn_number)->first();
+            $cartTfn = Cart::where('item_number', $tfnnumbermove->tfn_number)->first();
+
+            if ($removedTfn) {
+                DB::rollBack();
+                return $this->output(true, 'This TFN Number is already removed!', [], 200);
             }
+
+            RemovedTfn::create([
+                'tfn_number' => $tfnnumbermove->tfn_number,
+                'country_id' => $tfnnumbermove->country_id,
+                'status'     => $tfnnumbermove->status ?? 1,
+            ]);
+
+            $tfnnumbermove->forcedelete();
+
+            if ($cartTfn) {
+                $cartTfn->delete();
+            }
+
+            DB::commit();
+            return $this->output(true, 'This TFN Number was removed successfully!', [], 200);
         } catch (\Exception $e) {
-            DB::rollback();
-            return $this->output(false, $e->getMessage());
-            //throw $e;
+            DB::rollBack();
+            return $this->output(false, 'An error occurred: ' . $e->getMessage(), [], 500);
         }
     }
+
 
     public function getAllTfn(Request $request)
     {
@@ -349,7 +352,7 @@ class TfnController extends Controller
                         // $destination['External Number'] = $externalNumber;
                         break;
                     case 5:
-                        $destination->load('conferences:id');
+                        $destination->load('conferences:id,conf_name,confno');
                         break;
                     case 6:
                         $destination->load('ringGroups:id,ringno');
@@ -359,7 +362,7 @@ class TfnController extends Controller
                         // $destination['PbxIP'] = $pbxIP;
                         break;
                     case 8:
-                        $destination->load('ivrs:id');
+                        $destination->load('ivrs:id,name');
                         break;
                 }
             });
@@ -422,7 +425,7 @@ class TfnController extends Controller
                         // $destination['External Number'] = $externalNumber;
                         break;
                     case 5:
-                        $destination->load('conferences:id');
+                        $destination->load('conferences:id,conf_name,confno');
                         break;
                     case 6:
                         $destination->load('ringGroups:id,ringno');
@@ -432,7 +435,7 @@ class TfnController extends Controller
                         // $destination['PbxIP'] = $pbxIP;
                         break;
                     case 8:
-                        $destination->load('ivrs:id');
+                        $destination->load('ivrs:id,name');
                         break;
                 }
             });
@@ -739,30 +742,29 @@ class TfnController extends Controller
     }
     public function getAllActiveTFNByCompanyAndCountry(Request $request, $country_id, $company_id)
     {
-		$user = \Auth::user();
-		if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
-				$data = Tfn::select('id','tfn_number','country_id', 'company_id')
-						/*->with('company:id,company_name,email,mobile')
+        $user = \Auth::user();
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+            $data = Tfn::select('id', 'tfn_number', 'country_id', 'company_id')
+                /*->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')*/
-						->where('country_id', $country_id)
-            			->where('company_id', $company_id)
-						->where('status', 1)
-                        ->where('activated' , 1)->get();
-		}else{
-			$data = Tfn::select('id','tfn_number','country_id', 'company_id')
-					/*->with('company:id,company_name,email,mobile')
+                ->where('country_id', $country_id)
+                ->where('company_id', $company_id)
+                ->where('status', 1)
+                ->where('activated', 1)->get();
+        } else {
+            $data = Tfn::select('id', 'tfn_number', 'country_id', 'company_id')
+                /*->with('company:id,company_name,email,mobile')
                     ->with('country:id,country_name')*/
-					->where('company_id', '=',  $user->company_id)
-					->where('country_id', $country_id)            		
-					->where('status', 1)
-                    ->where('activated' , 1)->get();
-		}
+                ->where('company_id', '=',  $user->company_id)
+                ->where('country_id', $country_id)
+                ->where('status', 1)
+                ->where('activated', 1)->get();
+        }
 
-		if($data->isNotEmpty()){
-			return $this->output(true, 'Success', $data->toArray());
-		}else{
-			return $this->output(true, 'No Record Found', []);
-		}
-	}
-    
+        if ($data->isNotEmpty()) {
+            return $this->output(true, 'Success', $data->toArray());
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
+    }
 }

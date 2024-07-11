@@ -52,15 +52,15 @@ class TfnDestination extends Model
         return $this->belongsTo(Queue::class, 'destination_id', 'id');
     }
 
-    // public function ivrs()
-    // {
-    //     return $this->belongsTo(IVR::class, 'destination_id', 'id');
-    // }
+    public function ivrs()
+    {
+        return $this->belongsTo(Ivr::class, 'destination_id', 'id');
+    }
 
-    // public function conferences()
-    // {
-    //     return $this->belongsTo(Conference::class, 'destination_id', 'id');
-    // }
+    public function conferences()
+    {
+        return $this->belongsTo(Conference::class, 'destination_id', 'id');
+    }
 
     public function getExternalNumber($destinationId)
     {
