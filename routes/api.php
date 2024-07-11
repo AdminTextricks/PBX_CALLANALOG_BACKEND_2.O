@@ -29,6 +29,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\QueueController;
 use App\Http\Controllers\ConferenceController;
 use App\Http\Controllers\IvrMediaController;
+use App\Http\Controllers\IvrController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -309,7 +310,18 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/active', [IvrMediaController::class, 'getAllActiveIvrMediaList']);
 		Route::get('/{id?}', [IvrMediaController::class, 'getAllIvrMedia']);
 		Route::get('/getByCompany/{company_id}', [IvrMediaController::class, 'getAllIvrMediaByCompany']);	
+		Route::delete('/{id}', [IvrMediaController::class, 'deleteIvrMedia']);
 	});	
+
+	#IVR Manage
+	Route::group(['prefix'=> 'ivr'], function () {
+		Route::post('/', [IvrController::class,'addIvr']);
+		Route::patch('/changeStatus/{id}', [IvrController::class,'changeIVRStatus']);
+		Route::put('/{id}', [IvrController::class,'updateIvr']);
+		Route::get('/active', [IvrController::class, 'getAllActiveIvrList']);
+		Route::get('/{id?}', [IvrController::class, 'getAllIvrList']);
+		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [IvrController::class, 'getIvrListByCompanyAndCountry']);
+	});
 
 });
 /*

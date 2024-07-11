@@ -16,6 +16,7 @@ return new class extends Migration
             $table->integer('company_id')->nullable()->index();
             $table->string('account_code',20)->nullable()->index();
             $table->integer('country_id')->nullable();
+            $table->string('caller_num', 100)->nullable();
             $table->string('agent_channel', 200)->nullable();
             $table->string('agent_name', 200)->nullable();
             $table->string('agent_number', 200)->nullable();

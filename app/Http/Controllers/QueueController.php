@@ -112,14 +112,14 @@ class QueueController extends Controller
 					$data = Queue::with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
 						->where('company_id', '=',  $user->company_id)
-						->select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context')
+						->select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context','description','strategy', 'status')
 						->paginate(
 							$perPage = $perPageNo,
 							$columns = ['*'],
 							$pageName = 'page'
 						);
 				}
-			}			
+			}
 		}
 		if ($data->isNotEmpty()) {
 			$dd = $data->toArray();
