@@ -309,7 +309,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/', [IvrMediaController::class,'addIvrMedia']);
 		Route::patch('/changeStatus/{id}', [IvrMediaController::class,'changeIVRMediaStatus']);
 		Route::put('/{id}', [IvrMediaController::class,'updateIvrMedia']);
-		Route::get('/active', [IvrMediaController::class, 'getAllActiveIvrMediaList']);
+		Route::get('/active/{company_id}', [IvrMediaController::class, 'getAllActiveIvrMediaList']);
 		Route::get('/{id?}', [IvrMediaController::class, 'getAllIvrMedia']);
 		Route::get('/getByCompany/{company_id}', [IvrMediaController::class, 'getAllIvrMediaByCompany']);	
 		Route::delete('/{id}', [IvrMediaController::class, 'deleteIvrMedia']);

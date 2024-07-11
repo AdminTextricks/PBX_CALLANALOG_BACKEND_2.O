@@ -198,11 +198,11 @@ class IvrMediaController extends Controller
         }
     }
 
-    public function getAllActiveIvrMediaList(Request $request)
+    public function getAllActiveIvrMediaList(Request $request, $company_id)
     {
         $user = \Auth::user();
         if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
-            $IvrMedia = IvrMedia::where('status',   1)->get();
+            $IvrMedia = IvrMedia::where('status',   1)->where('company_id', $company_id)->get();
         } else {
             $IvrMedia = IvrMedia::where('status',   1)->where('company_id', $request->user()->company_id)->get();
         }
