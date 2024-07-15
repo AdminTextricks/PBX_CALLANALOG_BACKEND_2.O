@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('tfn', 100)->nullable()->index();
             $table->string('destination_type', 100)->nullable();
             $table->string('destination', 20)->nullable();
+            $table->string('ip', 30)->nullable();
             $table->timestamps();
         });
     }
