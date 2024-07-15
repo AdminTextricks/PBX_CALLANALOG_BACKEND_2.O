@@ -199,7 +199,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	# Manage Extensions
 	Route::group(['prefix' => 'extensions'], function () {
-		Route::post('/', [ExtensionController::class, 'addExtensions']);
+		Route::post('/', [ExtensionController::class, 'createExtensions']);
+		//Route::post('/', [ExtensionController::class, 'addExtensions']);
 		Route::post('/generate', [ExtensionController::class, 'generateExtensions']);
 		Route::get('/generatePassword', [ExtensionController::class, 'generateStrongPassword']);
 		Route::get('/{id?}', [ExtensionController::class, 'getAllExtensions']);

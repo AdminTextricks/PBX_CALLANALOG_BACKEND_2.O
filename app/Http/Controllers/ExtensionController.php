@@ -7,6 +7,8 @@ use App\Models\VoiceMail;
 use App\Models\Company;
 use App\Models\Cart;
 use App\Models\ConfTemplate;
+use App\Models\Invoice;
+use App\Models\InvoiceItems;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -77,6 +79,246 @@ class ExtensionController extends Controller
         return $final_array = array_diff($number_array,$exitArray);
     }
 
+    /**********    new  */
+    public function createExtensions(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'country_id'        => 'required|numeric',
+            'company_id'        => 'required|numeric',
+            'name.*'            => 'required|unique:extensions,name',
+            'callbackextension' => 'required|integer|digits_between:2,5',
+            'agent_name'        => 'required|max:150',
+            'callgroup'         => 'required|in:0,1', // Outbound call yes or no
+            'callerid'          => 'required_if:callgroup,1',                                    
+            'secret'            => 'required',
+            'barge'             => 'required|in:0,1', //Yes ro no(0,1)
+            'recording'         => 'required|in:0,1', //Yes ro no(0,1)
+            'mailbox'           => 'required|in:0,1', //voice mail yes or no
+            'voice_email'       => 'required_if:mailbox,1',
+            'payment_type'      => 'nullable',
+        ],[
+            'name'  => 'This Extension is already exist with us. Please try with different.',
+        ]);
+        if ($validator->fails()){
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+        // Start transaction!
+        try { 
+            DB::beginTransaction();    
+            $user = \Auth::user();     
+            $Company = Company::where('id', $request->company_id)->first();
+            $input = $request->all();
+            $extension_name = $input['name'];            
+            if($Company){
+                $reseller_id = '';
+                if($Company->parent_id > 1){
+                    $price_for = 'Reseller';
+                    $reseller_id = $Company->parent_id;
+                }else{
+                    $price_for = 'Company';
+                }
+                $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'Extension');
+                if($item_price_arr['Status'] == 'true'){
+                    $item_price = $item_price_arr['Extension_price'];
+                    if (is_array($extension_name)) {
+                        $TotalItemPrice = $item_price * count($extension_name);
+                        if($Company->plan_id == 1 && in_array($user->roles->first()->slug, array('super-admin', 'support','noc')) && $request->payment_type == 'Paid' && $Company->balance < $TotalItemPrice)
+                        {
+                            DB::commit();
+                            return $this->output(false, 'Company account has insufficient balance!');  
+                        }else{
+                            $VoiceMail = $item_ids = $Cart =[];
+                            $status = '0';
+                            $startingdate = $expirationdate = $host = $sip_temp = NULL;
+                            if($Company->plan_id == 2 || in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))){
+                                $status = '1';
+                                $startingdate = Carbon::now();
+                                $expirationdate =  $startingdate->addDays(179);
+                                $host = 'dynamic';
+                                $sip_temp = 'WEBRTC';
+                            }
+                            
+                            foreach ($extension_name as $item) {
+                                $data = [];
+                                $data = [
+                                    'country_id'        => $request->country_id,
+                                    'company_id'        => $request->company_id,
+                                    'name'	            => $item,
+                                    'callbackextension' => $request->callbackextension,
+                                    'account_code'      => $Company->account_code,
+                                    'agent_name'        => $request->agent_name,
+                                    'callgroup'         => $request->callgroup,
+                                    'callerid' 	        => $request->callerid,
+                                    'secret' 	        => $request->secret,
+                                    'barge'             => $request->barge,
+                                    'recording'         => $request->recording,
+                                    'mailbox'           => $request->mailbox,
+                                    'regexten'          => $item,
+                                    'startingdate'      => Carbon::now(),
+                                    'expirationdate'    => $expirationdate,
+                                    'fromdomain'        => 'NULL',
+                                    'amaflags'          => 'billing',
+                                    'canreinvite'       => 'no',
+                                    'context'           => 'callanalog',
+                                    'dtmfmode'          => 'RFC2833',
+                                    'host'              => $host,
+                                    'sip_temp'          => $sip_temp,
+                                    'insecure'          => 'port,invite',
+                                    'language'          => 'en',
+                                    'nat'               => 'force_rport,comedia',
+                                    'qualify'           => 'yes',
+                                    'rtptimeout'        => '60',
+                                    'rtpholdtimeout'    => '300',
+                                    'type'              => 'friend',
+                                    'username'          => $item, 
+                                    'disallow'          => 'ALL',
+                                    'allow'             => 'g729,g723,ulaw,gsm',
+                                    'created_at'        => Carbon::now(),
+                                    'updated_at'        => Carbon::now(),
+                                    'status'            => $status,
+                                ];
+                            
+                                $id = DB::table('extensions')->insertGetId($data);
+                                $item_ids[$id] = $item;
+                                if($request->mailbox == '1'){
+                                    array_push($VoiceMail, [
+                                        'company_id'=> $request->company_id,
+                                        'context'   => 'default',
+                                        'mailbox'   => $item,
+                                        'fullname'  => $request->agent_name,
+                                        'email'     => $request->voice_email,
+                                        'timezone'  => 'central',
+                                        'attach'    => 'yes',
+                                        'review'    => 'no',
+                                        'operator'  => 'no',
+                                        'envelope'  => 'no',
+                                        'sayduration'   => 'no',
+                                        'saydurationm'  => '1',
+                                        'sendvoicemail' => 'no',
+                                        'nextaftercmd'  => 'yes',
+                                        'forcename'     => 'no',
+                                        'forcegreetings'=> 'no',
+                                        'hidefromdir'   => 'yes',
+                                        'created_at'    => Carbon::now(),
+                                        'updated_at'    => Carbon::now(),
+                                    ]);
+                                }
+                                array_push($Cart,  [
+                                    'company_id'        => $request->company_id,
+                                    'item_id'           => $id,
+                                    'item_number'       => $item,
+                                    'item_type'         => 'Extension',
+                                    'item_price'        => $item_price,
+                                    'created_at'        => Carbon::now(),
+                                    'updated_at'        => Carbon::now(),
+                                ]);            
+                                //$cartIds = DB::table('carts')->insertGetId($Cart);  
+                            }
+                            // $Extensions = Extension::insert($data);
+                            if($request->mailbox == '1'){
+                                $VoiceMail = VoiceMail::insert($VoiceMail);            
+                            }
+                            
+                            if($Company->plan_id == 1 && !in_array($user->roles->first()->slug, array('super-admin', 'support','noc')))
+                            {
+                                $cartIds = Cart::insert($Cart);
+                                $response['total_extension'] = count($item_ids);//$Extensions;//->toArray();
+                                $response['Show_Cart'] = 'Yes';
+                                DB::commit();
+                                return $this->output(true, 'Extension added successfully.', $response);
+
+                            }else{
+                                if($Company->plan_id == 1 && in_array($user->roles->first()->slug, array('super-admin', 'support','noc')) && $request->payment_type == 'Paid')
+                                {
+                                    
+                                    $Company = Company::where('id', $request->company_id)->first();
+                                    if($Company->balance > $TotalItemPrice){
+                                        $Company_balance = $Company->balance;
+                                        $Company->balance =  $Company_balance - $TotalItemPrice;
+                                        if($Company->save()){
+                                            $response['total_extension'] = count($item_ids);
+                                            //$Extensions;//->toArray();
+                                            $response['Show_Cart'] = 'No';                                        
+                                        }else{
+                                            DB::rollback();
+                                            return $this->output(false, 'Error occurred in deducting company balance.');
+                                        }
+                                    }else{
+                                        DB::rollback();
+                                        return $this->output(false, 'Company account has insufficient balance.');
+                                    }
+                                }
+                                /*
+                                $invoicetable_id = DB::table('invoices')->max('id');
+                                if (!$invoicetable_id) {
+                                    $invoice_id = 'INV/' . date('Y') . '/00001';
+                                } else {
+                                    $invoice_id = "INV/" . date('Y') . "/000" . ($invoicetable_id + 1);
+                                }
+                                $Invoice = Invoice::create([
+                                    'company_id'        => $request->company_id,
+                                    'country_id'        => $Company->country_id,
+                                    'state_id'          => $Company->state_id,
+                                    'invoice_id'        => $invoice_id,
+                                    'invoice_currency'  => 'USD',
+                                    'invoice_subtotal_amount'   => $TotalItemPrice,
+                                    'invoice_amount'    => $TotalItemPrice,
+                                    'payment_status'    => $request->payment_type,
+                                    'email_status'      => 0,
+                                ]);
+                                */
+                                foreach($item_ids as $item_id => $item){
+                                    /*
+                                    $InvoiceItems = InvoiceItems::create([                                    
+                                        'invoice_id'    => $Invoice->id,
+                                        'item_type'     => 'Extension',
+                                        'item_number'   => $item,
+                                        'item_price'    => $item_price,
+                                    ]);
+                                    */
+                                    $webrtc_template_url = config('app.webrtc_template_url');
+                                    $addExtensionFile = $webrtc_template_url;
+                                    $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
+                                    $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code,  $ConfTemplate->template_contents);
+                                }
+                                /*
+                                $emailData['title'] = 'Invoice From Callanalog';
+                                $emailData['item_numbers'] = $item_ids;
+                                $emailData['item_types'] = 'Extension';
+                                $emailData['price'] = $TotalItemPrice;
+                                $emailData['invoice_number'] = $invoice_id;
+                                $emailData['email'] = $Company->email;
+                                dispatch(new \App\Jobs\SendEmailJob($emailData));
+                                
+                                $response['total_extension'] = count($item_ids);
+                                //$Extensions;//->toArray();
+                                $response['Show_Cart'] = 'No';
+                                */
+                                DB::commit();
+                                return $this->output(true, 'Extension added successfully.', $response);
+                            }
+                        }                        
+                    }else{
+                        DB::commit();
+                        return $this->output(false, 'Wrong extension value format.');
+                    }
+                }else{
+                    DB::commit();
+                    return $this->output(false, $item_price_arr['Message']);
+                } 
+            }else{
+                DB::commit();
+                return $this->output(false, 'Company not exist with us.');
+            }
+        } catch(\Exception $e)
+        {
+            DB::rollback();
+            Log::error('Error in Extensions Inserting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Error Occurred in adding extensions. Please try again after some time.', [], 406);            
+        }
+    }
+
+/************ End */
     public function addExtensions(Request $request)
     {
         $validator = Validator::make($request->all(), [

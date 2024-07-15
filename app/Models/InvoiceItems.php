@@ -10,7 +10,7 @@ class InvoiceItems extends Model
     use HasFactory;
 
     protected $fillable = [
-        'company_id', 'invoice_id', 'item_id', 'item_number', 'item_price',
+        'invoice_id', 'item_type', 'item_number', 'item_price',
     ];
     public function user()
     {
