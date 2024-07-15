@@ -30,6 +30,7 @@ use App\Http\Controllers\QueueController;
 use App\Http\Controllers\ConferenceController;
 use App\Http\Controllers\IvrMediaController;
 use App\Http\Controllers\IvrController;
+use App\Http\Controllers\CdrController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -325,6 +326,12 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/{id?}', [IvrController::class, 'getAllIvrList']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [IvrController::class, 'getIvrListByCompanyAndCountry']);
 		Route::delete('/{id}', [IvrController::class,'deleteIvr']);
+	});
+
+	#CDR 
+	Route::group(['prefix'=> 'cdr'], function () {
+		Route::get('/{company_id?}', [CdrController::class, 'getAllCdrList']);
+		//Route::delete('/{id}', [IvrController::class,'deleteIvr']);
 	});
 
 });
