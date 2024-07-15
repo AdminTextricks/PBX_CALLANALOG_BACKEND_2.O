@@ -120,14 +120,8 @@ class ExtensionController extends Controller
                 $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'Extension');
                 if($item_price_arr['Status'] == 'true'){
                     $item_price = $item_price_arr['Extension_price'];
-
-                    echo $Company->balance;
-                    echo '------------';
-                    echo $request->payment_type;
-                    echo '------------ bal';
                     if (is_array($extension_name)) {
-                        echo $TotalItemPrice = $item_price * count($extension_name);
-                        exit;
+                        $TotalItemPrice = $item_price * count($extension_name);
                         if($Company->plan_id == 1 && in_array($user->roles->first()->slug, array('super-admin', 'support','noc')) && $request->payment_type == 'Paid' && $Company->balance < $TotalItemPrice)
                         {
                             DB::commit();
