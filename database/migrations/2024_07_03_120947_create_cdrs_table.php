@@ -21,7 +21,7 @@ return new class extends Migration
             $table->dateTime('call_start_time')->nullable();
             $table->dateTime('answer_time')->nullable();
             $table->dateTime('hangup_time')->nullable();
-            $table->string('context')->nullable();
+            //$table->string('context')->nullable();
             $table->string('agent_channel', 200)->nullable();
             $table->string('agent_name', 200)->nullable()->index();
             $table->string('agent_number', 200)->nullable()->index();
