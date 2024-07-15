@@ -226,11 +226,9 @@ class ExtensionController extends Controller
                                 $response['Show_Cart'] = 'Yes';
                                 DB::commit();
                                 return $this->output(true, 'Extension added successfully.', $response);
-
                             }else{
                                 if($Company->plan_id == 1 && in_array($user->roles->first()->slug, array('super-admin', 'support','noc')) && $request->payment_type == 'Paid')
-                                {
-                                    
+                                {                                    
                                     $Company = Company::where('id', $request->company_id)->first();
                                     if($Company->balance > $TotalItemPrice){
                                         $Company_balance = $Company->balance;
@@ -241,7 +239,7 @@ class ExtensionController extends Controller
                                             $response['Show_Cart'] = 'No';                                        
                                         }else{
                                             DB::rollback();
-                                            return $this->output(false, 'Error occurred in deducting company balance.');
+                                            return $this->output(false, 'Error occurred in deducting company balance.', [], 209);
                                         }
                                     }else{
                                         DB::rollback();
@@ -300,7 +298,7 @@ class ExtensionController extends Controller
                         }                        
                     }else{
                         DB::commit();
-                        return $this->output(false, 'Wrong extension value format.');
+                        return $this->output(false, 'Wrong extension value format.',[],429);
                     }
                 }else{
                     DB::commit();
@@ -308,7 +306,7 @@ class ExtensionController extends Controller
                 } 
             }else{
                 DB::commit();
-                return $this->output(false, 'Company not exist with us.');
+                return $this->output(false, 'Company not exist with us.',[],409);
             }
         } catch(\Exception $e)
         {
