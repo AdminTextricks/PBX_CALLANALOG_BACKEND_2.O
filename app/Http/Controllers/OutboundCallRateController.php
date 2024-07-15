@@ -30,9 +30,9 @@ class OutboundCallRateController extends Controller
         // Start transaction!
         try { 
             DB::beginTransaction();
-            $OutboundCallRate = OutboundCallRate::where('tariff_id', $request->tariff_id)
+            /*$OutboundCallRate = OutboundCallRate::where('tariff_id', $request->tariff_id)
                     ->where('trunk_id', $request->trunk_id)->first();        
-            if(!$OutboundCallRate){
+            if(!$OutboundCallRate){*/
                 $OutboundCallRate = OutboundCallRate::create([
                     'tariff_id'     => $request->tariff_id,
                     'trunk_id'      => $request->trunk_id,
@@ -48,10 +48,10 @@ class OutboundCallRateController extends Controller
                 $response 	= $OutboundCallRate->toArray();               
                 DB::commit();
                 return $this->output(true, 'Outbound Call Rate added successfully.', $response);
-            }else{
+            /*}else{
                 DB::commit();
                 return $this->output(false, 'This Outbound Call Rate is already register with us.');
-            }
+            }*/
         } catch(\Exception $e)
         {
             DB::rollback();
@@ -185,11 +185,11 @@ class OutboundCallRateController extends Controller
                 if ($validator->fails()){
                     return $this->output(false, $validator->errors()->first(), [], 409);
                 }
-                $checkOutboundCallRate = OutboundCallRate::where('tariff_id', $request->tariff_id)
+                /* $checkOutboundCallRate = OutboundCallRate::where('tariff_id', $request->tariff_id)
                                     ->where('trunk_id', $request->trunk_id)
                                     ->where('id', '!=', $id)->first();  
                 //$user = $request->user();
-                if(!$checkOutboundCallRate){
+                if(!$checkOutboundCallRate){  */
                     $OutboundCallRate->tariff_id        = $request->tariff_id;
                     $OutboundCallRate->trunk_id 	    = $request->trunk_id;
                     $OutboundCallRate->country_prefix	= $request->country_prefix;
@@ -209,10 +209,10 @@ class OutboundCallRateController extends Controller
                         DB::commit();
                         return $this->output(false, 'Error occurred in Outbound Call Rate Updating. Please try again!.', [], 200);
                     }
-                }else{
+                /* }else{
                     DB::commit();
                     return $this->output(false, 'This Outbound Call Rate is already register with us.');
-                }
+                } */
             }
         } catch(\Exception $e)
         {
