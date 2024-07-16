@@ -82,6 +82,9 @@ class ExtensionController extends Controller
     /**********    new  */
     public function createExtensions(Request $request)
     {
+        $shell_script = config('app.shell_script');
+        echo $result = shell_exec('sudo '.$shell_script);
+        exit;
         $validator = Validator::make($request->all(), [
             'country_id'        => 'required|numeric',
             'company_id'        => 'required|numeric',
@@ -225,10 +228,10 @@ class ExtensionController extends Controller
                                 $response['total_extension'] = count($item_ids);//$Extensions;//->toArray();
                                 $response['Show_Cart'] = 'Yes';
                                 DB::commit();
-                                return $this->output(true, 'Extension added successfully.', $response);
+                                return $this->output(true, 'Extension added successfully in cart.', $response);
                             }else{
                                 if($Company->plan_id == 1 && in_array($user->roles->first()->slug, array('super-admin', 'support','noc')) && $request->payment_type == 'Paid')
-                                {                                    
+                                {
                                     $Company = Company::where('id', $request->company_id)->first();
                                     if($Company->balance > $TotalItemPrice){
                                         $Company_balance = $Company->balance;
@@ -292,6 +295,9 @@ class ExtensionController extends Controller
                                 //$Extensions;//->toArray();
                                 $response['Show_Cart'] = 'No';
                                 */
+                                //$shell_script = config('app.shell_script');
+                                //$result = shell_exec('sudo '.$shell_script);
+
                                 DB::commit();
                                 return $this->output(true, 'Extension added successfully.', $response);
                             }
