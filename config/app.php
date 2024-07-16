@@ -63,6 +63,7 @@ return [
     'softphone_template_url' => env('SOFTPHONE_TEMPLATE_URL','/var/www/html/pbxcallanalog/pbx_backend/public/sip_additional.conf'),
     
     'shell_script' => env('SHELL_SCRIPT', '/var/www/html/pbxcallanalog/pbx_backend/public/transfer.sh'),
+
     'server_flag' => env('SERVER_FLAG', 1),
     /*
     |--------------------------------------------------------------------------
