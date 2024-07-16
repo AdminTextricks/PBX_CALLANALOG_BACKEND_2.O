@@ -82,9 +82,6 @@ class ExtensionController extends Controller
     /**********    new  */
     public function createExtensions(Request $request)
     {
-        $shell_script = config('app.shell_script');
-        echo $result = shell_exec('sudo '.$shell_script);
-        exit;
         $validator = Validator::make($request->all(), [
             'country_id'        => 'required|numeric',
             'company_id'        => 'required|numeric',
@@ -295,9 +292,12 @@ class ExtensionController extends Controller
                                 //$Extensions;//->toArray();
                                 $response['Show_Cart'] = 'No';
                                 */
-                                //$shell_script = config('app.shell_script');
-                                //$result = shell_exec('sudo '.$shell_script);
-
+                                $server_flag = config('app.server_flag');
+                                if($server_flag == 1){
+                                    $shell_script = config('app.shell_script');
+                                    $result = shell_exec('sudo '.$shell_script);
+                                    Log::error('Extension File Transfer Log : ' . $result);
+                                }
                                 DB::commit();
                                 return $this->output(true, 'Extension added successfully.', $response);
                             }
