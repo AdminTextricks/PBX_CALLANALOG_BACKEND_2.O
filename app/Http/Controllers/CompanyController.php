@@ -233,6 +233,13 @@ class CompanyController extends Controller
                     $User = User::where('company_id', $id)
                         ->update(['status' => '0']);
                     return $this->output(true, 'Company and all User has been disabled successfully.');
+                }else{
+                    if ($request->status == '1') {
+                        $User = User::where('company_id', $id)->where('role_id', 4)
+                            ->orderBy('id', 'asc')->limit(1)
+                            ->update(['status' => '1']);
+                        return $this->output(true, 'Company and admin User status has been activated successfully.');
+                    }
                 }
                 return $this->output(true, 'Company status has been updated successfully.');
             } else {
