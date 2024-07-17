@@ -131,7 +131,7 @@ class ExtensionController extends Controller
                             if ($Company->plan_id == 2 || in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
                                 $status = '1';
                                 $startingdate = Carbon::now();
-                                $expirationdate = $startingdate->addDays(179);
+                                $expirationdate = ($Company->plan_id == 2) ? $startingdate->addDays(179) : $startingdate->addDays(29);
                                 $host = 'dynamic';
                                 $sip_temp = 'WEBRTC';
                             }
