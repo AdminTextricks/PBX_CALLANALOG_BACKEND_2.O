@@ -778,6 +778,7 @@ class ExtensionController extends Controller
 
     public function getSipRegistrationList(Request $request)
     {
+        $user = \Auth::user();
         $server_ip = "139.84.157.121";
         $socket = @fsockopen($server_ip, 5038);
         $response = "";
@@ -813,9 +814,16 @@ class ExtensionController extends Controller
                 }
                 if(is_numeric($columns[1])){
 
-                    $extension = Extension::with('company:id,company_name,email,mobile')
+                    if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                        $extension = Extension::with('company:id,company_name,email,mobile')
                                     ->select('id', 'name', 'agent_name', 'sip_temp','callbackextension', 'country_id', 'company_id')
                                     ->where('name', $columns[1])->first();
+                    }else{
+                        $extension = Extension::with('company:id,company_name,email,mobile')
+                                    ->select('id', 'name', 'agent_name', 'sip_temp','callbackextension', 'country_id', 'company_id')
+                                    ->where('company_id', $user->company_id)
+                                    ->where('name', $columns[1])->first();
+                    }
 
                     if ($extension != null) {
                         $clientId   = $extension->company_id;
