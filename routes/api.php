@@ -201,14 +201,16 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	# Manage Extensions
 	Route::group(['prefix' => 'extensions'], function () {
+		Route::get('/getSipRegistrationList', [ExtensionController::class, 'getSipRegistrationList'])->name('getSipRegistrationList');
+		
 		Route::post('/', [ExtensionController::class, 'createExtensions']);
 		//Route::post('/', [ExtensionController::class, 'addExtensions']);
 		Route::post('/generate', [ExtensionController::class, 'generateExtensions']);
 		Route::get('/generatePassword', [ExtensionController::class, 'generateStrongPassword']);
 		Route::get('/{id?}', [ExtensionController::class, 'getAllExtensions']);
 		Route::put('/{id}', [ExtensionController::class, 'updateExtension']);	
-		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ExtensionController::class, 'getExtensionsByCountryIdAndCompanyId']);
-		Route::get('/getSipRegistrationList', [ExtensionController::class, 'getSipRegistrationList']);
+		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ExtensionController::class, 'getExtensionsByCountryIdAndCompanyId']);		
+		
 	});
 
 	#Conf Template Manage
