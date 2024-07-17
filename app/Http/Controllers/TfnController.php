@@ -24,13 +24,13 @@ class TfnController extends Controller
     public function addAdminTfns(Request $request)
     {
         $user = \Auth::user();
-        if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
+        //if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
             $validator = Validator::make($request->all(), [
                 'tfn_number'                => 'required|numeric|unique:tfns',
                 'tfn_provider'              => 'required|numeric',
                 'tfn_group_id'              => 'required|numeric',
                 'country_id'                => 'required|numeric',
-                'activated'                 => 'required',
                 'monthly_rate'              => 'required',
                 'connection_charge'         => 'required',
                 'selling_rate'              => 'required',
@@ -43,7 +43,6 @@ class TfnController extends Controller
             } else {
                 try {
                     DB::beginTransaction();
-
                     $addTfns = Tfn::where('tfn_number', $request->tfn_number)->first();
                     if (!$addTfns) {
                         $addTfns = Tfn::create([
@@ -51,7 +50,6 @@ class TfnController extends Controller
                             'tfn_provider'             => $request->tfn_provider,
                             'tfn_group_id'             => $request->tfn_group_id,
                             'country_id'               => $request->country_id,
-                            'activated'                => $request->activated,
                             'monthly_rate'             => $request->monthly_rate,
                             'connection_charge'        => $request->connection_charge,
                             'selling_rate'             => $request->selling_rate,
@@ -61,7 +59,6 @@ class TfnController extends Controller
                         ]);
 
                         DB::commit();
-
                         $response = $addTfns->toArray();
                         return $this->output(true, 'Tfn Number Added Successfully!', $response);
                     } else {
