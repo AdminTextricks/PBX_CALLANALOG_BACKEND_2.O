@@ -331,8 +331,9 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	});
 
 	#CDR 
-	Route::group(['prefix'=> 'cdr'], function () {
-		Route::get('/{company_id?}', [CdrController::class, 'getAllCdrList']);
+	Route::group(['prefix'=> 'cdr-report'], function () {
+		Route::get('/inboundCdr/{company_id?}', [CdrController::class, 'getAllCdrList']);
+		Route::get('/outboundCdr/{company_id?}', [CdrController::class, 'getAllCallList']);
 		//Route::delete('/{id}', [IvrController::class,'deleteIvr']);
 	});
 
