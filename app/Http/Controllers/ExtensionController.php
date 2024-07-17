@@ -793,10 +793,10 @@ class ExtensionController extends Controller
         fputs($socket, "Action: Logoff\r\n\r\n");
         while (!feof($socket))
             $response .= fread($socket, 8192);
-        fclose($socket);
+        fclose($socket); 
 
-        return $lines = explode("\n", $response);
-/*
+        $lines = explode("\n", $response);
+        $data = array();
         foreach ($lines as $line) 
         {
             $line = trim($line); // Remove leading/trailing whitespace 
@@ -807,84 +807,74 @@ class ExtensionController extends Controller
 
             if (strpos($line, "OK") !== false || strpos($line, "UNREACHABLE") !== false || strpos($line, "LAGGED") !== false) {
                 $columns = preg_split('/\s+/', $line);
-
+                
                 if (strpos($columns[1], "/") !== false) {
                     $columns[1] = substr($columns[1], 0, strpos($columns[1], "/"));
                 }
+                if(is_numeric($columns[1])){
 
-                $ext_sql = "select clientId,agent_name,play_ivr,id_cc_card from cc_sip_buddies where name='" . $columns[1] . "'";
-                $res_client = mysqli_query($connection, $ext_sql);
-                $rows = mysqli_fetch_assoc($res_client);
-                $clientId = $rows['clientId'];
-                $agent = $rows['agent_name'];
-                $phone_type = $rows['play_ivr'];
-                $user_id = $rows['id_cc_card'];
-                $clt_sql = "SELECT `clientName` FROM `Client` WHERE `clientId` = '" . $clientId . "'";
-                $clt_res = mysqli_query($connection, $clt_sql);
-                $rowss = mysqli_fetch_assoc($clt_res);
-                $client_name = $rowss['clientName'];
-                $usr_sql = "select email from users_login where id='" . $user_id . "'";
-                $usr_res = mysqli_query($connection, $usr_sql) or die('query failed : usr_sql');
-                $rowsss = mysqli_fetch_assoc($usr_res);
-                $email = $rowsss['email'];
+                    $extension = Extension::with('company:id,company_name,email,mobile')
+                                    ->select('id', 'name', 'agent_name', 'sip_temp','callbackextension', 'country_id', 'company_id')
+                                    ->where('name', $columns[1])->first();
 
-                if (in_array('D', $columns)) {
-                    unset($columns[3]);
-                    $columns = array_values($columns);
-                }
+                    if ($extension != null) {
+                        $clientId   = $extension->company_id;
+                        $agent      = $extension->agent_name;
+                        $phone_type = $extension->sip_temp;
+                        $client_name= $extension->company->company_name;
+                        $email      = $extension->company->email;
 
-                if ($phone_type == 0) {
-                    $user_type = "Soft Phone";
-                } else {
-                    $user_type = "Web Phone";
-                }
-                if (in_array('A', $columns)) {
-                    unset($columns[5]);
-                    $columns = array_values($columns);
-                    // $user_type = "Soft Phone";
-                } else {
-                    // $user_type = "Web Phone";
-                }
-                // echo '<pre>';print_r($columns);exit;
-
-                if (in_array($columns[1], $Exname)) {
-
-                    // $ext_name = substr($columns[1],0,6);
-                    $port = $columns[5];
-                    if ($columns[5] == 0) {
-                        $port = 'Unreachable';
-                    }
-
-                    $status = trim($columns[6] . ' ' . $columns[7] . ' ' . $columns[8]);
-                    if ($port == 0 || $status == 'UNREACHABLE') {
-                        if ($status == 'UNREACHABLE') {
-                            $statusText = $status;
-                        } else {
-                            $statusText = "Out of Network";
+                        if (in_array('D', $columns)) {
+                            unset($columns[3]);
+                            $columns = array_values($columns);
                         }
-                        $status = "<div style='background:red;padding:6px;border-radius:15px;color:white;font-weight:bold;'>" . $statusText . "</div>";
-                    } else {
-                        $status = "<div style='background:green;padding:6px;border-radius:15px;color:white;font-weight:bold;'>REACHABLE<br>".trim($columns[7] . ' ' . $columns[8])."</div>";
+
+                        if ($phone_type == 'WEBRTC') {
+                            $user_type = "Web Phone";                    
+                        } else {
+                            $user_type = "Soft Phone";
+                        }
+                        if (in_array('A', $columns)) {
+                            unset($columns[5]);
+                            $columns = array_values($columns);                  
+                        } 
+                        $port = $columns[5];
+                        if ($columns[5] == 0) {
+                            $port = 'Unreachable';
+                        }
+        
+                        $status = trim($columns[6] . ' ' . $columns[7] . ' ' . $columns[8]);
+                        if ($port == 0 || $status == 'UNREACHABLE') {
+                            if ($status == 'UNREACHABLE') {
+                                $statusText = $status;
+                            } else {
+                                $statusText = "Out of Network";
+                            }
+                            $status = $statusText;
+                        } else {
+                            $status = 'REACHABLE<br>'.trim($columns[7] . ' ' . $columns[8]);
+                        }
+                        
+                        $peerData = array(
+                            "companyName" => $client_name,
+                            "agent_name" => $agent . '<br>' . $email,
+                            "userType" => $user_type,
+                            "name" => $columns[1] . '/' . $columns[1],
+                            "host" => $columns[2],
+                            "forceport" => $columns[3],
+                            "comedia" => $columns[4],
+                            "port" => $port,
+                            "status" => $status                   
+                        );                
+                        $data[] = $peerData;
                     }
-                    // echo $ext_name;exit;
-                    $peerData = array(
-
-                        // "Select" => '<td><input type="checkbox" class="emp_checkbox" data-emp-id="'.$columns[1].'"></td>',
-                        "companyName" => $client_name,
-                        "agent_name" => $agent . '<br>' . $email,
-                        "userType" => $user_type,
-                        "name" => $columns[1] . '/' . $columns[1],
-                        "host" => $columns[2],
-                        "forceport" => $columns[3],
-                        "comedia" => $columns[4],
-                        "port" => $port,
-                        "status" => $status,
-                        "action" => '<button type="button" onclick="return sip_unregister(' . $columns[1] . ');" class="btn btn-danger btn-sm">Unregister</button>'
-                    );
-
-                    $data[] = $peerData;
                 }
             }
-        }*/
+        }
+        if (count($data) > 0 ) {
+            return $this->output(true, 'Success', $data, 200);
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
     }
 }
