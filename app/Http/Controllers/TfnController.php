@@ -80,7 +80,8 @@ class TfnController extends Controller
     public function updateTfns(Request $request, $id)
     {
         $user = \Auth::user();
-        if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
+        //if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {    
             $updateTfns = Tfn::find($id);
 
             if (is_null($updateTfns)) {
@@ -92,7 +93,6 @@ class TfnController extends Controller
                 'tfn_provider'              => 'required|numeric',
                 'tfn_group_id'              => 'required|numeric',
                 'country_id'                => 'required|numeric',
-                'activated'                 => 'required',
                 'monthly_rate'              => 'required',
                 'connection_charge'         => 'required',
                 'selling_rate'              => 'required',
@@ -106,12 +106,10 @@ class TfnController extends Controller
 
             try {
                 DB::beginTransaction();
-
-                $updateTfns->tfn_number               = $request->tfn_number;
+                //$updateTfns->tfn_number               = $request->tfn_number;
                 $updateTfns->tfn_provider             = $request->tfn_provider;
                 $updateTfns->tfn_group_id             = $request->tfn_group_id;
                 $updateTfns->country_id               = $request->country_id;
-                $updateTfns->activated                = $request->activated;
                 $updateTfns->monthly_rate             = $request->monthly_rate;
                 $updateTfns->connection_charge        = $request->connection_charge;
                 $updateTfns->selling_rate             = $request->selling_rate;
