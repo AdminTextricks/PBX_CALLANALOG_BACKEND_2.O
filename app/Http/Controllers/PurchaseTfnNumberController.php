@@ -190,7 +190,7 @@ class PurchaseTfnNumberController extends Controller
                     if (strtoupper($request->item_type) == 'TFN') {
                         $tfnNumber = Tfn::where('id', $request->item_id)->where('reserved', '0')->first();
                         if ($tfnNumber) {
-                            $tfnNumber->reserved = 1;
+                            $tfnNumber->reserved = '1';
                             $tfnNumber->reserveddate = date('Y-m-d H:i:s');
                             $tfnNumber->reservedexpirationdate = date('Y-m-d H:i:s', strtotime('+1 day'));
                             if($tfnNumber->save()){
