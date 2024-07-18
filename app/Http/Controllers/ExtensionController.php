@@ -757,7 +757,7 @@ class ExtensionController extends Controller
 
     protected function sipReload()
     {
-        $server_ip = "139.84.157.121";
+        $server_ip = "85.195.76.161";
         $socket = @fsockopen($server_ip, 5038);
         $response = "";
         if (!is_resource($socket)) {
@@ -779,7 +779,7 @@ class ExtensionController extends Controller
     public function getSipRegistrationList(Request $request)
     {
         $user = \Auth::user();
-        $server_ip = "139.84.157.121";
+        $server_ip = "85.195.76.161";
         $socket = @fsockopen($server_ip, 5038);
         $response = "";
         if (!is_resource($socket)) {

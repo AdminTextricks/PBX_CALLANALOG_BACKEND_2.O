@@ -76,7 +76,7 @@ class PurchaseTfnNumberController extends Controller
             ->where('tfns.assign_by', '0')
             ->where('tfns.plan_id', '0')
             ->whereIn('tfns.tfn_provider', $inbound_trunk)
-            ->where('tfns.activated', '1')
+            ->where('tfns.activated', '0')
             ->where('tfns.reserved', '0')
             ->where('tfns.status', '1')
             ->distinct();
