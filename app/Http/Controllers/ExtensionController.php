@@ -644,6 +644,28 @@ class ExtensionController extends Controller
                         ]);
                     }
 
+                    if ($Extension->sip_temp != $request->sip_temp) { 
+                        if ($request->sip_temp == 'WEBRTC') {
+                            $addExtensionFile = $webrtc_template_url;
+                            $removeExtensionFile = $softphone_template_url;
+                        } else {
+                            $addExtensionFile = $softphone_template_url;
+                            $removeExtensionFile = $webrtc_template_url;
+                        }
+                        $ConfTemplate = ConfTemplate::select()->where('template_id', $request->sip_temp)->first();
+                        $this->addExtensionInConfFile($request->name, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
+                        $this->removeExtensionFromConfFile($request->name, $removeExtensionFile);
+
+                        $server_flag = config('app.server_flag');
+                        if ($server_flag == 1) {
+                            $shell_script = config('app.shell_script');
+                            $result = shell_exec('sudo ' . $shell_script);
+                            Log::error('Extension Update File Transfer Log : ' . $result);
+                            $this->sipReload();
+                        }
+                    }
+
+
                     $Extension->callbackextension = $request->callbackextension;
                     $Extension->agent_name = $request->agent_name;
                     $Extension->secret = $request->secret;
@@ -658,27 +680,6 @@ class ExtensionController extends Controller
                     $Extension->sip_temp = $request->sip_temp;
                     $ExtensionRes = $Extension->save();
                     if ($ExtensionRes) {
-
-                        if ($Extension->sip_temp != $request->sip_temp) { 
-                            if ($request->sip_temp == 'WEBRTC') {
-                                $addExtensionFile = $webrtc_template_url;
-                                $removeExtensionFile = $softphone_template_url;
-                            } else {
-                                $addExtensionFile = $softphone_template_url;
-                                $removeExtensionFile = $webrtc_template_url;
-                            }
-                            $ConfTemplate = ConfTemplate::select()->where('template_id', $request->sip_temp)->first();
-                            $this->addExtensionInConfFile($request->name, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
-                            $this->removeExtensionFromConfFile($request->name, $removeExtensionFile);
-    
-                            $server_flag = config('app.server_flag');
-                            if ($server_flag == 1) {
-                                $shell_script = config('app.shell_script');
-                                $result = shell_exec('sudo ' . $shell_script);
-                                Log::error('Extension Update File Transfer Log : ' . $result);
-                                $this->sipReload();
-                            }
-                        }
 
 
                         $ExtensionUpdated = Extension::where('id', $id)->first();

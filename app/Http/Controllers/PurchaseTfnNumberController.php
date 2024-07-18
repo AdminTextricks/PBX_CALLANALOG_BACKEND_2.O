@@ -15,7 +15,71 @@ use Illuminate\Support\Facades\DB;
 
 class PurchaseTfnNumberController extends Controller
 {
+
     public function searchTfn(Request $request)
+    {
+        $user = \Auth::user();
+        $perPageNo = isset($request->perpage) ? $request->perpage : 50;
+        $validator = Validator::make($request->all(), [
+            'country_id'        => 'required',
+            'type'              => 'required',
+            'starting_digits'   => 'nullable', 
+        ]);
+
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+
+        $country_id = $request->country_id;
+        $type       = $request->type;
+        $starting_digits = $request->starting_digits;
+        
+        $reseller_id = '';
+        if ($user->company->parent_id > 1) {
+            $price_for = 'Reseller';
+            $reseller_id = $user->company->parent_id;
+        } else {
+            $price_for = 'Company';
+        }
+        $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'TFN');
+        if ($item_price_arr['Status'] == 'true') {        
+            $item_price = $item_price_arr['TFN_price'];
+            $company = Company::where('id', $user->company->id)->first();
+            $inbound_trunk = explode(',', $company->inbound_permission);
+
+            $searchQry = Tfn::select('id', 'tfn_number')
+                        ->where('country_id', $country_id)
+                        ->where('company_id', 0)
+                        ->where('assign_by', 0)
+                        ->whereIn('tfn_provider', $inbound_trunk)
+                        ->where('activated', '0')
+                        ->where('reserved', '0')
+                        ->where('status', 1);
+            
+            if ($type == 'Local') {
+                $data = $searchQry->paginate($perPageNo);
+            } else {
+                $data = $searchQry->where('tfn_number', 'like', "%$starting_digits%")->paginate(
+                    $perPage = $perPageNo,
+                    $columns = ['*'],
+                    $pageName = 'page'
+                );
+            }
+            if ($data->isNotEmpty()) {
+                $datanew = $data->toArray();
+                $datanew = ['item_price' => $item_price] + $datanew;
+                unset($datanew['links']);
+                return $this->output(true, 'success', $datanew, 200);
+            } else {
+                return $this->output(true, 'No Record Found!!', []);
+            }
+        } else {
+            DB::commit();
+            return $this->output(false, $item_price_arr['Message']);
+        }
+    }
+
+    public function searchTfn_old(Request $request)
     {
         $user = \Auth::user();
         $perPageNo = isset($request->perpage) ? $request->perpage : 50;
@@ -76,7 +140,7 @@ class PurchaseTfnNumberController extends Controller
             ->where('tfns.assign_by', '0')
             ->where('tfns.plan_id', '0')
             ->whereIn('tfns.tfn_provider', $inbound_trunk)
-            ->where('tfns.activated', '0')
+            ->where('tfns.activated', '1')
             ->where('tfns.reserved', '0')
             ->where('tfns.status', '1')
             ->distinct();
