@@ -652,6 +652,9 @@ class ExtensionController extends Controller
                             $addExtensionFile = $softphone_template_url;
                             $removeExtensionFile = $webrtc_template_url;
                         }
+
+                        Log::error('addExtensionFile : ' . $addExtensionFile . '  / removeExtensionFile: ' . $removeExtensionFile );
+
                         $ConfTemplate = ConfTemplate::select()->where('template_id', $request->sip_temp)->first();
                         $this->addExtensionInConfFile($request->name, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
                         $this->removeExtensionFromConfFile($request->name, $removeExtensionFile);
