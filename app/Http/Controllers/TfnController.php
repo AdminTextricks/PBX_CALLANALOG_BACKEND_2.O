@@ -25,7 +25,7 @@ class TfnController extends Controller
     {
         $user = \Auth::user();
         //if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
-        if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
             $validator = Validator::make($request->all(), [
                 'tfn_number'                => 'required|numeric|unique:tfns',
                 'tfn_provider'              => 'required|numeric',
@@ -81,7 +81,7 @@ class TfnController extends Controller
     {
         $user = \Auth::user();
         //if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
-        if (in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))) {    
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
             $updateTfns = Tfn::find($id);
 
             if (is_null($updateTfns)) {
@@ -255,7 +255,8 @@ class TfnController extends Controller
                     ->select('*')->where('id', $tfn_id)->withTrashed()->get();
             } else {
                 if ($params !== "") {
-                    $tfngetAll = Tfn::with([
+                    $tfngetAll = Tfn::select('tfns.id', 'tfns.company_id', 'tfns.assign_by', 'tfns.tfn_number', 'tfns.tfn_provider', 'tfns.tfn_group_id', 'tfns.country_id', 'tfns.activated', 'tfns.reserved')
+                    ->with([
                         'countries:id,country_name,phone_code,currency_symbol',
                         'trunks:id,type,name',
                         'company:id,company_name,email',
@@ -267,6 +268,8 @@ class TfnController extends Controller
                         ->where('tfn_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_type_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
+                        ->orWhere('activated', 'LIKE', "%$params%")
+                        ->orWhere('reserved', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('company_name', 'like', "%{$params}%");
                         })
@@ -286,7 +289,7 @@ class TfnController extends Controller
                                 })
                                 ->orWhereHas('voiceMail', function ($subQuery) use ($params) {
                                     $subQuery->where('fullname', 'like', "%{$params}%")
-                                    ->orWhere('email', 'like', "%{$params}%");
+                                        ->orWhere('email', 'like', "%{$params}%");
                                 })
                                 ->orWhereHas('conferences', function ($subQuery) use ($params) {
                                     $subQuery->where('confno', 'like', "%{$params}%");
@@ -329,7 +332,8 @@ class TfnController extends Controller
                     ->where('id', $tfn_id)->withTrashed()->get();
             } else {
                 if ($params !== "") {
-                    $tfngetAll = Tfn::with([
+                    $tfngetAll = Tfn::select('tfns.id', 'tfns.company_id', 'tfns.assign_by', 'tfns.tfn_number', 'tfns.tfn_provider', 'tfns.tfn_group_id', 'tfns.country_id', 'tfns.activated', 'tfns.reserved')
+                    ->with([
                         'countries:id,country_name,phone_code,currency_symbol',
                         'trunks:id,type,name',
                         'company:id,company_name,email',
@@ -341,6 +345,8 @@ class TfnController extends Controller
                         ->where('tfn_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_type_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
+                        ->orWhere('activated', 'LIKE', "%$params%")
+                        ->orWhere('reserved', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('company_name', 'like', "%{$params}%");
                         })
@@ -360,7 +366,7 @@ class TfnController extends Controller
                                 })
                                 ->orWhereHas('voiceMail', function ($subQuery) use ($params) {
                                     $subQuery->where('fullname', 'like', "%{$params}%")
-                                    ->orWhere('email', 'like', "%{$params}%");
+                                        ->orWhere('email', 'like', "%{$params}%");
                                 })
                                 ->orWhereHas('conferences', function ($subQuery) use ($params) {
                                     $subQuery->where('confno', 'like', "%{$params}%");
@@ -607,8 +613,7 @@ class TfnController extends Controller
 
             if ($tfn && $tfn->company_id != 0) {
                 return $this->output(false, "TFN Number ($tfn_number) is already purchased. Please try another TFN number.", [], 409);
-            }
-            elseif($tfn && $tfn->reserved == "1"){
+            } elseif ($tfn && $tfn->reserved == "1") {
                 return $this->output(false, "TFN Number ($tfn_number) is already in Cart. Please try another TFN number.", [], 409);
             }
 
@@ -804,7 +809,7 @@ class TfnController extends Controller
                 ->where('country_id', $country_id)
                 ->where('company_id', $company_id)
                 ->where('status', 1)
-                ->where('activated', 1)->get();
+                ->where('activated', '1')->get();
         } else {
             $data = Tfn::select('id', 'tfn_number', 'country_id', 'company_id')
                 /*->with('company:id,company_name,email,mobile')
@@ -812,7 +817,7 @@ class TfnController extends Controller
                 ->where('company_id', '=',  $user->company_id)
                 ->where('country_id', $country_id)
                 ->where('status', 1)
-                ->where('activated', 1)->get();
+                ->where('activated', '1')->get();
         }
 
         if ($data->isNotEmpty()) {
@@ -836,7 +841,7 @@ class TfnController extends Controller
             $tfnData = Tfn::select('*')->where('id', $request->tfn_id)->first();
             if (!$tfnData) {
                 return $this->output(false, 'This Tfn Number is not exist with us. Please try again!.', [], 404);
-            }else {
+            } else {
                 $tfnData->call_screen_action = $request->call_screen_action;
                 if ($tfnData->save()) {
                     DB::commit();
