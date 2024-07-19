@@ -157,11 +157,12 @@ class PaymentController extends Controller
                         if ($itemType === "TFN") {
                             $numbers_list = Tfn::where('tfn_number', $itemNumber)->first();
                             if ($numbers_list) {
-                                $numbers_list->assign_by = $user->company->id;
+                                $numbers_list->company_id = $user->company->id;
                                 $numbers_list->assign_by = $user->id;
-                                $numbers_list->plan_id = $user->company->plan_id;
+                                // $numbers_list->plan_id = $user->company->plan_id;
+                                $numbers_list->activated = 1;
                                 $numbers_list->startingdate = date('Y-m-d H:i:s');
-                                $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                                $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
                                 $numbers_list->save();
                             } else {
                                 DB::rollback();
@@ -171,7 +172,7 @@ class PaymentController extends Controller
                             $numbers_list = Extension::where('name', $itemNumber)->first();
                             if ($numbers_list) {
                                 $numbers_list->startingdate = date('Y-m-d H:i:s');
-                                $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                                $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
                                 $numbers_list->host = 'dynamic';
                                 $numbers_list->sip_temp = 'WEBRTC';
                                 $numbers_list->status = 1;
@@ -613,11 +614,12 @@ class PaymentController extends Controller
                     if ($itemType === "TFN") {
                         $numbers_list = Tfn::where('tfn_number', $itemNumber)->first();
                         if ($numbers_list) {
-                            $numbers_list->assign_by = $user->company->id;
+                            $numbers_list->company_id = $user->company->id;
                             $numbers_list->assign_by = $user->id;
-                            $numbers_list->plan_id = $user->company->plan_id;
+                            // $numbers_list->plan_id = $user->company->plan_id;
+                            $numbers_list->activated = 1;
                             $numbers_list->startingdate = date('Y-m-d H:i:s');
-                            $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                            $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
                             $numbers_list->save();
                         } else {
                             DB::rollback();
@@ -627,7 +629,7 @@ class PaymentController extends Controller
                         $numbers_list = Extension::where('name', $itemNumber)->first();
                         if ($numbers_list) {
                             $numbers_list->startingdate = date('Y-m-d H:i:s');
-                            $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                            $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
                             $numbers_list->host = 'dynamic';
                             $numbers_list->sip_temp = 'WEBRTC';
                             $numbers_list->status = 1;
