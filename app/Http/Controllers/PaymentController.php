@@ -157,6 +157,7 @@ class PaymentController extends Controller
                         if ($itemType === "TFN") {
                             $numbers_list = Tfn::where('tfn_number', $itemNumber)->first();
                             if ($numbers_list) {
+                                $numbers_list->assign_by = $user->company->id;
                                 $numbers_list->assign_by = $user->id;
                                 $numbers_list->plan_id = $user->company->plan_id;
                                 $numbers_list->startingdate = date('Y-m-d H:i:s');
@@ -612,6 +613,7 @@ class PaymentController extends Controller
                     if ($itemType === "TFN") {
                         $numbers_list = Tfn::where('tfn_number', $itemNumber)->first();
                         if ($numbers_list) {
+                            $numbers_list->assign_by = $user->company->id;
                             $numbers_list->assign_by = $user->id;
                             $numbers_list->plan_id = $user->company->plan_id;
                             $numbers_list->startingdate = date('Y-m-d H:i:s');
