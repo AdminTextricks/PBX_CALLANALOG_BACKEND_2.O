@@ -542,7 +542,7 @@ class TfnController extends Controller
         foreach ($request->tfn_number as $tfn_number) {
             $tfn = Tfn::where('tfn_number', $tfn_number)->first();
 
-            if ($tfn && $tfn->company_id != 0 && $tfn->reserved !=0 && $tfn->plan_id !=0) {
+            if ($tfn && $tfn->company_id != 0) {
                 return $this->output(false, "TFN Number ($tfn_number) is already purchased. Please try another TFN number.", [], 409);
             }
 
