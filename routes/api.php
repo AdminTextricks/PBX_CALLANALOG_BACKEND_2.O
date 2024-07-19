@@ -204,7 +204,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/getSipRegistrationList', [ExtensionController::class, 'getSipRegistrationList'])->name('getSipRegistrationList');
 		
 		Route::post('/', [ExtensionController::class, 'createExtensions']);
-		//Route::post('/', [ExtensionController::class, 'addExtensions']);
+		Route::patch('/changeStatus/{id}', [ExtensionController::class, 'changeExtensionStatus']);
 		Route::post('/generate', [ExtensionController::class, 'generateExtensions']);
 		Route::get('/generatePassword', [ExtensionController::class, 'generateStrongPassword']);
 		Route::get('/{id?}', [ExtensionController::class, 'getAllExtensions']);

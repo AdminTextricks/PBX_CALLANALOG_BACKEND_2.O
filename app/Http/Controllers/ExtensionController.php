@@ -319,171 +319,41 @@ class ExtensionController extends Controller
     }
 
     /************ End */
-    public function addExtensions(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'country_id' => 'required|numeric',
-            'company_id' => 'required|numeric',
-            'name.*' => 'required|unique:extensions,name',
-            'callbackextension' => 'required|max:50',
-            'agent_name' => 'required|max:150',
-            'callgroup' => 'required|in:0,1', // Outbound call yes or no
-            'callerid' => 'required_if:callgroup,1',
-            'secret' => 'required',
-            'barge' => 'required|in:0,1', //Yes ro no(0,1)
-            'recording' => 'required|in:0,1', //Yes ro no(0,1)
-            'mailbox' => 'required|in:0,1', //voice mail yes or no
-            'voice_email' => 'required_if:mailbox,1',
-        ], [
-            'name' => 'This Extension is already exist with us. Please try with different.',
-        ]);
-        if ($validator->fails()) {
-            return $this->output(false, $validator->errors()->first(), [], 409);
-        }
-        // Start transaction!
-        try {
-            DB::beginTransaction();
-            $user = \Auth::user();
-            $input = $request->all();
-            //$extension_name = explode(',',$input['extension_name']);
-            $extension_name = $input['name'];
-            $Company = Company::where('id', $request->company_id)->first();
-            if ($Company) {
-                $reseller_id = '';
-                if ($Company->parent_id > 1) {
-                    $price_for = 'Reseller';
-                    $reseller_id = $Company->parent_id;
-                } else {
-                    $price_for = 'Company';
-                }
-                $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'Extension');
-                if ($item_price_arr['Status'] == 'true') {
-                    $item_price = $item_price_arr['Extension_price'];
-                    if (is_array($extension_name)) {
-                        $VoiceMail = $ids = $Cart = [];
-                        $status = '0';
-                        $startingdate = $expirationdate = $host = $sip_temp = NULL;
-                        if ($Company->plan_id == 2) {
-                            $status = '1';
-                            $startingdate = Carbon::now();
-                            $expirationdate = $startingdate->addDays(179);
-                            $host = 'dynamic';
-                            $sip_temp = 'WEBRTC';
-                        }
-                        foreach ($extension_name as $item) {
-                            $data = [];
-                            $data = [
-                                'country_id' => $request->country_id,
-                                'company_id' => $request->company_id,
-                                'name' => $item,
-                                'callbackextension' => $request->callbackextension,
-                                'account_code' => $Company->account_code,
-                                'agent_name' => $request->agent_name,
-                                'callgroup' => $request->callgroup,
-                                'callerid' => $request->callerid,
-                                'secret' => $request->secret,
-                                'barge' => $request->barge,
-                                'recording' => $request->recording,
-                                'mailbox' => $request->mailbox,
-                                'regexten' => $item,
-                                'startingdate' => Carbon::now(),
-                                'expirationdate' => $expirationdate,
-                                'fromdomain' => 'NULL',
-                                'amaflags' => 'billing',
-                                'canreinvite' => 'no',
-                                'context' => 'callanalog',
-                                'dtmfmode' => 'RFC2833',
-                                'host' => $host,
-                                'sip_temp' => $sip_temp,
-                                'insecure' => 'port,invite',
-                                'language' => 'en',
-                                'nat' => 'force_rport,comedia',
-                                'qualify' => 'yes',
-                                'rtptimeout' => '60',
-                                'rtpholdtimeout' => '300',
-                                'type' => 'friend',
-                                'username' => $item,
-                                'disallow' => 'ALL',
-                                'allow' => 'g729,g723,ulaw,gsm',
-                                'created_at' => Carbon::now(),
-                                'updated_at' => Carbon::now(),
-                                'status' => $status,
-                            ];
 
-                            $id = DB::table('extensions')->insertGetId($data);
-                            $ids[$id] = $item;
-                            if ($Company->plan_id == 1) {
-                                array_push($Cart, [
-                                    'company_id' => $request->company_id,
-                                    'item_id' => $id,
-                                    'item_number' => $item,
-                                    'item_type' => 'Extension',
-                                    'item_price' => $item_price,
-                                    'created_at' => Carbon::now(),
-                                    'updated_at' => Carbon::now(),
-                                ]);
-                                //$cartIds = DB::table('carts')->insertGetId($Cart);                   
-                            } else {
-                                $webrtc_template_url = config('app.webrtc_template_url');
-                                $addExtensionFile = $webrtc_template_url;
-                                $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
-                                $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
-                            }
-                            if ($request->mailbox == '1') {
-                                array_push($VoiceMail, [
-                                    'company_id' => $request->company_id,
-                                    'context' => 'default',
-                                    'mailbox' => $item,
-                                    'fullname' => $request->agent_name,
-                                    'email' => $request->voice_email,
-                                    'timezone' => 'central',
-                                    'attach' => 'yes',
-                                    'review' => 'no',
-                                    'operator' => 'no',
-                                    'envelope' => 'no',
-                                    'sayduration' => 'no',
-                                    'saydurationm' => '1',
-                                    'sendvoicemail' => 'no',
-                                    'nextaftercmd' => 'yes',
-                                    'forcename' => 'no',
-                                    'forcegreetings' => 'no',
-                                    'hidefromdir' => 'yes',
-                                    'created_at' => Carbon::now(),
-                                    'updated_at' => Carbon::now(),
-                                ]);
-                            }
-                        }
-                        // $Extensions = Extension::insert($data);
-                        if ($request->mailbox == '1') {
-                            $VoiceMail = VoiceMail::insert($VoiceMail);
-                        }
-                        if ($Company->plan_id == 1) {
-                            $cartIds = Cart::insert($Cart);
-                        }
-
-                        $response['total_extension'] = count($ids);//$Extensions;//->toArray();
-                        $response['plan_id'] = $Company->plan_id;
-                        DB::commit();
-                        return $this->output(true, 'Extension added successfully.', $response);
-                    } else {
-                        DB::commit();
-                        return $this->output(false, 'Wrong extension value format.');
-                    }
-                } else {
-                    DB::commit();
-                    return $this->output(false, $item_price_arr['Message']);
-                }
-            } else {
-                DB::commit();
-                return $this->output(false, 'Company not exist with us.');
-            }
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Error in Extensions Inserting : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
-            return $this->output(false, 'Error Occurred in adding extensions. Please try again after some time.', [], 406);
-        }
+    public function changeExtensionStatus(Request $request, $id)
+	{
+		try { 
+			DB::beginTransaction(); 
+			$validator = Validator::make($request->all(), [
+				'status' => 'required',
+			]);
+			if ($validator->fails()){
+				DB::commit();
+				return $this->output(false, $validator->errors()->first(), [], 409);
+			}		
+			$Extension = Extension::find($id);
+			if(is_null($Extension)){
+				DB::commit();
+				return $this->output(false, 'This Extension not exist with us. Please try again!.', [], 409);
+			}else{				
+				$Extension->status = $request->status;
+				$ExtensionsRes = $Extension->save();
+				if($ExtensionsRes){
+					$Extension = Extension::where('id', $id)->first();        
+					$response = $Extension->toArray();
+					DB::commit();
+					return $this->output(true, 'Extension status updated successfully.', $response, 200);
+				}else{
+					DB::commit();
+					return $this->output(false, 'Error occurred in Extension Updating. Please try again!.', [], 200);
+				}				
+			}
+		} catch (\Exception $e) {
+			DB::rollback();
+			Log::error('Error occurred in Extension Updating : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+		}
     }
-
 
     public function getAllExtensions(Request $request)
     {
