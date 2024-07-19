@@ -197,10 +197,10 @@ class UserController extends Controller
             'parent_id'     => 'required',
             'plan_id'       => 'required',
             'company_name'  => 'required|max:500|unique:companies',
-            'account_code'  => 'required|max:500|unique:companies',
             'name'     		=> 'required|max:255',
             'email'         => 'required|email|max:255|unique:users|unique:companies',
             'mobile'        => 'required|numeric|unique:users',
+            'account_code'  => 'required|max:500|unique:companies',
 			'address'		=> 'required|max:500',
 			'country_id'	=> 'required',
 			'state_id'		=> 'required',
@@ -213,7 +213,7 @@ class UserController extends Controller
             'email.unique'  => 'This email ID is already registered. Please try with different email ID.',
             'mobile.unique' => 'This mobile number is already registered. Please try with different mobile number.',
             'company_name.unique' => 'This Company name is already registered. Please try with different Company name.',
-			'account_code.unique' => 'This Account code is already exist. Please try with different Account code.',
+			'account_code.unique' => 'This mobile number is already registered. Please try with different mobile number.',
         ]);
         if ($validator->fails()){
             return $this->output(false, $validator->errors()->first(), [], 409);
