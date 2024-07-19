@@ -267,6 +267,37 @@ class TfnController extends Controller
                         ->where('tfn_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_type_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
+                        ->orWhereHas('company', function ($query) use ($params) {
+                            $query->where('company_name', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('trunks', function ($query) use ($params) {
+                            $query->where('name', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('destination_types', function ($query) use ($params) {
+                            $query->where('destination_type', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('tfn_destinations', function ($query) use ($params) {
+                            $query->where('destination_id', 'like', "%{$params}%")
+                                ->orWhereHas('queues', function ($subQuery) use ($params) {
+                                    $subQuery->where('name', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('extensions', function ($subQuery) use ($params) {
+                                    $subQuery->where('name', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('voiceMail', function ($subQuery) use ($params) {
+                                    $subQuery->where('fullname', 'like', "%{$params}%")
+                                    ->orWhere('email', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('conferences', function ($subQuery) use ($params) {
+                                    $subQuery->where('confno', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('ringGroups', function ($subQuery) use ($params) {
+                                    $subQuery->where('ringno', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('ivrs', function ($subQuery) use ($params) {
+                                    $subQuery->where('name', 'like', "%{$params}%");
+                                });
+                        })
                         ->select('*')->withTrashed()->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 } else {
                     $tfngetAll = Tfn::with([
@@ -310,6 +341,37 @@ class TfnController extends Controller
                         ->where('tfn_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_type_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
+                        ->orWhereHas('company', function ($query) use ($params) {
+                            $query->where('company_name', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('trunks', function ($query) use ($params) {
+                            $query->where('name', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('destination_types', function ($query) use ($params) {
+                            $query->where('destination_type', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('tfn_destinations', function ($query) use ($params) {
+                            $query->where('destination_id', 'like', "%{$params}%")
+                                ->orWhereHas('queues', function ($subQuery) use ($params) {
+                                    $subQuery->where('name', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('extensions', function ($subQuery) use ($params) {
+                                    $subQuery->where('name', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('voiceMail', function ($subQuery) use ($params) {
+                                    $subQuery->where('fullname', 'like', "%{$params}%")
+                                    ->orWhere('email', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('conferences', function ($subQuery) use ($params) {
+                                    $subQuery->where('confno', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('ringGroups', function ($subQuery) use ($params) {
+                                    $subQuery->where('ringno', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('ivrs', function ($subQuery) use ($params) {
+                                    $subQuery->where('name', 'like', "%{$params}%");
+                                });
+                        })
                         ->where('company_id', '=', $user->company_id)
                         ->withTrashed()
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
