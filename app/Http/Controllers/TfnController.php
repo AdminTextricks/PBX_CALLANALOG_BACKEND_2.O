@@ -625,6 +625,7 @@ class TfnController extends Controller
                     'company_id' => $company->id,
                     'assign_by' => $user->id,
                     // 'plan_id' => $company->plan_id,
+                    'activated' =>1,
                     'reserved' => 1,
                     'reserveddate' => date('Y-m-d H:i:s'),
                     'reservedexpirationdate' => NULL,
