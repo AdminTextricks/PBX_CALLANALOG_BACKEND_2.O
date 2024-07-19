@@ -160,7 +160,7 @@ class PaymentController extends Controller
                                 $numbers_list->company_id = $user->company->id;
                                 $numbers_list->assign_by = $user->id;
                                 // $numbers_list->plan_id = $user->company->plan_id;
-                                $numbers_list->activated = 1;
+                                $numbers_list->activated = '1';
                                 $numbers_list->startingdate = date('Y-m-d H:i:s');
                                 $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
                                 $numbers_list->save();
@@ -617,7 +617,7 @@ class PaymentController extends Controller
                             $numbers_list->company_id = $user->company->id;
                             $numbers_list->assign_by = $user->id;
                             // $numbers_list->plan_id = $user->company->plan_id;
-                            $numbers_list->activated = 1;
+                            $numbers_list->activated = '1';
                             $numbers_list->startingdate = date('Y-m-d H:i:s');
                             $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
                             $numbers_list->save();
