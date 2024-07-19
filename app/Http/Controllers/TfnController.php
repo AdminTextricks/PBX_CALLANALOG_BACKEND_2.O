@@ -527,6 +527,7 @@ class TfnController extends Controller
             'tfn_type'   => 'required',
         ], [
             'company_id' => 'The company is required.',
+            'tfn_type' => 'Payment Type Field is required.',
         ]);
 
         if ($validator->fails()) {
@@ -623,7 +624,7 @@ class TfnController extends Controller
                 $tfn->update([
                     'company_id' => $company->id,
                     'assign_by' => $user->id,
-                    'plan_id' => $company->plan_id,
+                    // 'plan_id' => $company->plan_id,
                     'reserved' => 1,
                     'reserveddate' => date('Y-m-d H:i:s'),
                     'reservedexpirationdate' => NULL,
