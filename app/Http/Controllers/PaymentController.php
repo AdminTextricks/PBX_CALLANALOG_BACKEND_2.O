@@ -41,7 +41,7 @@ class PaymentController extends Controller
                 }
                 if ($itemType === "TFN") {
                     $tfn_list_type = Tfn::select('*')->where('tfn_number', $itemNumber)->first();
-                    if ($tfn_list_type && $tfn_list_type->reserved == 1 && $tfn_list_type->company_id != $user->company_id) {
+                    if ($tfn_list_type && $tfn_list_type->company_id != 0) {
                         return $this->output(false, 'Tfn Number ' . $itemNumber . ' is already Purchased.', 400);
                     }
                 } else {
