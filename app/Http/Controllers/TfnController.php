@@ -240,7 +240,7 @@ class TfnController extends Controller
         $perPageNo = isset($request->perpage) ? $request->perpage : 10;
         $params = $request->params ?? "";
 
-        if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
             $tfn_id = $request->id ?? NULL;
             if ($tfn_id) {
                 $tfngetAll = Tfn::with([
@@ -266,7 +266,6 @@ class TfnController extends Controller
                             'tfn_destinations.destinationType:id,destination_type'
                         ])
                         ->where('tfn_number', 'LIKE', "%$params%")
-                        ->orWhere('tfn_type_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
                         ->orWhere('activated', 'LIKE', "%$params%")
                         ->orWhere('reserved', 'LIKE', "%$params%")
@@ -344,7 +343,6 @@ class TfnController extends Controller
                             'tfn_destinations.destinationType:id,destination_type'
                         ])
                         ->where('tfn_number', 'LIKE', "%$params%")
-                        ->orWhere('tfn_type_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
                         ->orWhere('activated', 'LIKE', "%$params%")
                         ->orWhere('reserved', 'LIKE', "%$params%")
@@ -443,7 +441,7 @@ class TfnController extends Controller
     public function getAllActiveTfns(Request $request)
     {
         $user = \Auth::user();
-        if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
             $tfngetAll = Tfn::with([
                 'countries:id,country_name,phone_code,currency_symbol',
                 'trunks:id,type,name',
