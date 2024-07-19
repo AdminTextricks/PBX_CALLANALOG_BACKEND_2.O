@@ -24,7 +24,7 @@ class ServerController extends Controller
 			DB::beginTransaction(); 
 			$validator = Validator::make($request->all(), [
 				'name'	    => 'required', 
-				'ip'	    => 'required|ip',
+				'ip'	    => 'required',
 				'domain'    => 'required|regex:/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu',				
 			]);
 			if ($validator->fails()){
@@ -138,7 +138,7 @@ class ServerController extends Controller
 			}else{
 				$validator = Validator::make($request->all(), [
 					'name'      => 'required',
-					'ip'	    => 'required|ip|unique:servers,ip,'.$Server->id,
+					'ip'	    => 'required|unique:servers,ip,'.$Server->id,
 					'domain'	=> 'required|regex:/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu',					
 					'status'	=> 'nullable',
 				],[
