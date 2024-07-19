@@ -154,7 +154,7 @@ class ExtensionController extends Controller
                                     'regexten' => $item,
                                     'startingdate' => Carbon::now(),
                                     'expirationdate' => $expirationdate,
-                                    'fromdomain' => 'NULL',
+                                    'fromdomain' => NULL,
                                     'amaflags' => 'billing',
                                     'canreinvite' => 'no',
                                     'context' => 'callanalog',
@@ -761,5 +761,9 @@ class ExtensionController extends Controller
         } else {
             return $this->output(true, 'No Record Found', []);
         }
+    }
+
+    public function extensionAddToCArt(Request $request){
+        
     }
 }
