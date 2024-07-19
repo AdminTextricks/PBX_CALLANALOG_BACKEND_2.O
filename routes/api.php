@@ -210,7 +210,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/{id?}', [ExtensionController::class, 'getAllExtensions']);
 		Route::put('/{id}', [ExtensionController::class, 'updateExtension']);	
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ExtensionController::class, 'getExtensionsByCountryIdAndCompanyId']);		
-		
+		Route::post('/adToCart', [ExtensionController::class, 'extensionAddToCArt']);
 	});
 
 	#Conf Template Manage

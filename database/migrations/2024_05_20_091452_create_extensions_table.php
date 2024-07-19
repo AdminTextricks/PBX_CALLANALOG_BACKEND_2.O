@@ -28,7 +28,7 @@ return new class extends Migration
             $table->string('defaultip',30)->nullable();
             $table->string('dtmfmode',50)->nullable();
             $table->string('fromuser',100)->nullable();
-            $table->string('fromdomain',100)->nullablet();
+            $table->string('fromdomain',100)->nullable();
             $table->string('host',100)->nullable();
             $table->string('insecure',100)->nullable();
             $table->string('language',100)->nullable();
