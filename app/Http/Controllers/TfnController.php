@@ -663,10 +663,10 @@ class TfnController extends Controller
 
         try {
             DB::beginTransaction();
-            $isAdmin = $request->user()->hasRole('super-admin') || $user->company_id == 0;
+            $isAdmin = in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'));
             $tfnnumberDataQuery = Tfn::where('id', $request->tfn_id);
             if ($isAdmin) {
-                $tfnnumberDataQuery->where('plan_id', '!=', 0);
+                $tfnnumberDataQuery->where('company_id', '!=', 0);
             }
 
             $tfnnumberData = $tfnnumberDataQuery->first();
