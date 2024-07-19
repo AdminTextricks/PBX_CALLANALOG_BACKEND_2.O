@@ -698,7 +698,7 @@ class TfnController extends Controller
                     ]);
                     $response = $tfn_destinations->toArray();
                     DB::commit();
-                    return $this->output(true, 'Destination Type added successfully.', $response);
+                    return $this->output(true, 'Destination Assigned successfully.', $response);
                 } else {
                     $tfn_destinations->destination_type_id = $request->destination_type_id;
                     $tfn_destinations->destination_id = $request->destination_id;
