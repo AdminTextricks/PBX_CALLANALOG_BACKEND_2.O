@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\LOG;
 use App\Models\Server;
 use Validator;
 
@@ -23,8 +24,9 @@ class ServerController extends Controller
 		try { 
 			DB::beginTransaction(); 
 			$validator = Validator::make($request->all(), [
-				'name'	    => 'required', 
-				'ip'	    => 'required',
+				'name'	    => 'required',
+				'port'	    => 'nullable',
+				'ip'	    => 'required|ip',
 				'domain'    => 'required|regex:/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu',				
 			]);
 			if ($validator->fails()){
@@ -39,7 +41,8 @@ class ServerController extends Controller
 				if(!$Server){
 					$Server = Server::create([
 							'name'	    => $request->name,
-							'ip'        => $request->ip,						
+							'ip'        => $request->ip,
+							'port'      => isset($request->port) ? $request->port : 5060,
 							'domain'	=> $request->domain,							
 							'status' 	=> isset($request->status) ? $request->status : '1',
 						]);
@@ -138,12 +141,11 @@ class ServerController extends Controller
 			}else{
 				$validator = Validator::make($request->all(), [
 					'name'      => 'required',
-					'ip'	    => 'required|unique:servers,ip,'.$Server->id,
+					'ip'	    => 'required|ip|unique:servers,ip,'.$Server->id,
+					'port'		=> 'nullable',
 					'domain'	=> 'required|regex:/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu',					
 					'status'	=> 'nullable',
-				],[
-                  'ip' => 'This IP is already exist with us.',  
-                ]);
+				]);
 				if ($validator->fails()){
 					return $this->output(false, $validator->errors()->first(), [], 409);
 				}
@@ -155,6 +157,7 @@ class ServerController extends Controller
 				if(!$ServerOld){
 					$Server->name   = $request->name;
 					$Server->ip     = $request->ip;
+					$Server->port   = $request->port;
 					$Server->domain = $request->domain;
 					$ServersRes     = $Server->save();
 					if($ServersRes){
@@ -173,7 +176,7 @@ class ServerController extends Controller
 			}
 		} catch (\Exception $e) {
 			DB::rollback();
-			//return $this->output(false, $e->getMessage());
+			Log::error('Error in Server Updating : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
 			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
 		}
 	}

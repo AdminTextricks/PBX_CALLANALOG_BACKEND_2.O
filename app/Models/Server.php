@@ -12,6 +12,7 @@ class Server extends Model
         'id',
         'name',
         'ip',
+        'port',
         'domain',
         'status',
     ];
