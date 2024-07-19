@@ -15,6 +15,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->string('name')->nullable();
             $table->string('ip')->nullable()->index();
+            $table->integer('port')->nullable()->default(5060);
             $table->string('domain')->nullable();
             $table->tinyInteger('status')->nullable()->default(1);
             $table->timestamps();            
