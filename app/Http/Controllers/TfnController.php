@@ -618,7 +618,7 @@ class TfnController extends Controller
 
         $tfn = Tfn::where('tfn_number', $tfn_number)->first();
 
-        if ($tfn && $tfn->company_id != 0) {
+        if ($tfn && $tfn->company_id == 0) {
             if (in_array($tfn->tfn_provider, $inbound_trunk)) {
                 $tfn->update([
                     'company_id' => $company->id,
