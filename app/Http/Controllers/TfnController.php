@@ -769,27 +769,16 @@ class TfnController extends Controller
             'tfn_id'             => 'required',
             'call_screen_action' => 'required',
         ]);
-
         if ($validator->fails()) {
             return $this->output(false, $validator->errors()->first(), [], 409);
         }
-
         try {
             DB::beginTransaction();
-
-            $tfnData = Tfn::select('*')
-                ->where('id', $request->tfn_id)
-                ->first();
-
+            $tfnData = Tfn::select('*')->where('id', $request->tfn_id)->first();
             if (!$tfnData) {
                 return $this->output(false, 'This Tfn Number is not exist with us. Please try again!.', [], 404);
-            }
-            //  elseif ($tfnData && $tfnData->company_id == 0 && $tfnData->plan_id == 0 && $tfnData->reserved == 0) {
-            //     return $this->output(false, 'This Tfn Number is not Assigned. Please try again!.', [], 400);
-            // }
-            else {
+            }else {
                 $tfnData->call_screen_action = $request->call_screen_action;
-
                 if ($tfnData->save()) {
                     DB::commit();
                     $response = $tfnData->toArray();

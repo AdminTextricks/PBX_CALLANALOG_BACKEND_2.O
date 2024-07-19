@@ -512,6 +512,9 @@ class ExtensionController extends Controller
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('company_name', 'like', "%{$params}%");
                         })
+                        ->orWhereHas('company', function ($query) use ($params) {
+                            $query->where('email', 'like', "%{$params}%");
+                        })
                         ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
                 } else {
