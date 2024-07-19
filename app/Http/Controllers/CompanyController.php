@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\Server;
+use App\Models\Trunk;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
@@ -54,6 +55,11 @@ class CompanyController extends Controller
             DB::beginTransaction();
             $user = User::where('email', $request->email)->first();        
             if(!$user){
+                $Trunk = Trunk::select('id')->where('status',1)->where('type', 'Inbound')->pluck('id');
+                $Trunk_ids = '';
+                foreach($Trunk as $key => $Trunk_id){
+                    $Trunk_ids .= $Trunk_id.',';
+                }
                 $company = Company::create([
                     'plan_id'       => $request->plan_id,
                     'parent_id'     => $request->parent_id,
@@ -67,7 +73,7 @@ class CompanyController extends Controller
                     'city' 			=> $request->city,
                     'zip' 			=> $request->zip,
                     'inbound_permission' => $request->inbound_permission,
-                    'status' 	    => '1',
+                    'status' 	    => rtrim($Trunk_ids,','),
                 ]);
                 //dd($company);
                 $random_pass = Str::random(10);

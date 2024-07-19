@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Company;
 use App\Models\Server;
+use App\Models\Trunk;
 use App\Models\EmailVerification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -223,6 +224,11 @@ class UserController extends Controller
             DB::beginTransaction();
             $user = User::where('email', $request->email)->first();        
             if(!$user){
+                $Trunk = Trunk::select('id')->where('status',1)->where('type', 'Inbound')->pluck('id');
+                $Trunk_ids = '';
+                foreach($Trunk as $key => $Trunk_id){
+                    $Trunk_ids .= $Trunk_id.',';
+                }                
                 $company = Company::create([
                     'plan_id'       => $request->plan_id,
                     'parent_id'     => $request->parent_id,
@@ -235,7 +241,7 @@ class UserController extends Controller
                     'state_id' 		=> $request->state_id,
                     'city' 			=> $request->city,
                     'zip' 			=> $request->zip,
-                    'inbound_permission' => '1',
+                    'inbound_permission' => rtrim($Trunk_ids,','),
                 ]);
                 //dd($company);
                 $user = User::create([
