@@ -616,13 +616,9 @@ class TfnController extends Controller
     {
         $inbound_trunk = explode(',', $company->inbound_permission);
 
-        $tfn = Tfn::where('tfn_number', $tfn_number)
-            ->where('company_id', 0)
-            ->where('plan_id', 0)
-            ->where('reserved', 0)
-            ->first();
+        $tfn = Tfn::where('tfn_number', $tfn_number)->first();
 
-        if ($tfn) {
+        if ($tfn && $tfn->company_id != 0) {
             if (in_array($tfn->tfn_provider, $inbound_trunk)) {
                 $tfn->update([
                     'company_id' => $company->id,
@@ -632,7 +628,7 @@ class TfnController extends Controller
                     'reserveddate' => date('Y-m-d H:i:s'),
                     'reservedexpirationdate' => NULL,
                     'startingdate' => date('Y-m-d H:i:s'),
-                    'expirationdate' => date('Y-m-d H:i:s', strtotime('+30 days')),
+                    'expirationdate' => date('Y-m-d H:i:s', strtotime('+29 days')),
                 ]);
                 Cart::where('item_number', $tfn_number)->delete();
                 return ['success' => true];
@@ -640,7 +636,7 @@ class TfnController extends Controller
                 return ['success' => false, 'message' => "Inbound Trunk Permission not found for this TFN Number ($tfn_number)"];
             }
         } else {
-            return ['success' => false, 'message' => "TFN Number ($tfn_number) not found"];
+            return ['success' => false, 'message' => "TFN Number ($tfn_number) is already Purchased!!"];
         }
     }
 
