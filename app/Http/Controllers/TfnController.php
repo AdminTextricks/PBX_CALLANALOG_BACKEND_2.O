@@ -546,6 +546,9 @@ class TfnController extends Controller
             if ($tfn && $tfn->company_id != 0) {
                 return $this->output(false, "TFN Number ($tfn_number) is already purchased. Please try another TFN number.", [], 409);
             }
+            elseif($tfn && $tfn->reserved == "1"){
+                return $this->output(false, "TFN Number ($tfn_number) is already in Cart. Please try another TFN number.", [], 409);
+            }
 
             $main_price = MainPrice::where('country_id', $tfn->country_id)
                 ->where('price_for', $company->parent_id != 1 ? 'Reseller' : 'Company')
