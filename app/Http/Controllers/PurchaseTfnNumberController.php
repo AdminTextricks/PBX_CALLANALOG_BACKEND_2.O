@@ -184,10 +184,11 @@ class PurchaseTfnNumberController extends Controller
                 $cart = Cart::where('item_number', $request->item_number)
                             ->where('company_id', $user->company_id)->get();
                 if ($cart->count() > 0) {
-                    DB::rollBack();
                     if($request->item_type == "TFN") {
+                        DB::rollBack();
                         return $this->output(false, 'Tfn Number is already in the cart', 409);
                     }else{
+                        DB::rollBack();
                         return $this->output(false, 'Extension Number is already in the cart', 409);
                     }       
                 }else{
