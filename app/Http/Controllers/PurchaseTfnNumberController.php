@@ -186,7 +186,7 @@ class PurchaseTfnNumberController extends Controller
                                 ->where('company_id', $user->company_id)->get();
                     if ($cart->count() > 0) {
                         DB::rollBack();
-                        return $this->output(false, "' $request->item_type ' Number is already in the cart", 409);
+                        return $this->output(false, "'{$request->item_type}' Number is already in the cart", 409);
                     }else{
                         if (strtoupper($request->item_type) == 'TFN') {
                             $tfnNumber = Tfn::where('id', $request->item_id)->where('reserved', '0')->first();
