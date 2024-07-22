@@ -14,7 +14,7 @@ class Invoice extends Model
         'country_id',
         'state_id',
         'invoice_id',
-        'payment_type',
+        // 'payment_type',
         'invoice_currency',
         'invoice_subtotal_amount',
         'invoice_amount',
@@ -44,5 +44,10 @@ class Invoice extends Model
     public function states()
     {
         return $this->belongsTo(State::class, 'state_id', 'id');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payments::class, 'invoice_id', 'id');
     }
 }
