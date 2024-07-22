@@ -191,7 +191,7 @@ class InvoiceController extends Controller
                         InvoiceItems::create([
                             'company_id' => $user->company->id,
                             'invoice_id' => $createinvoice->id,
-                            'item_id' => $itemId,
+                            'item_type' => $itemType,
                             'item_number' => $itemNumber,
                             'item_price' => $itemPrice,
                         ]);

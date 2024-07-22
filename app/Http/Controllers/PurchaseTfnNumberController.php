@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Company;
+use App\Models\InvoiceItems;
 use App\Models\MainPrice;
 use App\Models\ResellerPrice;
 use App\Models\Tfn;
@@ -305,6 +306,7 @@ class PurchaseTfnNumberController extends Controller
             }
             $cartDeleted = Cart::where('id', $id)->where('company_id', $user->company_id)->delete();
             if ($cartDeleted) {
+                InvoiceItems::where('item_number', '=', $cart->item_number)->delete();
                 DB::commit();
                 return $this->output(true, 'Cart item deleted successfully.', [], 200);
             } else {
