@@ -181,35 +181,34 @@ class PurchaseTfnNumberController extends Controller
         } else {            
             try {                
                 DB::beginTransaction();
-                if (in_array($user->roles->first()->slug, array('admin', 'user'))) {
-                    $cart = Cart::where('item_number', $request->item_number)
-                                ->where('company_id', $user->company_id)->get();
-                    if ($cart->count() > 0) {
-                        DB::rollBack();
+                $cart = Cart::where('item_number', $request->item_number)
+                            ->where('company_id', $user->company_id)->get();
+                if ($cart->count() > 0) {
+                    DB::rollBack();
+                    if($request->item_type == "TFN") {
                         return $this->output(false, 'Tfn Number is already in the cart', 409);
                     }else{
-                        if (strtoupper($request->item_type) == 'TFN') {
-                            $tfnNumber = Tfn::where('id', $request->item_id)->where('reserved', '0')->first();
-                            if ($tfnNumber) {
-                                $tfnNumber->reserved = '1';
-                                $tfnNumber->reserveddate = date('Y-m-d H:i:s');
-                                $tfnNumber->reservedexpirationdate = date('Y-m-d H:i:s', strtotime('+1 day'));
-                                if($tfnNumber->save()){
-                                    $addCart = Cart::create([
-                                        'company_id'    => $user->company_id,
-                                        'item_id'       => $request->item_id,
-                                        'item_number'   => $request->item_number,
-                                        'item_type'     => $request->item_type,
-                                        'item_price'    => $request->item_price,
-                                    ]);
-                                    if ($addCart) {
-                                        $response = $addCart->toArray();                                   
-                                        DB::commit();
-                                        return $this->output(true, 'Item has been added into cart successfully.', $response);
-                                    } else {
-                                        DB::rollBack();
-                                        return $this->output(false, 'Error occurred in add to cart process.');
-                                    }
+                        return $this->output(false, 'Extension Number is already in the cart', 409);
+                    }       
+                }else{
+                    if (strtoupper($request->item_type) == 'TFN') {
+                        $tfnNumber = Tfn::where('id', $request->item_id)->where('reserved', '0')->first();
+                        if ($tfnNumber) {
+                            $tfnNumber->reserved = '1';
+                            $tfnNumber->reserveddate = date('Y-m-d H:i:s');
+                            $tfnNumber->reservedexpirationdate = date('Y-m-d H:i:s', strtotime('+1 day'));
+                            if($tfnNumber->save()){
+                                $addCart = Cart::create([
+                                    'company_id'    => $user->company_id,
+                                    'item_id'       => $request->item_id,
+                                    'item_number'   => $request->item_number,
+                                    'item_type'     => $request->item_type,
+                                    'item_price'    => $request->item_price,
+                                ]);
+                                if ($addCart) {
+                                    $response = $addCart->toArray();                                   
+                                    DB::commit();
+                                    return $this->output(true, 'Item has been added into cart successfully.', $response);
                                 } else {
                                     return $this->output(false, 'Error occurred in reserving this TFN for you.');
                                 }
