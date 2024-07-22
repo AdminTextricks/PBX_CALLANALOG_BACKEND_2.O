@@ -320,6 +320,47 @@ class ExtensionController extends Controller
 
     /************ End */
 
+    public function deleteExtension(Request $request, $id)
+    {
+        try {  
+            DB::beginTransaction();
+            $Extension = Extension::where('id', $id)->first();
+            if($Extension){
+                if ($Extension->sip_temp == 'WEBRTC') {
+                    $removeExtensionFile = config('app.webrtc_template_url');
+                } else {
+                    $removeExtensionFile = config('app.softphone_template_url');
+                }
+                Log::error('removeExtensionFile: ' . $removeExtensionFile );
+
+                $this->removeExtensionFromConfFile($Extension->name, $removeExtensionFile);
+
+                $server_flag = config('app.server_flag');
+                if ($server_flag == 1) {
+                    $shell_script = config('app.shell_script');
+                    $result = shell_exec('sudo ' . $shell_script);
+                    Log::error('Extension Update File Transfer Log : ' . $result);
+                    $this->sipReload();
+                }
+				$resdelete = $Extension->delete();
+                if ($resdelete) {
+                    DB::commit();
+                    return $this->output(true,'Success',200);
+                } else {
+                    DB::commit();
+                    return $this->output(false, 'Error occurred in Extension deleting. Please try again!.', [], 209);                    
+                }
+            }else{
+                DB::commit();
+                return $this->output(false,'Extension not exist with us.', [], 409);
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error occurred in Extension Deleting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
+
     public function changeExtensionStatus(Request $request, $id)
 	{
 		try { 
