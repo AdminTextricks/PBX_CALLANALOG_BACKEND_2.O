@@ -325,6 +325,7 @@ class UserController extends Controller
 			'city'		=> 'required',
 			'zip'		=> 'required', 
 			'role_id'	=> 'required|numeric|in:2,3,5,6',
+            'password' 	=> 'required|confirmed',
             //'account_code'  => 'required|max:500|unique:users', 
         ],[
             'company_id' => 'The company field is required when you are creating company user',
@@ -348,7 +349,7 @@ class UserController extends Controller
                     'name'          => $request->name,
                     'email'         => $request->email,
                     'mobile'        => $request->mobile,
-                    'password'      => Hash::make($random_pass),
+                    'password'      => Hash::make($request->password),
                     'address'       => $request->address,
                     'country_id'    => $request->country_id,
                     'state_id'      => $request->state_id,
@@ -365,7 +366,7 @@ class UserController extends Controller
                     'role_id'   => $request->role_id,
                 ]);
 
-                $this->sendPassword($user, $random_pass);//PASSWORD SEND
+                $this->sendPassword($user, $request->password);//PASSWORD SEND
                 $response = $user->toArray();
                 DB::commit();
                 return $this->output(true, 'User registered successfully. Please find the login details on user email ID.', $response);
