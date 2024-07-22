@@ -190,7 +190,7 @@ class PaymentController extends Controller
                         DB::rollback();
                         return $this->output(false, 'Invoice not found.', 400);
                     } else {
-                        $invoice_update->payment_type =  'Stripe Card Payment';
+                        // $invoice_update->payment_type =  'Stripe Card Payment';
                         $invoice_update->payment_status = "Paid";
                         $invoice_update->save();
 
@@ -229,29 +229,10 @@ class PaymentController extends Controller
     }
 
 
-
-    // public function pdfmailSend($user, $invoice_id, $invoiceFilePath, $fileName)
-    // public function pdfmailSend($user, $item_numbers, $price_mail, $invoice_id, $invoice_number)
-    // public function pdfmailSend($user, $item_numbers, $price_mail, $invoice_id, $invoice_number, $itemTpyes)
-    // public function pdfmailSend($user, $item_numbers, $price_mail, $invoice_id, $invoice_number, $itemTpyes)
-
     public function pdfmailSend($user, $item_numbers, $price_mail, $invoice_id, $invoice_number, $itemTpyes)
-    // public function pdfmailSend(Request $request)
     {
         $user = \Auth::user();
         $email = $user->email;
-
-        // $price_mail = $request->payment_price;
-        // $invoice_id =  $request->invoice_id;
-        // $invoice_number =  $request->invoice_number;
-        // $item_numbers = [];
-        // $item_types = [];
-
-        // foreach ($request->items as $item) {
-        //     $item_numbers[] = $item['item_number'];
-        //     $item_types[] = $item['item_type'];
-        // }
-
         $data['title'] = 'Invoice From Callanalog';
         $data['item_numbers'] = $item_numbers;
         $data['item_types'] = $itemTpyes;
@@ -340,10 +321,9 @@ class PaymentController extends Controller
 
             $stripe = new \Stripe\StripeClient(config('stripe.stripe.secret_test'));
             $payments = Payments::select('*')->where('transaction_id', '=', $request->transaction_id)->where('company_id', '=', $user->company_id)->first();
-            // return $payments;
 
             if ($payments) {
-                // Get Data Fro Stripe
+                // Get Data From Stripe
                 $checkstripeData =  $stripe->charges->retrieve($payments->stripe_charge_id, []);
                 $paid_amount_ss = $checkstripeData->amount / 100;
                 if ($checkstripeData->amount_refunded == 0 && $paid_amount_ss > $request->amount) {
@@ -499,7 +479,7 @@ class PaymentController extends Controller
                     DB::rollback();
                     return $this->output(false, 'Invoice not found.');
                 } else {
-                    $invoice_update->payment_type =  'Add to Wallet Payment';
+                    // $invoice_update->payment_type =  'Add to Wallet Payment';
                     $invoice_update->payment_status = "Paid";
                     $this->pdfmailSend($user, $item_numbers, $price_mail, $createinvoice->id, $createinvoice->invoice_id, $itemTpyes);
                     $invoice_result = $invoice_update->save();
@@ -650,7 +630,7 @@ class PaymentController extends Controller
                 } else {
                     $itmNumber = implode("-", $itemNumbers);
                     $price_mail = $payment_price;
-                    $invoice_update->payment_type =  'Wallet Payment';
+                    // $invoice_update->payment_type =  'Wallet Payment';
                     $invoice_update->payment_status = "Paid";
                     $invoice_update->save();
                     $mailsend = $this->pdfmailSend($user, $itemNumbers, $price_mail, $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
