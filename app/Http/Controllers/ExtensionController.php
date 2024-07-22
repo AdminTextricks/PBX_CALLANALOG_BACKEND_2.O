@@ -242,7 +242,7 @@ class ExtensionController extends Controller
                                         return $this->output(false, 'Company account has insufficient balance.');
                                     }
                                 }
-                                /*
+                                
                                 $invoicetable_id = DB::table('invoices')->max('id');
                                 if (!$invoicetable_id) {
                                     $invoice_id = 'INV/' . date('Y') . '/00001';
@@ -260,22 +260,22 @@ class ExtensionController extends Controller
                                     'payment_status'    => $request->payment_type,
                                     'email_status'      => 0,
                                 ]);
-                                */
+                                
                                 foreach ($item_ids as $item_id => $item) {
-                                    /*
+                                    
                                     $InvoiceItems = InvoiceItems::create([                                    
                                         'invoice_id'    => $Invoice->id,
                                         'item_type'     => 'Extension',
                                         'item_number'   => $item,
                                         'item_price'    => $item_price,
                                     ]);
-                                    */
+                                    
                                     $webrtc_template_url = config('app.webrtc_template_url');
                                     $addExtensionFile = $webrtc_template_url;
                                     $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
                                     $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
                                 }
-                                /*
+                                
                                 $emailData['title'] = 'Invoice From Callanalog';
                                 $emailData['item_numbers'] = $item_ids;
                                 $emailData['item_types'] = 'Extension';
@@ -283,7 +283,7 @@ class ExtensionController extends Controller
                                 $emailData['invoice_number'] = $invoice_id;
                                 $emailData['email'] = $Company->email;
                                 dispatch(new \App\Jobs\SendEmailJob($emailData));
-                                */
+                                
                                 $response['total_extension'] = count($item_ids);
                                 //$Extensions;//->toArray();
                                 $response['Show_Cart'] = 'No';
@@ -711,7 +711,7 @@ class ExtensionController extends Controller
         fputs($socket, "Command: sip show peers\r\n\r\n");
         fputs($socket, "Action: Logoff\r\n\r\n");
         while (!feof($socket))
-            $response .= fread($socket, 8192);
+            $response .= fread($socket, 5038);
         fclose($socket); 
 
         $lines = explode("\n", $response);
@@ -719,14 +719,11 @@ class ExtensionController extends Controller
         foreach ($lines as $line) 
         {
             $line = trim($line); // Remove leading/trailing whitespace 
-
             if (empty($line)) {
                 continue; // Skip empty lines
             }
-
             if (strpos($line, "OK") !== false || strpos($line, "UNREACHABLE") !== false || strpos($line, "LAGGED") !== false) {
-                $columns = preg_split('/\s+/', $line);
-                
+                $columns = preg_split('/\s+/', $line);                
                 if (strpos($columns[1], "/") !== false) {
                     $columns[1] = substr($columns[1], 0, strpos($columns[1], "/"));
                 }
