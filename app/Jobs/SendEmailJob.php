@@ -29,7 +29,12 @@ class SendEmailJob implements ShouldQueue
     public function handle(): void
     {
 		$data = $this->data;
-		Mail::send('mailVerification',['data'=>$data],function($message) use ($data){
+        if(isset($data['email_template'])){
+            $mail_template = $data['email_template'];
+        }else{
+            $mail_template = 'mailVerification';
+        }
+		Mail::send($mail_template,['data'=>$data],function($message) use ($data){
 			$message->to($data['email'])->subject($data['title']);
 		});
     }
