@@ -254,18 +254,26 @@ class InvoiceController extends Controller
                 $getinvoicedata = Invoice::with('invoice_items')
                     ->with('countries:id,country_name,phone_code,currency,currency_symbol')
                     ->with('states:id,country_id,state_name')
-                    ->with('company')
+                    ->with('company:id,company_name,account_code,email,mobile')
+                    ->with('payments')
                     ->select('*')
                     ->where('payment_status', 'Paid')
+                    ->whereHas('payments', function ($query) {
+                        $query->where('payment_type', '!=', 'Added to Wallet');
+                    })
                     ->where('id', $invoice_get_id);
             } else {
                 if ($params !== "") {
                     $getinvoicedata = Invoice::with('invoice_items')
                         ->with('countries:id,country_name,phone_code,currency,currency_symbol')
                         ->with('states:id,country_id,state_name')
-                        ->with('company')
+                        ->with('company:id,company_name,account_code,email,mobile')
+                        ->with('payments')
                         ->select('*')
                         ->where('payment_status', 'Paid')
+                        ->whereHas('payments', function ($query) {
+                            $query->where('payment_type', '!=', 'Added to Wallet');
+                        })
                         ->orWhere('payment_type', "%$params%")
                         ->orWhere('invoice_id', "%$params%")
                         ->orWhere('invoice_amount', "%$params%")
@@ -275,7 +283,8 @@ class InvoiceController extends Controller
                     $getinvoicedata = Invoice::with('invoice_items')
                         ->with('countries:id,country_name,phone_code,currency,currency_symbol')
                         ->with('states:id,country_id,state_name')
-                        ->with('company')
+                        ->with('company:id,company_name,account_code,email,mobile')
+                        ->with('payments')
                         ->select('*')
                         ->where('payment_status', 'Paid')
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
@@ -286,8 +295,12 @@ class InvoiceController extends Controller
                 $getinvoicedata = Invoice::with('invoice_items')
                     ->with('countries:id,country_name,phone_code,currency,currency_symbol')
                     ->with('states:id,country_id,state_name')
-                    ->with('company')
+                    ->with('company:id,company_name,account_code,email,mobile')
+                    ->with('payments')
                     ->select('*')
+                    ->whereHas('payments', function ($query) {
+                        $query->where('payment_type', '!=', 'Added to Wallet');
+                    })
                     ->where('company_id', $user->company_id)
                     ->where('payment_status', 'Paid')
                     ->where('id', $invoice_get_id);
@@ -296,10 +309,14 @@ class InvoiceController extends Controller
                     $getinvoicedata = Invoice::with('invoice_items')
                         ->with('countries:id,country_name,phone_code,currency,currency_symbol')
                         ->with('states:id,country_id,state_name')
-                        ->with('company')
+                        ->with('company:id,company_name,account_code,email,mobile')
+                        ->with('payments')
                         ->select('*')
                         ->where('company_id', $user->company_id)
                         ->where('payment_status', 'Paid')
+                        ->whereHas('payments', function ($query) {
+                            $query->where('payment_type', '!=', 'Added to Wallet');
+                        })
                         ->orWhere('payment_type', "%$params%")
                         ->orWhere('invoice_id', "%$params%")
                         ->orWhere('invoice_amount', "%$params%")
@@ -309,8 +326,12 @@ class InvoiceController extends Controller
                     $getinvoicedata = Invoice::with('invoice_items')
                         ->with('countries:id,country_name,phone_code,currency,currency_symbol')
                         ->with('states:id,country_id,state_name')
-                        ->with('company')
+                        ->with('company:id,company_name,account_code,email,mobile')
+                        ->with('payments')
                         ->select('*')
+                        ->whereHas('payments', function ($query) {
+                            $query->where('payment_type', '!=', 'Added to Wallet');
+                        })
                         ->where('company_id', $user->company_id)
                         ->where('payment_status', 'Paid')
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
