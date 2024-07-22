@@ -18,7 +18,7 @@ return new class extends Migration
 			$table->string('country_id');
 			$table->string('state_id');                    
             $table->string('invoice_id');
-            $table->string('payment_type')->nullable();
+            // $table->string('payment_type')->nullable();
             $table->string('invoice_currency')->nullable();
             $table->decimal('invoice_subtotal_amount', total: 8, places: 2)->nullable()->default(0);
             $table->decimal('invoice_amount', total: 8, places: 2)->nullable()->default(0);

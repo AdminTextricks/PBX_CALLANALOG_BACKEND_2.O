@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('invoice_items', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->bigInteger('company_id')->nullable()->default(0);
+            // $table->bigInteger('company_id')->nullable()->default(0);
             $table->integer('invoice_id')->nullable();
-            $table->integer('item_id')->nullable();
+            $table->integer('item_type')->nullable();
             $table->bigInteger('item_number')->nullable();
             $table->decimal('item_price', total: 8, places: 2)->nullable()->default(0);
             $table->timestamps();

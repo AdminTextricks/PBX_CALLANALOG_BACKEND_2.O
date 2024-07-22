@@ -249,7 +249,7 @@ class InvoiceController extends Controller
         $params      = $request->params ?? "";
         $invoice_get_id = $request->id ?? NULL;
 
-        if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
             if ($invoice_get_id) {
                 $getinvoicedata = Invoice::with('invoice_items')
                     ->with('countries:id,country_name,phone_code,currency,currency_symbol')
