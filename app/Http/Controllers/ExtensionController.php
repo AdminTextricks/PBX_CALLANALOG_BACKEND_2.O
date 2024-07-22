@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\Cart;
 use App\Models\ConfTemplate;
 use App\Models\Invoice;
+use App\Models\Tfn;
 use App\Models\InvoiceItems;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -282,6 +283,7 @@ class ExtensionController extends Controller
                                 $emailData['price'] = $TotalItemPrice;
                                 $emailData['invoice_number'] = $invoice_id;
                                 $emailData['email'] = $Company->email;
+                                $emailData['email_template'] = 'invoice';
                                 dispatch(new \App\Jobs\SendEmailJob($emailData));
                                 
                                 $response['total_extension'] = count($item_ids);
@@ -801,7 +803,31 @@ class ExtensionController extends Controller
         }
     }
 
-    public function extensionAddToCArt(Request $request){
-        
+    public function getExtensionsNumberPassword(Request $request, $company_id)
+    {
+        try{    
+            $Extension  = Extension::select('country_id','name', 'secret')
+                                ->with('country:id,country_name')
+                                ->where('status', '1')
+                                ->where('host', 'dynamic')
+                                ->where('company_id', $company_id)->get();
+
+            $Tfn        = Tfn::select('country_id','tfn_number')
+                                ->with('country:id,country_name')
+                                ->where('status', 1)
+                                ->where('activated', '1')
+                                ->where('company_id', $company_id)->get();
+            $response['Extension']  = $Extension->toArray();
+            $response['Tfn']        = $Tfn->toArray();
+            if ($Extension->isNotEmpty() ||  $Tfn->isNotEmpty()) {
+                return $this->output(true, 'Success', $response, 200);
+            } else {
+                return $this->output(true, 'No Record Found', []);
+            }
+            
+        } catch (\Exception $e) {            
+            Log::error('Error in fetching extension number and secret : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());            
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }        
     }
 }
