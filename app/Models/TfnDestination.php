@@ -42,7 +42,7 @@ class TfnDestination extends Model
         return $this->belongsTo(Extension::class, 'destination_id', 'id');
     }
 
-    public function voice_mail()
+    public function voiceMail()
     {
         return $this->belongsTo(VoiceMail::class, 'destination_id', 'id');
     }
