@@ -62,6 +62,7 @@ return new class extends Migration
             $table->string('lastms',100)->nullable();
             $table->string('callbackextension',100)->nullable();
             $table->string('dial_timeout ',10)->default(20);
+            $table->enum('in_use',['0','1'])->default(0)->comment('0 for free and 1 for busy');
             $table->tinyInteger('status')->default(0);
             $table->timestamps();
             $table->foreign('company_id')->references('id')->on('companies');
