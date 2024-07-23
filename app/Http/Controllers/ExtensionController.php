@@ -135,6 +135,7 @@ class ExtensionController extends Controller
                                 $expirationdate = ($Company->plan_id == 2) ? $startingdate->addDays(179) : $startingdate->addDays(29);
                                 $host = 'dynamic';
                                 $sip_temp = 'WEBRTC';
+                                $payment_status = 'Free';
                             }
 
                             foreach ($extension_name as $item) {
@@ -242,6 +243,7 @@ class ExtensionController extends Controller
                                         DB::rollback();
                                         return $this->output(false, 'Company account has insufficient balance.');
                                     }
+                                    $payment_status = $request->payment_type;
                                 }
                                 
                                 $invoicetable_id = DB::table('invoices')->max('id');
@@ -258,7 +260,7 @@ class ExtensionController extends Controller
                                     'invoice_currency'  => 'USD',
                                     'invoice_subtotal_amount'   => $TotalItemPrice,
                                     'invoice_amount'    => $TotalItemPrice,
-                                    'payment_status'    => $request->payment_type,
+                                    'payment_status'    => $payment_status,
                                     'email_status'      => 0,
                                 ]);
                                 
