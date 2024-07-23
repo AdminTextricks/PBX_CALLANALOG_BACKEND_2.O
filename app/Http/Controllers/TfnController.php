@@ -287,7 +287,7 @@ class TfnController extends Controller
                                 ->orWhereHas('extensions', function ($subQuery) use ($params) {
                                     $subQuery->where('name', 'like', "%{$params}%");
                                 })
-                                ->orWhereHas('voice_mail', function ($subQuery) use ($params) {
+                                ->orWhereHas('voiceMail', function ($subQuery) use ($params) {
                                     $subQuery->where('fullname', 'like', "%{$params}%")
                                         ->orWhere('email', 'like', "%{$params}%");
                                 })
@@ -411,7 +411,7 @@ class TfnController extends Controller
                         $destination->load('extensions:id,name');
                         break;
                     case 3:
-                        $destination->load('voice_mail:id,mailbox,fullname,email');
+                        $destination->load('voiceMail:id,mailbox,fullname,email');
                         break;
                     case 4:
                         // $externalNumber = $destination->getExternalNumber($destination->destination_id);
