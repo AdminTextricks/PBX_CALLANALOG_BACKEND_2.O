@@ -201,6 +201,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	# Manage Extensions
 	Route::group(['prefix' => 'extensions'], function () {		
+		Route::post('/multiEdit', [ExtensionController::class, 'updateExtensionsDetails']);
 		Route::get('/getSipRegistrationList', [ExtensionController::class, 'getSipRegistrationList'])->name('getSipRegistrationList');
 		Route::get('/quickView/{company_id}', [ExtensionController::class, 'getExtensionsNumberPassword']);
 		Route::post('/', [ExtensionController::class, 'createExtensions']);
@@ -212,7 +213,6 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ExtensionController::class, 'getExtensionsByCountryIdAndCompanyId']);		
 		Route::post('/adToCart', [ExtensionController::class, 'extensionAddToCArt']);
 		Route::delete('/{id}', [ExtensionController::class, 'deleteExtension']);
-
 		
 	});
 

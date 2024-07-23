@@ -777,19 +777,18 @@ class ExtensionController extends Controller
                             }
                             $status = $statusText;
                         } else {
-                            $status = 'REACHABLE<br>'.trim($columns[7] . ' ' . $columns[8]);
+                            $status = 'REACHABLE<br>';
                         }
                         
                         $peerData = array(
-                            "companyName" => $client_name,
-                            "agent_name" => $agent . '<br>' . $email,
-                            "userType" => $user_type,
-                            "name" => $columns[1] . '/' . $columns[1],
-                            "host" => $columns[2],
-                            "forceport" => $columns[3],
-                            "comedia" => $columns[4],
-                            "port" => $port,
-                            "status" => $status                   
+                            "companyName"   => $client_name,
+                            "agent_name"    => $agent,
+                            "email"         => $email,
+                            "userType"      => $user_type,
+                            "name"      => $columns[1] . '/' . $columns[1],
+                            "host"      => $columns[2],
+                            "status"    => $status,
+                            "status_val"=> trim($columns[7] . ' ' . $columns[8]),
                         );                
                         $data[] = $peerData;
                     }
@@ -813,7 +812,7 @@ class ExtensionController extends Controller
                                 ->where('company_id', $company_id)->get();
 
             $Tfn        = Tfn::select('country_id','tfn_number')
-                                ->with('country:id,country_name')
+                                ->with('countries:id,country_name')
                                 ->where('status', 1)
                                 ->where('activated', '1')
                                 ->where('company_id', $company_id)->get();
@@ -829,5 +828,41 @@ class ExtensionController extends Controller
             Log::error('Error in fetching extension number and secret : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());            
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }        
+    }
+
+    public function updateExtensionsDetails(Request $request)
+    {
+        try {
+            $user = \Auth::user();
+            $validator = Validator::make($request->all(), [
+                'extension'	    => 'required|array',
+                'extension.*'	=> 'required|numeric|exists:extensions,id',
+            ]);
+            if ($validator->fails()) {
+                return $this->output(false, $validator->errors()->first(), [], 409);
+            }else{
+                $input = $request->all();
+                $extension = $input['extension'];
+                if (is_array($extension)) {
+                    $extension_details = array();
+                    foreach ($extension as $item) {
+                        $id = $item['id'];
+                        unset($item['id']);
+                        $data = Extension::where('id', $id)->update(['data'=>$item]);
+                        $extension_details[]  = $data;
+                    }
+                    if (count($extension_details) > 0 ) {
+                        return $this->output(true, 'Success', $extension_details, 200);
+                    } else {
+                        return $this->output(true, 'No Records updated', []);
+                    }
+                }else{
+                    return $this->output(false, 'Wrong extension value format.');
+                }
+            }
+        } catch (\Exception $e) {            
+            Log::error('Error in fetching extension Details : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());            
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }  
     }
 }
