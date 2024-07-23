@@ -270,7 +270,8 @@ class TfnController extends Controller
                         ->orWhere('activated', 'LIKE', "%$params%")
                         ->orWhere('reserved', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
-                            $query->where('company_name', 'like', "%{$params}%");
+                            $query->where('company_name', 'like', "%{$params}%")
+                                ->orWhere('email', 'like', "%{$params}%");
                         })
                         ->orWhereHas('trunks', function ($query) use ($params) {
                             $query->where('name', 'like', "%{$params}%");
@@ -313,7 +314,7 @@ class TfnController extends Controller
                         'tfn_destinations.destinationType:id,destination_type'
                     ])
                         ->withTrashed()
-                        ->paginate($perPageNo, ['*'], 'page');
+                        ->select('*')->withTrashed()->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 }
             }
         } else {
@@ -329,7 +330,7 @@ class TfnController extends Controller
                     'tfn_destinations.destinationType:id,destination_type'
                 ])
                     ->where('company_id', '=', $user->company_id)
-                    ->where('id', $tfn_id)->withTrashed()->get();
+                    ->where('id', $tfn_id)->get();
             } else {
                 if ($params !== "") {
                     $tfngetAll = Tfn::select('tfns.id', 'tfns.company_id', 'tfns.assign_by', 'tfns.tfn_number', 'tfns.tfn_provider', 'tfns.tfn_group_id', 'tfns.country_id', 'tfns.activated', 'tfns.reserved')
@@ -342,43 +343,47 @@ class TfnController extends Controller
                             'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
                             'tfn_destinations.destinationType:id,destination_type'
                         ])
-                        ->where('tfn_number', 'LIKE', "%$params%")
-                        ->orWhere('tfn_provider', 'LIKE', "%$params%")
-                        ->orWhere('activated', 'LIKE', "%$params%")
-                        ->orWhere('reserved', 'LIKE', "%$params%")
-                        ->orWhereHas('company', function ($query) use ($params) {
-                            $query->where('company_name', 'like', "%{$params}%");
-                        })
-                        ->orWhereHas('trunks', function ($query) use ($params) {
-                            $query->where('name', 'like', "%{$params}%");
-                        })
-                        ->orWhereHas('tfn_destinations.destinationType', function ($query) use ($params) {
-                            $query->where('destination_type', 'like', "%{$params}%");
-                        })
-                        ->orWhereHas('tfn_destinations', function ($query) use ($params) {
-                            $query->where('destination_id', 'like', "%{$params}%")
-                                ->orWhereHas('queues', function ($subQuery) use ($params) {
-                                    $subQuery->where('name', 'like', "%{$params}%");
-                                })
-                                ->orWhereHas('extensions', function ($subQuery) use ($params) {
-                                    $subQuery->where('name', 'like', "%{$params}%");
-                                })
-                                ->orWhereHas('voice_mail', function ($subQuery) use ($params) {
-                                    $subQuery->where('fullname', 'like', "%{$params}%")
+                        ->where(function ($query) use ($params, $user) {
+                            $query->where('tfn_number', 'LIKE', "%$params%")
+                                ->orWhere('tfn_type_number', 'LIKE', "%$params%")
+                                ->orWhere('tfn_provider', 'LIKE', "%$params%")
+                                ->orWhere('activated', 'LIKE', "%$params%")
+                                ->orWhere('reserved', 'LIKE', "%$params%")
+                                ->orWhereHas('company', function ($subQuery) use ($params) {
+                                    $subQuery->where('company_name', 'like', "%{$params}%")
                                         ->orWhere('email', 'like', "%{$params}%");
                                 })
-                                ->orWhereHas('conferences', function ($subQuery) use ($params) {
-                                    $subQuery->where('confno', 'like', "%{$params}%");
-                                })
-                                ->orWhereHas('ringGroups', function ($subQuery) use ($params) {
-                                    $subQuery->where('ringno', 'like', "%{$params}%");
-                                })
-                                ->orWhereHas('ivrs', function ($subQuery) use ($params) {
+                                ->orWhereHas('trunks', function ($subQuery) use ($params) {
                                     $subQuery->where('name', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('tfn_destinations.destinationType', function ($subQuery) use ($params) {
+                                    $subQuery->where('destination_type', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('tfn_destinations', function ($subQuery) use ($params, $user) {
+                                    $subQuery->where('company_id', '=', $user->company_id)
+                                        ->where('destination_id', 'like', "%{$params}%")
+                                        ->orWhereHas('queues', function ($nestedQuery) use ($params) {
+                                            $nestedQuery->where('name', 'like', "%{$params}%");
+                                        })
+                                        ->orWhereHas('extensions', function ($nestedQuery) use ($params) {
+                                            $nestedQuery->where('name', 'like', "%{$params}%");
+                                        })
+                                        ->orWhereHas('voiceMail', function ($nestedQuery) use ($params) {
+                                            $nestedQuery->where('fullname', 'like', "%{$params}%")
+                                                ->orWhere('email', 'like', "%{$params}%");
+                                        })
+                                        ->orWhereHas('conferences', function ($nestedQuery) use ($params) {
+                                            $nestedQuery->where('confno', 'like', "%{$params}%");
+                                        })
+                                        ->orWhereHas('ringGroups', function ($nestedQuery) use ($params) {
+                                            $nestedQuery->where('ringno', 'like', "%{$params}%");
+                                        })
+                                        ->orWhereHas('ivrs', function ($nestedQuery) use ($params) {
+                                            $nestedQuery->where('name', 'like', "%{$params}%");
+                                        });
                                 });
                         })
                         ->where('company_id', '=', $user->company_id)
-                        ->withTrashed()
                         ->paginate($perPageNo, ['*'], 'page');
                 } else {
                     $tfngetAll = Tfn::with([
@@ -845,10 +850,10 @@ class TfnController extends Controller
                 if ($tfnData->save()) {
                     DB::commit();
                     $response = $tfnData->toArray();
-                    return $this->output(true, "TFN Call Screen Status Updated Successfully!", $response, 200);
+                    return $this->output(true, "TFN Dail Status Updated Successfully!", $response, 200);
                 } else {
                     DB::rollBack();
-                    return $this->output(false, "Failed to update TFN Call Screen Status.", [], 500);
+                    return $this->output(false, "Failed to update TFN Dail Status.", [], 500);
                 }
             }
         } catch (\Exception $e) {
