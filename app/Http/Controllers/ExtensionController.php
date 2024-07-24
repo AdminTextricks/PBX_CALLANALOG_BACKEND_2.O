@@ -10,6 +10,7 @@ use App\Models\ConfTemplate;
 use App\Models\Invoice;
 use App\Models\Tfn;
 use App\Models\InvoiceItems;
+use App\Models\Payments;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -263,9 +264,9 @@ class ExtensionController extends Controller
                                     'payment_status'    => $payment_status,
                                     'email_status'      => 0,
                                 ]);
-                                
+                                $purchase_item = array();
                                 foreach ($item_ids as $item_id => $item) {
-                                    
+                                    $purchase_item[] = $item;
                                     $InvoiceItems = InvoiceItems::create([                                    
                                         'invoice_id'    => $Invoice->id,
                                         'item_type'     => 'Extension',
@@ -278,6 +279,21 @@ class ExtensionController extends Controller
                                     $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
                                     $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
                                 }
+                                
+                                $payment = Payments::create([
+                                    'company_id' => $request->company_id,
+                                    'invoice_id'  => $Invoice->id,
+                                    'ip_address' => $request->ip(),
+                                    'invoice_number'  => $invoice_id,
+                                    'order_id'        =>  $invoice_id. '-UID-' .$request->company_id,
+                                    'item_numbers'    => implode(',', $purchase_item),
+                                    'payment_type'    => $payment_status,
+                                    'payment_currency' => 'USD',
+                                    'payment_price' => $TotalItemPrice,
+                                    'stripe_charge_id' => '',
+                                    'transaction_id'  => '',
+                                    'status' => 1,
+                                ]);
                                 
                                 $emailData['title'] = 'Invoice From Callanalog';
                                 $emailData['item_numbers'] = $item_ids;
