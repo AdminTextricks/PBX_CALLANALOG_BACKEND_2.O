@@ -22,8 +22,7 @@ class CompanyController extends Controller
     }
 
     public  function registrationByAdminOrReseller(Request $request)
-    {
-        
+    {        
         $validator = Validator::make($request->all(), [
             'parent_id'     => 'required',
             'plan_id'       => 'required',
@@ -37,6 +36,7 @@ class CompanyController extends Controller
 			'state_id'		=> 'required',
 			'city'			=> 'required',
 			'zip'			=> 'required',
+            'password' 	    => 'required|confirmed',
             'inbound_permission' => 'required',
         ],[
             'plan_id'       => 'Plan type is required!',
@@ -70,14 +70,14 @@ class CompanyController extends Controller
                     'status' 	    => '1',
                 ]);
                 //dd($company);
-                $random_pass = Str::random(10);
+                //$random_pass = Str::random(10);
                 $user = User::create([
                     'company_id' => $company->id,
                     //'account_code' => $request->account_code,
                     'name' 		=> $request->name,
                     'email' 	=> $request->email,
                     'mobile' 	=> $request->mobile,
-                    'password' 	=> Hash::make($random_pass),
+                    'password' 	=> Hash::make($request->password),
                     'address' 	=> $request->address,
                     'country_id'=> $request->country_id,
                     'state_id' 	=> $request->state_id,
@@ -123,7 +123,7 @@ class CompanyController extends Controller
                     ]);
                 }
                 
-                $this->sendPassword($user, $random_pass);//PASSWORD SEND
+                $this->sendPassword($user, $request->password);//PASSWORD SEND
                 //$token 		=  $user->createToken('Callanalog-API')->plainTextToken;
                 $response 	= $user->toArray();
                 //$response['token'] = $token;
