@@ -34,7 +34,8 @@ class CdrController extends Controller
 						->with('company:id,company_name,email')	
                         ->with('country:id,country_name')
 						->orWhere('agent_name', 'LIKE', "%$params%")
-                        //->orWhere('duration', 'LIKE', "%$params%")
+                        ->orWhere('caller_num', 'LIKE', "%$params%")
+                        ->orWhere('disposition', 'LIKE', "%$params%")
                         ->orWhere('tfn', 'LIKE', "%$params%")
                         ->orWhere('destination', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
@@ -61,7 +62,8 @@ class CdrController extends Controller
                     ->with('country:id,country_name')
                     ->where('company_id', '=',  $user->company_id)
                     ->orWhere('agent_name', 'LIKE', "%$params%")
-                    ->orWhere('duration', 'LIKE', "%$params%")
+                    ->orWhere('caller_num', 'LIKE', "%$params%")
+                    ->orWhere('disposition', 'LIKE', "%$params%")
                     ->orWhere('tfn', 'LIKE', "%$params%")
                     ->orWhere('destination', 'LIKE', "%$params%")
                     ->orWhereHas('company', function ($query) use ($params) {
@@ -113,7 +115,8 @@ class CdrController extends Controller
 						->with('company:id,company_name,email')	
                         ->with('country:id,country_name')
 						->orWhere('agent_name', 'LIKE', "%$params%")
-                        //->orWhere('duration', 'LIKE', "%$params%")
+                        ->orWhere('caller_num', 'LIKE', "%$params%")
+                        ->orWhere('disposition', 'LIKE', "%$params%")
                         ->orWhere('tfn', 'LIKE', "%$params%")
                         ->orWhere('destination', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
@@ -140,7 +143,8 @@ class CdrController extends Controller
                     ->with('country:id,country_name')
                     ->where('company_id', '=',  $user->company_id)
                     ->orWhere('agent_name', 'LIKE', "%$params%")
-                    //->orWhere('duration', 'LIKE', "%$params%")
+                    ->orWhere('caller_num', 'LIKE', "%$params%")
+                    ->orWhere('disposition', 'LIKE', "%$params%")
                     ->orWhere('tfn', 'LIKE', "%$params%")
                     ->orWhere('destination', 'LIKE', "%$params%")
                     ->orWhereHas('company', function ($query) use ($params) {
