@@ -97,6 +97,7 @@ class UserDocumentsController extends Controller
                 $UserDocuments_data = UserDocuments::select()                    
                     ->with('user:id,name,email')
                     ->with('company:id,company_name,email')
+                    ->orderBy('id', 'DESC')
                     ->paginate(
                     $perPage = $perPageNo,
                     $columns = ['*'],
@@ -118,6 +119,7 @@ class UserDocumentsController extends Controller
                     ->with('company:id,company_name,email')
                     ->with('user:id,name,email')
                     ->where('user_id', '=',  $user->id)
+                    ->orderBy('id', 'DESC')
                     ->paginate(
                         $perPage = $perPageNo,
                         $columns = ['*'],

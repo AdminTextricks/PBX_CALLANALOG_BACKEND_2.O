@@ -47,11 +47,13 @@ class CdrController extends Controller
                         ->orWhereHas('country', function ($query) use ($params) {
                             $query->where('country_name', 'like', "%{$params}%");
                         })
+                        ->orderBy('id', 'DESC')
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
                     $data = Cdr::select('*')
                         ->with('company:id,company_name,email')
                         ->with('country:id,country_name')
+                        ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
                 }
 			}
@@ -75,12 +77,14 @@ class CdrController extends Controller
                     ->orWhereHas('country', function ($query) use ($params) {
                         $query->where('country_name', 'like', "%{$params}%");
                     })
+                    ->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             } else {
                 $data = Cdr::with('company:id,company_name,email')
                     ->with('country:id,country_name')
                     ->where('company_id', '=',  $user->company_id)
                     ->select('*')
+                    ->orderBy('id', 'DESC')
                     ->paginate(
                         $perPage = $perPageNo,
                         $columns = ['*'],
@@ -128,11 +132,13 @@ class CdrController extends Controller
                         ->orWhereHas('country', function ($query) use ($params) {
                             $query->where('country_name', 'like', "%{$params}%");
                         })
+                        ->orderBy('id', 'DESC')
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
                     $data = Call::select('*')
                         ->with('company:id,company_name,email')
                         ->with('country:id,country_name')
+                        ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
                 }
 			}
@@ -150,18 +156,13 @@ class CdrController extends Controller
                     ->orWhereHas('company', function ($query) use ($params) {
                         $query->where('company_name', 'like', "%{$params}%");
                     })
-                    ->orWhereHas('company', function ($query) use ($params) {
-                        $query->where('email', 'like', "%{$params}%");
-                    })
-                    ->orWhereHas('country', function ($query) use ($params) {
-                        $query->where('country_name', 'like', "%{$params}%");
-                    })
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             } else {
                 $data = Call::with('company:id,company_name,email')
                     ->with('country:id,country_name')
                     ->where('company_id', '=',  $user->company_id)
                     ->select('*')
+                    ->orderBy('id', 'DESC')
                     ->paginate(
                         $perPage = $perPageNo,
                         $columns = ['*'],
