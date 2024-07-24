@@ -804,7 +804,7 @@ class ExtensionController extends Controller
                             }
                             $status = $statusText;
                         } else {
-                            $status = 'REACHABLE<br>';
+                            $status = 'REACHABLE';
                         }
                         
                         $peerData = array(
@@ -816,7 +816,7 @@ class ExtensionController extends Controller
                             "host"      => $columns[2],
                             "status"    => $status,
                             "status_val"=> trim($columns[7] . ' ' . $columns[8]),
-                        );                
+                        );
                         $data[] = $peerData;
                     }
                 }
