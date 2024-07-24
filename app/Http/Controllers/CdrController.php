@@ -34,11 +34,17 @@ class CdrController extends Controller
 						->with('company:id,company_name,email')	
                         ->with('country:id,country_name')
 						->orWhere('agent_name', 'LIKE', "%$params%")
-                        ->orWhere('duration', 'LIKE', "%$params%")
+                        //->orWhere('duration', 'LIKE', "%$params%")
                         ->orWhere('tfn', 'LIKE', "%$params%")
                         ->orWhere('destination', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('company_name', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('company', function ($query) use ($params) {
+                            $query->where('email', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('country', function ($query) use ($params) {
+                            $query->where('country_name', 'like', "%{$params}%");
                         })
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
@@ -60,6 +66,12 @@ class CdrController extends Controller
                     ->orWhere('destination', 'LIKE', "%$params%")
                     ->orWhereHas('company', function ($query) use ($params) {
                         $query->where('company_name', 'like', "%{$params}%");
+                    })
+                    ->orWhereHas('company', function ($query) use ($params) {
+                        $query->where('email', 'like', "%{$params}%");
+                    })
+                    ->orWhereHas('country', function ($query) use ($params) {
+                        $query->where('country_name', 'like', "%{$params}%");
                     })
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             } else {
@@ -101,11 +113,17 @@ class CdrController extends Controller
 						->with('company:id,company_name,email')	
                         ->with('country:id,country_name')
 						->orWhere('agent_name', 'LIKE', "%$params%")
-                        ->orWhere('duration', 'LIKE', "%$params%")
+                        //->orWhere('duration', 'LIKE', "%$params%")
                         ->orWhere('tfn', 'LIKE', "%$params%")
                         ->orWhere('destination', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('company_name', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('company', function ($query) use ($params) {
+                            $query->where('email', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('country', function ($query) use ($params) {
+                            $query->where('country_name', 'like', "%{$params}%");
                         })
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
@@ -122,11 +140,17 @@ class CdrController extends Controller
                     ->with('country:id,country_name')
                     ->where('company_id', '=',  $user->company_id)
                     ->orWhere('agent_name', 'LIKE', "%$params%")
-                    ->orWhere('duration', 'LIKE', "%$params%")
+                    //->orWhere('duration', 'LIKE', "%$params%")
                     ->orWhere('tfn', 'LIKE', "%$params%")
                     ->orWhere('destination', 'LIKE', "%$params%")
                     ->orWhereHas('company', function ($query) use ($params) {
                         $query->where('company_name', 'like', "%{$params}%");
+                    })
+                    ->orWhereHas('company', function ($query) use ($params) {
+                        $query->where('email', 'like', "%{$params}%");
+                    })
+                    ->orWhereHas('country', function ($query) use ($params) {
+                        $query->where('country_name', 'like', "%{$params}%");
                     })
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             } else {
