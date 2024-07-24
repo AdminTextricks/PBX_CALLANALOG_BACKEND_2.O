@@ -31,6 +31,7 @@ class User extends Authenticatable
         'zip',    
         'role_id',
         'is_verified',
+        'is_verified_doc',
         'status',
     ];
 
