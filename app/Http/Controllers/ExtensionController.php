@@ -348,6 +348,7 @@ class ExtensionController extends Controller
                 }
 				$resdelete = $Extension->delete();
                 if ($resdelete) {
+                    Cart::where('item_id', '=', $id)->delete();
                     DB::commit();
                     return $this->output(true,'Success',200);
                 } else {
