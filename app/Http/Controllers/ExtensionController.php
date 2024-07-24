@@ -436,15 +436,18 @@ class ExtensionController extends Controller
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
-                        ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-                        ->orWhere('agent_name', 'LIKE', "%$params%")
+                        ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')                        
                         ->orWhere('name', 'LIKE', "%$params%")
-                        ->orWhere('callbackextension', 'LIKE', "%$params%")
+                        //->orWhere('callbackextension', 'LIKE', "%$params%")
+                        //->orWhere('agent_name', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('company_name', 'like', "%{$params}%");
                         })
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('email', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('country', function ($query) use ($params) {
+                            $query->where('country_name', 'like', "%{$params}%");
                         })
                         ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
@@ -479,11 +482,17 @@ class ExtensionController extends Controller
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
                         ->where('extensions.company_id', '=', $user->company_id)
-                        ->orWhere('agent_name', 'LIKE', "%$params%")
+                        //->orWhere('agent_name', 'LIKE', "%$params%")
                         ->orWhere('name', 'LIKE', "%$params%")
-                        ->orWhere('callbackextension', 'LIKE', "%$params%")
+                        //->orWhere('callbackextension', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('company_name', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('company', function ($query) use ($params) {
+                            $query->where('email', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('country', function ($query) use ($params) {
+                            $query->where('country_name', 'like', "%{$params}%");
                         })
                         ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
