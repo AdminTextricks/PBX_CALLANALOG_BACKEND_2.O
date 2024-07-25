@@ -341,6 +341,13 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		//Route::delete('/{id}', [IvrController::class,'deleteIvr']);
 	});
 
+	#One Go User
+	Route::group(['prefix'=> 'one-go-user'], function () {
+		Route::post('/', [CompanyController::class, 'registrationByAdminOrReseller']);
+		Route::get('/outboundCdr/{company_id?}', [CdrController::class, 'getAllCallList']);
+		//Route::delete('/{id}', [IvrController::class,'deleteIvr']);
+	});
+	
 });
 /*
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

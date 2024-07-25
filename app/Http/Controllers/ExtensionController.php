@@ -863,7 +863,7 @@ class ExtensionController extends Controller
             $user = \Auth::user();
             $validator = Validator::make($request->all(), [
                 'extension'	    => 'required|array',
-                'extension.*'	=> 'required|numeric|exists:extensions,id',
+                'extension.*.*'	=> 'required|numeric|exists:extensions,id',
             ]);
             if ($validator->fails()) {
                 return $this->output(false, $validator->errors()->first(), [], 409);
@@ -872,11 +872,11 @@ class ExtensionController extends Controller
                 $extension = $input['extension'];
                 if (is_array($extension)) {
                     $extension_details = array();
-                    foreach ($extension as $item) {
-                        $id = $item['id'];
-                        unset($item['id']);
-                        $data = Extension::where('id', $id)->update(['data'=>$item]);
-                        $extension_details[]  = $data;
+                    foreach ($extension as $data) {
+                        $id = $data['id'];
+                        unset($data['id']);
+                        $res = Extension::where('id', $id)->update($data);
+                        $extension_details[]  = $res;
                     }
                     if (count($extension_details) > 0 ) {
                         return $this->output(true, 'Success', $extension_details, 200);
