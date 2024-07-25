@@ -11,6 +11,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItems;
 use App\Models\Tfn;
 use Carbon\Carbon;
+
 class InvoiceController extends Controller
 {
     public function createInvoice(Request $request)
@@ -149,12 +150,12 @@ class InvoiceController extends Controller
 
         $fromDate = $request->get('from_date');
         $toDate = $request->get('to_date');
-    
+
         if ($fromDate) {
-            $fromDate = \Carbon\Carbon::createFromFormat('d-m-Y', $fromDate)->startOfDay();
+            $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $fromDate)->startOfDay();
         }
         if ($toDate) {
-            $toDate = \Carbon\Carbon::createFromFormat('d-m-Y', $toDate)->endOfDay();
+            $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $toDate)->endOfDay();
         }
 
         if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
@@ -192,7 +193,7 @@ class InvoiceController extends Controller
                             })
                             ->orWhereHas('payments', function ($subQuery) use ($params) {
                                 $subQuery->where('payment_type', 'LIKE', "%{$params}%")
-                                         ->orWhere('transaction_id', 'LIKE', "%{$params}%");
+                                    ->orWhere('transaction_id', 'LIKE', "%{$params}%");
                             })
                             ->orWhereHas('countries', function ($subQuery) use ($params) {
                                 $subQuery->where('country_name', 'LIKE', "%{$params}%");
@@ -240,7 +241,7 @@ class InvoiceController extends Controller
                             })
                             ->orWhereHas('payments', function ($subQuery) use ($params) {
                                 $subQuery->where('payment_type', 'LIKE', "%{$params}%")
-                                         ->orWhere('transaction_id', 'LIKE', "%{$params}%");
+                                    ->orWhere('transaction_id', 'LIKE', "%{$params}%");
                             })
                             ->orWhereHas('countries', function ($subQuery) use ($params) {
                                 $subQuery->where('country_name', 'LIKE', "%{$params}%");
