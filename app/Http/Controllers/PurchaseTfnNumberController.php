@@ -43,7 +43,7 @@ class PurchaseTfnNumberController extends Controller
         } else {
             $price_for = 'Company';
         }
-        $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'TFN');
+        $item_price_arr = $this->getItemPrice($user->company_id, $request->country_id, $price_for, $reseller_id, 'TFN');
         if ($item_price_arr['Status'] == 'true') {        
             $item_price = $item_price_arr['TFN_price'];
             $company = Company::where('id', $user->company->id)->first();
