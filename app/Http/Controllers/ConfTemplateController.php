@@ -61,6 +61,7 @@ class ConfTemplateController extends Controller
 
 	public function getAllConfTemplate(Request $request)
 	{
+		$user  = \Auth::user();
 		$perPageNo = isset($request->perpage) ? $request->perpage : 25;
 		$params = $request->params ?? "";
 
