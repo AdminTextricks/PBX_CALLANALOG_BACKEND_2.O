@@ -184,7 +184,11 @@ class InvoiceController extends Controller
                                     ->orWhere('email', 'LIKE', "%{$params}%");
                             })
                             ->orWhereHas('payments', function ($subQuery) use ($params) {
-                                $subQuery->where('payment_type', 'LIKE', "%{$params}%");
+                                $subQuery->where('payment_type', 'LIKE', "%{$params}%")
+                                         ->where('transaction_id', 'LIKE', "%{$params}%");
+                            })
+                            ->orWhereHas('countries', function ($subQuery) use ($params) {
+                                $subQuery->where('country_name', 'LIKE', "%{$params}%");
                             });
                     });
                 }
@@ -231,7 +235,11 @@ class InvoiceController extends Controller
                                     ->orWhere('email', 'LIKE', "%{$params}%");
                             })
                             ->orWhereHas('payments', function ($subQuery) use ($params) {
-                                $subQuery->where('payment_type', 'LIKE', "%{$params}%");
+                                $subQuery->where('payment_type', 'LIKE', "%{$params}%")
+                                         ->where('transaction_id', 'LIKE', "%{$params}%");
+                            })
+                            ->orWhereHas('countries', function ($subQuery) use ($params) {
+                                $subQuery->where('country_name', 'LIKE', "%{$params}%");
                             });
                     });
                 }
