@@ -70,12 +70,12 @@ class MainPriceController extends Controller
         $perPageNo = isset($request->perpage) ? $request->perpage : 10;
         $params = $request->params ?? "";
 
-        $trunk_id = $request->id ?? NULL;
-        if($trunk_id){            
+        $price_id = $request->id ?? NULL;
+        if($price_id){
             $MainPrice_data = MainPrice::select('*') 
                             ->with(['user:id,name,email,mobile']) 
                             ->with('country:id,country_name')
-                            ->where('id', $trunk_id)->get();;
+                            ->where('id', $price_id)->get();
         }else{
             $MainPrice_data = MainPrice::select('*') 
                                 ->with(['user:id,name,email,mobile']) 
@@ -232,12 +232,12 @@ class MainPriceController extends Controller
         $perPageNo = isset($request->perpage) ? $request->perpage : 10;
         $params = $request->params ?? "";
 
-        $trunk_id = $request->id ?? NULL;
-        if($trunk_id){            
+        $price_id = $request->id ?? NULL;
+        if($price_id){            
             $ResellerPrice_data = ResellerPrice::select('*')
                             ->with(['company:id,company_name,email,mobile'])
                             ->with('country:id,country_name') 
-                            ->where('id', $trunk_id)->get();;
+                            ->where('id', $price_id)->get();;
         }else{
             $ResellerPrice_data = ResellerPrice::select('*') 
                                 ->with(['company:id,company_name,email,mobile']) 
