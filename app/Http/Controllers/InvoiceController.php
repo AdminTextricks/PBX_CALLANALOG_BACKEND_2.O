@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Invoice;
 use App\Models\InvoiceItems;
 use App\Models\Tfn;
-
+use Carbon\Carbon;
 class InvoiceController extends Controller
 {
     public function createInvoice(Request $request)
@@ -147,6 +147,16 @@ class InvoiceController extends Controller
         $params      = $request->params ?? "";
         $invoice_get_id = $request->id ?? NULL;
 
+        $fromDate = $request->get('from_date');
+        $toDate = $request->get('to_date');
+    
+        if ($fromDate) {
+            $fromDate = \Carbon\Carbon::createFromFormat('d-m-Y', $fromDate)->startOfDay();
+        }
+        if ($toDate) {
+            $toDate = \Carbon\Carbon::createFromFormat('d-m-Y', $toDate)->endOfDay();
+        }
+
         if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
             if ($invoice_get_id) {
                 $getinvoicedata = Invoice::with(['invoice_items', 'countries:id,country_name,phone_code,currency,currency_symbol', 'states:id,country_id,state_name', 'company:id,company_name,account_code,email,mobile,billing_address,city,zip', 'payments'])
@@ -164,9 +174,6 @@ class InvoiceController extends Controller
                         $query->where('payment_type', '!=', 'Added to Wallet');
                     });
 
-                // Add the date filters
-                $fromDate = $request->get('from_date');
-                $toDate = $request->get('to_date');
                 if ($fromDate) {
                     $getinvoicedata->where('updated_at', '>=', $fromDate);
                 }
@@ -185,7 +192,7 @@ class InvoiceController extends Controller
                             })
                             ->orWhereHas('payments', function ($subQuery) use ($params) {
                                 $subQuery->where('payment_type', 'LIKE', "%{$params}%")
-                                         ->where('transaction_id', 'LIKE', "%{$params}%");
+                                         ->orWhere('transaction_id', 'LIKE', "%{$params}%");
                             })
                             ->orWhereHas('countries', function ($subQuery) use ($params) {
                                 $subQuery->where('country_name', 'LIKE', "%{$params}%");
@@ -215,9 +222,6 @@ class InvoiceController extends Controller
                         $query->where('payment_type', '!=', 'Added to Wallet');
                     });
 
-                // Add the date filters
-                $fromDate = $request->get('from_date');
-                $toDate = $request->get('to_date');
                 if ($fromDate) {
                     $getinvoicedata->where('updated_at', '>=', $fromDate);
                 }
@@ -236,7 +240,7 @@ class InvoiceController extends Controller
                             })
                             ->orWhereHas('payments', function ($subQuery) use ($params) {
                                 $subQuery->where('payment_type', 'LIKE', "%{$params}%")
-                                         ->where('transaction_id', 'LIKE', "%{$params}%");
+                                         ->orWhere('transaction_id', 'LIKE', "%{$params}%");
                             })
                             ->orWhereHas('countries', function ($subQuery) use ($params) {
                                 $subQuery->where('country_name', 'LIKE', "%{$params}%");
