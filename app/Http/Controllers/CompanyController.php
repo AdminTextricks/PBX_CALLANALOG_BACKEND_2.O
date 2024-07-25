@@ -122,6 +122,16 @@ class CompanyController extends Controller
                         'updated_at' => Carbon::now(),
                     ]);
                 }
+
+                if(isset($request->one_go_user)){
+                    DB::table('one_go_user_steps')->insert([
+                        'company_id'=> $company->id,
+                        'user_id'   => $user->id,
+                        'step_no'   => 1,
+                        'created_at'=> Carbon::now(),
+                        'updated_at'=> Carbon::now(),
+                    ]);
+                }
                 
                 $this->sendPassword($user, $request->password);//PASSWORD SEND
                 //$token 		=  $user->createToken('Callanalog-API')->plainTextToken;
