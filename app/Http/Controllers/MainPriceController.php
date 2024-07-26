@@ -63,8 +63,32 @@ class MainPriceController extends Controller
         }
     }
 
+    public function getPriceList(Request $request, $price_for)
+    {
+        
+        $perPageNo = isset($request->perpage) ? $request->perpage : 10;
+        //$price_fo = $request->price_fo ?? "";
 
-    public function getPriceList(Request $request)
+        $MainPrice_data = MainPrice::select('*') 
+                            ->with(['user:id,name,email,mobile']) 
+                            ->with('country:id,country_name')
+                            ->where('price_for', $price_for)
+                            ->paginate(
+                            $perPage = $perPageNo,
+                            $columns = ['*'],
+                            $pageName = 'page'
+                        );
+
+        if ($MainPrice_data->isNotEmpty()) {
+            $MainPrice_dd = $MainPrice_data->toArray();
+            unset($MainPrice_dd['links']);
+            return $this->output(true, 'Success', $MainPrice_dd, 200);
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
+    }
+
+    public function getAllPriceList(Request $request)
     {
         $user = \Auth::user();
         $perPageNo = isset($request->perpage) ? $request->perpage : 10;
