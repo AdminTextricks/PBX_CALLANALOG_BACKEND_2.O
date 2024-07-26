@@ -172,6 +172,7 @@ class CompanyController extends Controller
                     ->with('country:id,country_name,iso3')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
+                    ->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             }
         }elseif ($user->roles->first()->slug == 'reseller') {
@@ -190,6 +191,7 @@ class CompanyController extends Controller
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
                     ->where('parent_id', $user->id)
+                    ->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             }
         }else{
