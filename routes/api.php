@@ -111,7 +111,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'price'], function () {
 		Route::post('/', [MainPriceController::class, 'addSuperAdminPrice']);
 		Route::patch('/changeStatus/{id}', [MainPriceController::class, 'changeMainPriceStatus']);
-		Route::get('/{id?}', [MainPriceController::class, 'getPriceList']);
+		Route::get('/{price_for}', [MainPriceController::class, 'getPriceList']);
+		Route::get('/{id?}', [MainPriceController::class, 'getAllPriceList']);
 		Route::patch('/{id}', [MainPriceController::class, 'updatePrice']);
 		Route::delete('/{id}', [MainPriceController::class, 'deletePrice']);
 		//Route::delete('/reseller/{id}', [MainPriceController::class, 'deleteResellerPrice']);
