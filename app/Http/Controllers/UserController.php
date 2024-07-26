@@ -46,7 +46,7 @@ class UserController extends Controller
             if($user_id) {
                 $data = $dataQuery->where('id', $user_id)->first();
             }else{
-                $data = $dataQuery->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+                $data = $dataQuery->orderBy('id', 'DESC')->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             }
         }elseif($user->roles->first()->slug == 'admin'){
             $dataQuery = User::select()
@@ -66,7 +66,7 @@ class UserController extends Controller
             if($user_id) {
                 $data = $dataQuery->where('id', $user_id)->first(); 
             }else{
-                $data = $dataQuery->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+                $data = $dataQuery->orderBy('id', 'DESC')->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             }
         }else{
             $dataQuery = User::select()
