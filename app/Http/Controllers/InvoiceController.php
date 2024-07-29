@@ -314,8 +314,7 @@ class InvoiceController extends Controller
                                     ->orWhere('email', 'LIKE', "%{$params}%");
                             })
                             ->orWhereHas('payments', function ($subQuery) use ($params) {
-                                $subQuery->where('payment_type', 'LIKE', "%{$params}%")
-                                    ->orWhere('email', 'LIKE', "%{$params}%");
+                                $subQuery->where('payment_type', 'LIKE', "%{$params}%");
                             });
                     });
                     $getinvoicedata = $getinvoicedata->orderBy('id', 'DESC')
@@ -374,8 +373,7 @@ class InvoiceController extends Controller
                                     ->orWhere('email', 'LIKE', "%{$params}%");
                             })
                             ->orWhereHas('payments', function ($subQuery) use ($params) {
-                                $subQuery->where('payment_type', 'LIKE', "%{$params}%")
-                                    ->orWhere('email', 'LIKE', "%{$params}%");
+                                $subQuery->where('payment_type', 'LIKE', "%{$params}%");
                             });
                     });
                     $getinvoicedata = $getinvoicedata->orderBy('id', 'DESC')
