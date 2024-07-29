@@ -50,4 +50,9 @@ class Company extends Model
     {
         return $this->belongsTo(MainPlan::class,'plan_id');
     }
+
+    public function main_prices()
+    {
+        return $this->hasOne(MainPrice::class, 'reseller_id', 'parent_id');
+    }
 }
