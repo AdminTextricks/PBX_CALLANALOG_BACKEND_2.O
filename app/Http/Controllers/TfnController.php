@@ -255,7 +255,7 @@ class TfnController extends Controller
                     ->select('*')->where('id', $tfn_id)->withTrashed()->get();
             } else {
                 if ($params !== "") {
-                    $tfngetAll = Tfn::select('tfns.id', 'tfns.company_id', 'tfns.assign_by', 'tfns.tfn_number', 'tfns.tfn_provider', 'tfns.tfn_group_id', 'tfns.country_id', 'tfns.activated', 'tfns.reserved')
+                    $tfngetAll = Tfn::select('*')
                         ->with([
                             'countries:id,country_name,phone_code,currency_symbol',
                             'trunks:id,type,name',
@@ -333,7 +333,7 @@ class TfnController extends Controller
                     ->where('id', $tfn_id)->get();
             } else {
                 if ($params !== "") {
-                    $tfngetAll = Tfn::select('tfns.id', 'tfns.company_id', 'tfns.assign_by', 'tfns.tfn_number', 'tfns.tfn_provider', 'tfns.tfn_group_id', 'tfns.country_id', 'tfns.activated', 'tfns.reserved')
+                    $tfngetAll = Tfn::select('*')
                         ->with([
                             'countries:id,country_name,phone_code,currency_symbol',
                             'trunks:id,type,name',
