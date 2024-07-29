@@ -31,6 +31,8 @@ use App\Http\Controllers\ConferenceController;
 use App\Http\Controllers\IvrMediaController;
 use App\Http\Controllers\IvrController;
 use App\Http\Controllers\CdrController;
+use App\Http\Controllers\ResellerCommissionController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -350,6 +352,10 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		//Route::delete('/{id}', [IvrController::class,'deleteIvr']);
 	});
 	
+	Route::group(['prefix' => 'reseller-commission'], function () {
+		Route::get('/commission', [ResellerCommissionController::class, 'getCommissionExtensionOrTfnForReseller']);
+	});
+
 });
 /*
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
