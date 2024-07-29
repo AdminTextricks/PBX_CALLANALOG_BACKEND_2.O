@@ -269,7 +269,8 @@ class InvoiceController extends Controller
         $perPageNo = $request->filled('perpage') ? $request->perpage : 10;
         $params      = $request->params ?? "";
         $invoice_get_id = $request->id ?? NULL;
-
+        $fromDate = $request->get('from_date');
+        $toDate = $request->get('to_date');
         if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
             if ($invoice_get_id) {
                 $getinvoicedata = Invoice::with('invoice_items')
@@ -284,22 +285,40 @@ class InvoiceController extends Controller
                     })
                     ->where('id', $invoice_get_id);
             } else {
-                if ($params !== "") {
-                    $getinvoicedata = Invoice::with('invoice_items')
-                        ->with('countries:id,country_name,phone_code,currency,currency_symbol')
-                        ->with('states:id,country_id,state_name')
-                        ->with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
-                        ->with('payments')
+                if ($params !== "" || $request->has('from_date') || $request->has('to_date')) {
+                    $getinvoicedata = Invoice::with([
+                        'invoice_items',
+                        'countries:id,country_name,phone_code,currency,currency_symbol',
+                        'states:id,country_id,state_name',
+                        'company:id,company_name,account_code,email,mobile,billing_address,city,zip',
+                        'payments'
+                    ])
                         ->select('*')
                         ->where('payment_status', 'Paid')
                         ->whereHas('payments', function ($query) {
                             $query->where('payment_type', '=', 'Added to Wallet');
-                        })
-                        ->orWhere('payment_type', "%$params%")
-                        ->orWhere('invoice_id', "%$params%")
-                        ->orWhere('invoice_amount', "%$params%")
-                        ->orWhere('invoice_file', "%$params%")
-                        ->orderBy('id', 'DESC')
+                        });
+
+                    if ($fromDate) {
+                        $getinvoicedata->where('updated_at', '>=', $fromDate);
+                    }
+                    if ($toDate) {
+                        $getinvoicedata->where('updated_at', '<=', $toDate);
+                    }
+                    $getinvoicedata->where(function ($query) use ($params) {
+                        $query->orWhere('invoice_id', 'LIKE', "%$params%")
+                            ->orWhere('invoice_amount', 'LIKE', "%$params%")
+                            ->orWhere('updated_at', 'LIKE', "%$params%")
+                            ->orWhereHas('company', function ($subQuery) use ($params) {
+                                $subQuery->where('company_name', 'LIKE', "%$params%")
+                                    ->orWhere('email', 'LIKE', "%{$params}%");
+                            })
+                            ->orWhereHas('payments', function ($subQuery) use ($params) {
+                                $subQuery->where('payment_type', 'LIKE', "%{$params}%")
+                                    ->orWhere('email', 'LIKE', "%{$params}%");
+                            });
+                    });
+                    $getinvoicedata = $getinvoicedata->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 } else {
                     $getinvoicedata = Invoice::with('invoice_items')
@@ -328,7 +347,7 @@ class InvoiceController extends Controller
                     ->where('payment_status', 'Paid')
                     ->where('id', $invoice_get_id);
             } else {
-                if ($params != "") {
+                if ($params !== "" || $request->has('from_date') || $request->has('to_date')) {
                     $getinvoicedata = Invoice::with('invoice_items')
                         ->with('countries:id,country_name,phone_code,currency,currency_symbol')
                         ->with('states:id,country_id,state_name')
@@ -339,12 +358,27 @@ class InvoiceController extends Controller
                         ->where('payment_status', 'Paid')
                         ->whereHas('payments', function ($query) {
                             $query->where('payment_type', '=', 'Added to Wallet');
-                        })
-                        ->orWhere('payment_type', "%$params%")
-                        ->orWhere('invoice_id', "%$params%")
-                        ->orWhere('invoice_amount', "%$params%")
-                        ->orWhere('invoice_file', "%$params%")
-                        ->orderBy('id', 'DESC')
+                        });
+                    if ($fromDate) {
+                        $getinvoicedata->where('updated_at', '>=', $fromDate);
+                    }
+                    if ($toDate) {
+                        $getinvoicedata->where('updated_at', '<=', $toDate);
+                    }
+                    $getinvoicedata->where(function ($query) use ($params) {
+                        $query->orWhere('invoice_id', 'LIKE', "%$params%")
+                            ->orWhere('invoice_amount', 'LIKE', "%$params%")
+                            ->orWhere('updated_at', 'LIKE', "%$params%")
+                            ->orWhereHas('company', function ($subQuery) use ($params) {
+                                $subQuery->where('company_name', 'LIKE', "%$params%")
+                                    ->orWhere('email', 'LIKE', "%{$params}%");
+                            })
+                            ->orWhereHas('payments', function ($subQuery) use ($params) {
+                                $subQuery->where('payment_type', 'LIKE', "%{$params}%")
+                                    ->orWhere('email', 'LIKE', "%{$params}%");
+                            });
+                    });
+                    $getinvoicedata = $getinvoicedata->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 } else {
                     $getinvoicedata = Invoice::with('invoice_items')
