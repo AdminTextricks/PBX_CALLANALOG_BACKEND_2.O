@@ -252,7 +252,7 @@ class MainPriceController extends Controller
 
     public function getResellerPriceList(Request $request)
     {
-        //$user = \Auth::user();
+        $user = \Auth::user();
         $perPageNo = isset($request->perpage) ? $request->perpage : 10;
         $params = $request->params ?? "";
 
@@ -261,11 +261,17 @@ class MainPriceController extends Controller
             $ResellerPrice_data = ResellerPrice::select('*')
                             ->with(['company:id,company_name,email,mobile'])
                             ->with('country:id,country_name') 
-                            ->where('id', $price_id)->get();;
+                            ->orWhereHas('company', function ($query) use ($user) {
+                                $query->where('parent_id', '=', $user->id);
+                            })
+                            ->where('id', $price_id)->get();
         }else{
             $ResellerPrice_data = ResellerPrice::select('*') 
                                 ->with(['company:id,company_name,email,mobile']) 
                                 ->with('country:id,country_name')
+                                ->orWhereHas('company', function ($query) use ($user) {
+                                    $query->where('parent_id', '=', $user->id);
+                                })
                                 ->paginate(
                                 $perPage = $perPageNo,
                                 $columns = ['*'],
