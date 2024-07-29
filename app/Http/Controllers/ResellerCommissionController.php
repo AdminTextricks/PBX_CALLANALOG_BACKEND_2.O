@@ -13,6 +13,7 @@ class ResellerCommissionController extends Controller
     public function getCommissionExtensionOrTfnForReseller(Request $request)
     {
         $user = \Auth::user();
+        $perPageNo = $request->filled('perpage') ? $request->perpage : 10;
         if ($request->user()->hasRole('reseller')) {
             $getinvoicedata = Invoice::with([
                 'invoice_items',
@@ -33,7 +34,7 @@ class ResellerCommissionController extends Controller
                 })
                 ->orderBy('invoices.id', 'DESC')
                 ->distinct()
-                ->get();
+                ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
 
             if ($getinvoicedata) {
                 foreach ($getinvoicedata as $invoice) {
