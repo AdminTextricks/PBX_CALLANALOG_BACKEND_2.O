@@ -32,6 +32,9 @@ class ResellerCommissionController extends Controller
                 ->whereHas('company', function ($query) {
                     $query->where('parent_id', '>', 1);
                 })
+                ->whereHas('payments', function ($query) {
+                    $query->where('payment_type', '!=', "Added to Wallet");
+                })
                 ->orderBy('invoices.id', 'DESC')
                 ->distinct()
                 ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
@@ -97,6 +100,9 @@ class ResellerCommissionController extends Controller
                 ->leftJoin('reseller_prices', 'reseller_prices.company_id', '=', 'companies.id')
                 ->whereHas('company', function ($query) use ($user) {
                     $query->where('parent_id', '=', $user->id);
+                })
+                ->whereHas('payments', function ($query) {
+                    $query->where('payment_type', '!=', "Added to Wallet");
                 })
                 ->orderBy('invoices.id', 'DESC')
                 ->distinct()
