@@ -286,10 +286,13 @@ class ResellerCommissionController extends Controller
         return $this->output(true, 'Success', $paginatedData, 200);
     }
 
-    public function numberofItemsforResellerCommission(Request $request)
+    public function numberofItemsforResellerCommission(Request $request, $invoice_id)
     {
         $user = \Auth::user();
-        $invoice_id = $request->invoice_id ?? NULL;
+        // $invoice_id = $request->invoice_id ?? NULL;
+        if(is_null($invoice_id)){
+            return $this->output(false, 'Invoice Not Found!', 400);
+        }
         $getNumberData = InvoiceItems::where('invoice_id', '=', $invoice_id)->get();
         if (is_null($getNumberData)) {
             return $this->output(false, 'No Record Found!', 400);

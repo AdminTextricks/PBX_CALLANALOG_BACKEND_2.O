@@ -354,7 +354,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	
 	Route::group(['prefix' => 'reseller-commission'], function () {
 		Route::get('/commission', [ResellerCommissionController::class, 'getCommissionExtensionOrTfnForReseller']);
-		Route::get('/get-invoice-items', [ResellerCommissionController::class, 'numberofItemsforResellerCommission']);
+		Route::get('/get-invoice-items/{$invoice_id?}', [ResellerCommissionController::class, 'numberofItemsforResellerCommission']);
 	});
 
 });
