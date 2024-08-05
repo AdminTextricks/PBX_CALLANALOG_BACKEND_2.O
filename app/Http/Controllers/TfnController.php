@@ -19,7 +19,7 @@ use Illuminate\Auth\Events\Validated;
 use Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Str;
 use function Laravel\Prompts\select;
 
 class TfnController extends Controller
