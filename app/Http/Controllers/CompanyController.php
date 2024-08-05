@@ -422,4 +422,36 @@ class CompanyController extends Controller
             return $this->output(true, 'No Record Found', []);
         }
     }
+
+    public function AddbalanceForCompanyBySuperAdmin(Request $request)
+    {
+        $user = \Auth::user();
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+            $validator = Validator::make($request->all(), [
+                'company_id' => 'required|numeric',
+                'amount' => 'required|numeric',
+            ],  [
+                'company_id' => 'Company name is Required.',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->output(false, $validator->errors()->first(), [], 409);
+            } else {
+                $companydataforbalanceupdate = Company::where('id', '=', $request->company_id)->first();
+                if (is_null($companydataforbalanceupdate)) {
+                    return $this->output(true, 'Something Went Wrong!!', []);
+                } else {
+                    $companydataforbalanceupdate->balance += $request->amount;
+                    $resCompanyBalance = $companydataforbalanceupdate->save();
+                    if ($resCompanyBalance) {
+                        return $this->output(true, 'Amount Added successfully!', $resCompanyBalance, 200);
+                    } else {
+                        return $this->output(false, 'Error occurred While adding Amount. Please try again!.', [], 200);
+                    }
+                }
+            }
+        } else {
+            return $this->output(false, 'Unauthorized action.', [], 403);
+        }
+    }
 }
