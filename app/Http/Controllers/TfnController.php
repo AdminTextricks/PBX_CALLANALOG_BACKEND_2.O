@@ -1066,10 +1066,10 @@ class TfnController extends Controller
                 if ($tfnData->save()) {
                     DB::commit();
                     $response = $tfnData->toArray();
-                    return $this->output(true, "TFN Dail Status Updated Successfully!", $response, 200);
+                    return $this->output(true, "TFN Dial Status Updated Successfully!", $response, 200);
                 } else {
                     DB::rollBack();
-                    return $this->output(false, "Failed to update TFN Dail Status.", [], 500);
+                    return $this->output(false, "Failed to update TFN Dial Status.", [], 500);
                 }
             }
         } catch (\Exception $e) {
