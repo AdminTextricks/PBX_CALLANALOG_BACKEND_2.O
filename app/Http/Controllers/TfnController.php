@@ -667,7 +667,7 @@ class TfnController extends Controller
         try {
             if ($request->tfn_type == "Free") {
                 foreach ($request->tfn_number as $tfn_number) {
-                    $result = $this->assignTfnToCompany($tfn_number, $company, $user);
+                    $result = $this->assignTfnToCompanyOLD($tfn_number, $company, $user);
                     if (!$result['success']) {
                         DB::rollBack();
                         return $this->output(false, $result['message'], null, 400);
@@ -678,7 +678,7 @@ class TfnController extends Controller
                     $company->balance -= $total_price;
                     if ($company->save()) {
                         foreach ($request->tfn_number as $tfn_number) {
-                            $result = $this->assignTfnToCompany($tfn_number, $company, $user);
+                            $result = $this->assignTfnToCompanyOLD($tfn_number, $company, $user);
                             if (!$result['success']) {
                                 DB::rollBack();
                                 return $this->output(false, $result['message'], null, 400);
@@ -800,7 +800,7 @@ class TfnController extends Controller
                 // Invoice Data
                 // $invoice_amount_assign = 0;
                 foreach ($request->tfn_number as $tfn_number) {
-                    $result = $this->assignTfnToCompany1($tfn_number, $company, $user);
+                    $result = $this->assignTfnToCompany($tfn_number, $company, $user);
                     if (!$result['success']) {
                         DB::rollBack();
                         return $this->output(false, $result['message'], null, 400);
@@ -814,7 +814,7 @@ class TfnController extends Controller
 
                     if ($company->save()) {
                         foreach ($request->tfn_number as $tfn_number) {
-                            $result = $this->assignTfnToCompany1($tfn_number, $company, $user);
+                            $result = $this->assignTfnToCompany($tfn_number, $company, $user);
                             if (!$result['success']) {
                                 DB::rollBack();
                                 return $this->output(false, $result['message'], null, 400);
