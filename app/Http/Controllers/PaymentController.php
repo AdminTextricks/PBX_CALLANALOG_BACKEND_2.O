@@ -352,7 +352,7 @@ class PaymentController extends Controller
         $getcountry = Country::select('*')->where('id', $user->company->country_id)->first();
         $getstate = State::select('state_name')->where('id', $user->company->state_id)->first();
         $validator = Validator::make($request->all(), [
-            "amount" => 'required|string',
+            "amount" => 'required',
 
         ]);
         if ($validator->fails()) {
