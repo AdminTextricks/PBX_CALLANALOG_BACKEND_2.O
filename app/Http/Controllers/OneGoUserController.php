@@ -35,35 +35,35 @@ class OneGoUserController extends Controller
         $type = 'Toll Free';
         $starting_digits = '';
         $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'TFN');
-        if ($item_price_arr['Status'] == 'true') {        
+        if ($item_price_arr['Status'] == 'true') {
             $item_price = $item_price_arr['TFN_price'];
             $company = Company::where('id', $request->company_id)->first();
             $inbound_trunk = explode(',', $company->inbound_permission);
 
-            $searchQry = Tfn::select('id', 'tfn_number')
+            $tfnNumber = Tfn::select('id', 'tfn_number')
                         ->where('country_id', $request->country_id)
                         ->where('company_id', 0)
                         ->where('assign_by', 0)
                         ->whereIn('tfn_provider', $inbound_trunk)
                         ->where('activated', '0')
                         ->where('reserved', '0')
-                        ->where('status', 1);
-            
-            if ($type == 'Local') {
-                $data = $searchQry->paginate($perPageNo);
+                        ->where('status', 1)
+                        ->limit(1)->first();
+                
+            if ($tfnNumber->isNotEmpty()) {
+                $tfnNumber->reserved = '1';
+                $tfnNumber->reserveddate = date('Y-m-d H:i:s');
+                $tfnNumber->reservedexpirationdate = date('Y-m-d H:i:s', strtotime('+1 day'));
+                if($tfnNumber->save()){
+                    
+                    return $this->output(true, 'Success', $tfnNumber, 200);
+                }else{
+                    return $this->output(false, 'Error occurred in reserving TFN for you. Please try after some time.');
+                }
+                
+                
             } else {
-                $data = $searchQry->where('tfn_number', 'like', "%$starting_digits%")->paginate(
-                    $perPage = $perPageNo,
-                    $columns = ['*'],
-                    $pageName = 'page'
-                );
-            }        
-            if ($data->isNotEmpty()) {
-                $dd = $data->toArray();
-                unset($dd['links']);
-                return $this->output(true, 'Success', $dd, 200);
-            } else {
-                return $this->output(true, 'No Record Found', []);
+                return $this->output(true, 'TFN not available for this country', []);
             }
         }else{
             return $this->output(false, $item_price_arr['Message']);
