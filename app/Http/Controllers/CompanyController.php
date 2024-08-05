@@ -363,12 +363,16 @@ class CompanyController extends Controller
                     ->orWhere('email', 'LIKE', "%$params%")
                     ->orWhereHas('country', function ($query) use ($params) {
                         $query->where('country_name', 'LIKE', "%$params%");
-                    })->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+                    })
+                    ->orderBy('id', 'DESC')
+                    ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             } else {
                 $data = Company::select('*')
                     ->with('country:id,country_name')
                     ->with('state:id,state_name,state_code')
-                    ->with('user_plan:id,name')->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+                    ->with('user_plan:id,name')
+                    ->orderBy('id', 'DESC')
+                    ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             }
         } elseif ($user->roles->first()->slug == 'reseller') {
 
@@ -390,13 +394,16 @@ class CompanyController extends Controller
                     ->orWhere('email', 'LIKE', "%$params%")
                     ->orWhereHas('country', function ($query) use ($params) {
                         $query->where('country_name', 'LIKE', "%$params%");
-                    })->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+                    })
+                    ->orderBy('id', 'DESC')
+                    ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             } else {
                 $data = Company::select()
                     ->with('country:id,country_name,iso3')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
                     ->where('parent_id', $user->id)
+                    ->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             }
         } else {

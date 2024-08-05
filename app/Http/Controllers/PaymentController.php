@@ -481,6 +481,9 @@ class PaymentController extends Controller
                 } else {
                     // $invoice_update->payment_type =  'Add to Wallet Payment';
                     $invoice_update->payment_status = "Paid";
+                    $price_mail = $charge->amount / 100;
+                    $item_numbers[] = $price_mail;
+                    $itemTpyes[] = 'Wallet Payment';
                     $this->pdfmailSend($user, $item_numbers, $price_mail, $createinvoice->id, $createinvoice->invoice_id, $itemTpyes);
                     $invoice_result = $invoice_update->save();
                     DB::commit();
