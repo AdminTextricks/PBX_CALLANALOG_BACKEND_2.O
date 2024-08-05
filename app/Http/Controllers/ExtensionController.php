@@ -291,7 +291,7 @@ class ExtensionController extends Controller
                                     'payment_currency' => 'USD',
                                     'payment_price' => $TotalItemPrice,
                                     'stripe_charge_id' => '',
-                                    'transaction_id'  => '',
+                                    'transaction_id'  => $TotalItemPrice.'-'.time(),
                                     'status' => 1,
                                 ]);
                                 
@@ -587,7 +587,7 @@ class ExtensionController extends Controller
                         ]);
                     }
 
-                    if ($Extension->sip_temp != $request->sip_temp) { 
+                    //if ($Extension->sip_temp != $request->sip_temp) { 
                         if ($request->sip_temp == 'WEBRTC') {
                             $addExtensionFile = $webrtc_template_url;
                             $removeExtensionFile = $softphone_template_url;
@@ -609,7 +609,7 @@ class ExtensionController extends Controller
                             Log::error('Extension Update File Transfer Log : ' . $result);
                             $this->sipReload();
                         }
-                    }
+                    //}
 
 
                     $Extension->callbackextension = $request->callbackextension;

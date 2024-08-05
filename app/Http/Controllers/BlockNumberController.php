@@ -244,7 +244,7 @@ class BlockNumberController extends Controller
 						$BlockNumber = BlockNumber::where('id', $id)->first();        
 						$response = $BlockNumber->toArray();
 						DB::commit();
-						return $this->output(true, 'Block Numbre updated successfully.', $response, 200);
+						return $this->output(true, 'Block Number updated successfully.', $response, 200);
 					}else{
 						DB::commit();
 						return $this->output(false, 'Error occurred in Block Number Updating. Please try again!.', [], 200);
