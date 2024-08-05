@@ -31,6 +31,7 @@ use App\Http\Controllers\ConferenceController;
 use App\Http\Controllers\IvrMediaController;
 use App\Http\Controllers\IvrController;
 use App\Http\Controllers\CdrController;
+use App\Http\Controllers\OneGoUserController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -345,7 +346,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	#One Go User
 	Route::group(['prefix'=> 'one-go-user'], function () {
 		Route::post('/', [CompanyController::class, 'registrationByAdminOrReseller']);
-		Route::get('/outboundCdr/{company_id?}', [CdrController::class, 'getAllCallList']);
+		Route::post('/manageApplication', [OneGoUserController::class, 'manageApplication']);
 		//Route::delete('/{id}', [IvrController::class,'deleteIvr']);
 	});
 	

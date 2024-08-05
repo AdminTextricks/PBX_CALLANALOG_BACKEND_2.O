@@ -12,9 +12,10 @@ class ResellerPrice extends Model
         'id',
         'company_id',
         'country_id',
-        'commission_type',
-        'product',
-        'price',
+        'tfn_commission_type',
+        'extension_commission_type',
+        'tfn_price',
+        'extension_price',
         'status',
     ];
 
