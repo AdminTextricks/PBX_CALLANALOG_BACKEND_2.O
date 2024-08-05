@@ -17,6 +17,7 @@ use App\Models\TfnDestination;
 use App\Models\User;
 use Illuminate\Auth\Events\Validated;
 use Validator;
+use Mail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -320,7 +321,7 @@ class TfnController extends Controller
                         'tfn_destinations.destinationType:id,destination_type'
                     ])
                         ->withTrashed()
-                        ->select('*')                
+                        ->select('*')
                         ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 }
@@ -338,8 +339,8 @@ class TfnController extends Controller
                     'tfn_destinations.destinationType:id,destination_type'
                 ])
                     ->where('company_id', '=', $user->company_id)
-                    ->where('id', $tfn_id)               
-                     ->orderBy('id', 'DESC')
+                    ->where('id', $tfn_id)
+                    ->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
             } else {
                 if ($params !== "") {
@@ -776,9 +777,9 @@ class TfnController extends Controller
                 }
 
                 $reseller_id = '';
-                if ($user->company->parent_id > 1) {
+                if ($company->parent_id > 1) {
                     $price_for = 'Reseller';
-                    $reseller_id = $user->company->parent_id;
+                    $reseller_id = $company->parent_id;
                 } else {
                     $price_for = 'Company';
                 }
