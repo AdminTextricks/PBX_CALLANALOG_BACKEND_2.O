@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use App\Models\Company;
 use App\Models\DestinationType;
+use App\Models\Invoice;
+use App\Models\InvoiceItems;
 use App\Models\MainPrice;
+use App\Models\Payments;
 use App\Models\RemovedTfn;
 use App\Models\ResellerPrice;
 use App\Models\RingGroup;
@@ -589,7 +592,7 @@ class TfnController extends Controller
             $tfncsv->save();
         }
     }
-    public function assignTfnMain(Request $request)
+    public function assignTfnMainOLD(Request $request)
     {
         $user = \Auth::user();
         $validator = Validator::make($request->all(), [
@@ -686,7 +689,7 @@ class TfnController extends Controller
         }
     }
 
-    private function assignTfnToCompany($tfn_number, $company, $user)
+    private function assignTfnToCompanyOLD($tfn_number, $company, $user)
     {
         $inbound_trunk = explode(',', $company->inbound_permission);
 
@@ -712,6 +715,220 @@ class TfnController extends Controller
             }
         } else {
             return ['success' => false, 'message' => "TFN Number ($tfn_number) is already Purchased!!"];
+        }
+    }
+
+
+    ///// updated Assign Tfn Api:::::
+    public function assignTfnMain(Request $request)
+    {
+        $user = \Auth::user();
+        $validator = Validator::make($request->all(), [
+            'company_id' => 'required|numeric',
+            'tfn_number' => 'required|array',
+            'tfn_type'   => 'required',
+        ], [
+            'company_id.required' => 'The company is required.',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+
+        $company = Company::find($request->company_id);
+        if (!$company) {
+            return $this->output(false, 'Company Not Found. Please try again!', [], 409);
+        }
+        DB::beginTransaction();
+        try {
+            $transaction_id = Str::random(10);
+            $stripe_charge_id = Str::random(30);
+            $transaction_id_pf = $request->tfn_type == "Free" ? "FREE" . $transaction_id : "PAID" . $transaction_id;
+            $stripe_charge_id_pf = $request->tfn_type == "Free" ? "FREE" . $stripe_charge_id : "PAID" . $stripe_charge_id;
+            $payment_assign_type = $request->tfn_type == "Free" ? "Free" : "Paid";
+            $invoice_payments_status = $request->tfn_type == "Free" ? "Free" : "Paid";
+
+            $total_price = 0;
+            $item_types = [];
+            $prices = [];
+
+            foreach ($request->tfn_number as $key => $tfn_number) {
+                $tfn = Tfn::where('tfn_number', $tfn_number)->first();
+
+                if ($tfn && $tfn->company_id != 0) {
+                    return $this->output(false, "TFN Number ($tfn_number) is already purchased. Please try another TFN number.", [], 409);
+                } elseif ($tfn && $tfn->reserved == "1") {
+                    return $this->output(false, "TFN Number ($tfn_number) is already in Cart. Please try another TFN number.", [], 409);
+                }
+
+                $reseller_id = '';
+                if ($user->company->parent_id > 1) {
+                    $price_for = 'Reseller';
+                    $reseller_id = $user->company->parent_id;
+                } else {
+                    $price_for = 'Company';
+                }
+
+                $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id[$key], $price_for, $reseller_id, 'TFN');
+
+                if ($item_price_arr['Status'] == 'true') {
+                    $price = $item_price_arr['TFN_price'];
+                    $prices[] = $price;
+                    $total_price += $price;
+                } else {
+                    DB::rollBack();
+                    return $this->output(false, $item_price_arr['Message']);
+                }
+
+                $item_types[] = 'TFN';
+            }
+
+            if ($request->tfn_type == "Free") {
+                // Invoice Data
+                // $invoice_amount_assign = 0;
+                foreach ($request->tfn_number as $tfn_number) {
+                    $result = $this->assignTfnToCompany1($tfn_number, $company, $user);
+                    if (!$result['success']) {
+                        DB::rollBack();
+                        return $this->output(false, $result['message'], null, 400);
+                    }
+                }
+            } else {
+                if ($total_price > 0 && $company->balance > $total_price) {
+                    //Company Balance 
+                    $company->balance -= $total_price;
+
+
+                    if ($company->save()) {
+                        foreach ($request->tfn_number as $tfn_number) {
+                            $result = $this->assignTfnToCompany1($tfn_number, $company, $user);
+                            if (!$result['success']) {
+                                DB::rollBack();
+                                return $this->output(false, $result['message'], null, 400);
+                            }
+                        }
+                    } else {
+                        DB::rollBack();
+                        return $this->output(false, 'Something went wrong! Balance not credited.', null, 400);
+                    }
+                } else {
+                    DB::rollBack();
+                    return $this->output(false, 'Insufficient balance. Please Add balance in Wallet First.', null, 400);
+                }
+            }
+
+            $invoicetable_id = DB::table('invoices')->max('id');
+            if (!$invoicetable_id) {
+                $invoice_id = '#INV/' . date('Y') . '/00001';
+            } else {
+                $invoice_id = "#INV/" . date('Y') . "/000" . ($invoicetable_id + 1);
+            }
+            // return $company;
+            $createInvoices = Invoice::create([
+                'company_id' => $company->id,
+                'country_id' => $company->country_id,
+                'state_id' => $company->state_id,
+                'invoice_id' => $invoice_id,
+                'invoice_currency' => 'USD',
+                'invoice_subtotal_amount' => $total_price,
+                'invoice_amount' => $total_price,
+                'payment_status' => $invoice_payments_status,
+
+            ]);
+            foreach ($request->tfn_number as $tfn_number) {
+                InvoiceItems::create([
+                    'invoice_id' => $createInvoices->id,
+                    'item_type'  => 'TFN',
+                    'item_number' => $tfn_number,
+                    'item_price' => $total_price,
+                ]);
+            }
+            $payments = Payments::create([
+                'company_id' => $company->id,
+                'invoice_id'  => $createInvoices->id,
+                'ip_address' => $request->ip(),
+                'invoice_number'  => $createInvoices->invoice_id,
+                'order_id'        => $createInvoices->invoice_id . '-UID-' . $company->id,
+                'item_numbers'    => implode(',', $request->tfn_number),
+                'payment_type'    => $payment_assign_type,
+                'payment_currency' => 'USD',
+                'payment_price' => $total_price,
+                'stripe_charge_id' => $stripe_charge_id_pf,
+                'transaction_id'  => $transaction_id_pf,
+                'status' => 1,
+            ]);
+
+            $this->pdfmailSend($company, $request->tfn_number, $total_price, $createInvoices->id, $createInvoices->invoice_id, $item_types);
+
+            DB::commit();
+            return $this->output(true, 'TFN numbers assigned successfully.', null, 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->output(false, 'An error occurred. Please try again.', null, 500);
+        }
+    }
+
+    private function assignTfnToCompany($tfn_number, $company, $user)
+    {
+        $inbound_trunk = explode(',', $company->inbound_permission);
+
+        $tfn = Tfn::where('tfn_number', $tfn_number)
+            ->where('company_id', 0)
+            ->where('reserved', '0')
+            ->first();
+
+        if ($tfn) {
+            if (in_array($tfn->tfn_provider, $inbound_trunk)) {
+                $tfn->update([
+                    'company_id' => $company->id,
+                    'assign_by' => $user->id,
+                    'activated' => '1',
+                    'reserved' => '1',
+                    'reserveddate' => date('Y-m-d H:i:s'),
+                    'reservedexpirationdate' => NULL,
+                    'startingdate' => date('Y-m-d H:i:s'),
+                    'expirationdate' => date('Y-m-d H:i:s', strtotime('+29 days')),
+                ]);
+
+                Cart::where('item_number', $tfn_number)->delete();
+                return ['success' => true];
+            } else {
+                return ['success' => false, 'message' => "Inbound Trunk Permission not found for this TFN Number ($tfn_number)"];
+            }
+        } else {
+            return ['success' => false, 'message' => "TFN Number ($tfn_number) is already Assigned!!"];
+        }
+    }
+
+    public function pdfmailSend($user, $item_numbers, $price_mail, $invoice_id, $invoice_number, $itemTpyes)
+    {
+        $email = $user->email;
+        $data = [
+            'title' => 'Invoice From Callanalog',
+            'item_numbers' => $item_numbers,
+            'item_types' => $itemTpyes,
+            'price' => $price_mail,
+            'invoice_number' => $invoice_number
+        ];
+
+        if ($invoice_id) {
+            try {
+                Mail::send('invoice', ['data' => $data], function ($message) use ($data, $email) {
+                    $message->to($email)->subject($data['title']);
+                });
+
+                $invoice_update_email = Invoice::find($invoice_id);
+                if ($invoice_update_email) {
+                    $invoice_update_email->email_status = 1;
+                    $invoice_update_email->save();
+                }
+                return $this->output(true, 'Email sent successfully!');
+            } catch (\Exception $e) {
+                \Log::error('Error sending email: ' . $e->getMessage());
+                return $this->output(false, 'Error occurred while sending the email.');
+            }
+        } else {
+            return $this->output(false, 'Error occurred in Invoice creation. The PDF file does not exist or the path is incorrect.');
         }
     }
 

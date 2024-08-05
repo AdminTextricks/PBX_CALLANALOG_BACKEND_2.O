@@ -25,11 +25,15 @@
 
 <body>
     <h1>{{ $data['title'] }}</h1>
-    <h2>Invoice:: {{ $data['invoice_number'] }}</h2>
+    <h2>Invoice: {{ $data['invoice_number'] }}</h2>
     <table>
         <tr>
             <th>Item Type</th>
-            <th>Item Number</th>
+            @if (count($data['item_numbers']) === 1 && $data['item_types'][0] === 'Wallet Payment')
+            Payment Amount
+            @else
+            Item Number
+            @endif
         </tr>
 
         @foreach($data['item_numbers'] as $index => $item_number)
@@ -41,7 +45,7 @@
 
     </table>
 
-    <h2>Total Price :: {{ $data['price'] }}</h2>
+    <h2>Total Price: {{ $data['price'] }}</h2>
     <h3>You can download the invoice from our portal</h3>
 </body>
 
