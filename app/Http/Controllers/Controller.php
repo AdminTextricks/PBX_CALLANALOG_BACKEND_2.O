@@ -107,21 +107,28 @@ class Controller extends BaseController
             $ResellerPrice = ResellerPrice::select()
                             ->where('company_id',$company_id)
                             ->where('country_id',$country_id)
-                            ->where('product',$product)
+                            //->where('product',$product)
                             ->where('status','1')->first();
 
             $ResellerCommission = $ResellerPrice ? $ResellerPrice->toArray() : [];
 
             if(count($ResellerCommission) > 0 ){
-
-                if(trim($ResellerCommission['commission_type']) == 'Fixed Amount'){
-                    $itemPrice = $itemPrice + $ResellerCommission['price'];
+                if($product == 'Extension'){
+                    $commission_type = trim($ResellerCommission['extension_commission_type']);
+                    $commissionPrice = $ResellerCommission['extension_price'];
+                    
+                }else{
+                    $commission_type = trim($ResellerCommission['tfn_commission_type']);
+                    $commissionPrice = $ResellerCommission['tfn_price'];
+                }
+                if($commission_type == 'Fixed Amount'){
+                    $itemPrice += $commissionPrice;
                 }
 
-                if(trim($ResellerCommission['commission_type']) == 'Percentage'){
-                    $pricePercentage = $itemPrice * $ResellerCommission['price']/100;
-                    $itemPrice = $itemPrice + $pricePercentage;
-                }                
+                if(trim($commission_type) == 'Percentage'){
+                    $pricePercentage = $itemPrice * $commissionPrice/100;
+                    $itemPrice += $pricePercentage;
+                }
             }
             return array('Status' => 'true', $product.'_price' => $itemPrice);
         }else{
