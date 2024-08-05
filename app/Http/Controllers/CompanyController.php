@@ -37,7 +37,7 @@ class CompanyController extends Controller
             'city'            => 'required',
             'zip'            => 'required',
             'password'         => 'required|confirmed',
-            'inbound_permission' => 'required',
+            // 'inbound_permission' => 'required',
         ], [
             'plan_id'       => 'Plan type is required!',
             'parent_id'     => 'parent ID is required.',
@@ -66,7 +66,7 @@ class CompanyController extends Controller
                     'state_id'         => $request->state_id,
                     'city'             => $request->city,
                     'zip'             => $request->zip,
-                    'inbound_permission' => $request->inbound_permission,
+                    'inbound_permission' => $request->inbound_permission ?? "1,2,3,4",
                     'status'         => '1',
                 ]);
                 //dd($company);
