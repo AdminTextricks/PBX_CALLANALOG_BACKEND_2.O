@@ -206,10 +206,12 @@ class MainPriceController extends Controller
     {
         $validator = Validator::make($request->all(), [            
             'country_id'    => 'required|numeric',
-            'commission_type' => 'required|max:500|in:Fixed Amount,Percentage',
-            'company_id'    => 'required|numeric|exists:companies,id',
-            'product'       => 'required|max:500|in:TFN,Extension',
-            'price'         => 'required|max:255',
+            'company_id'    => 'required|numeric|exists:companies,id',          
+            'tfn_commission_type'       => 'required|max:500|in:Fixed Amount,Percentage',             
+            'extension_commission_type' => 'required|max:500|in:Fixed Amount,Percentage',
+            //'product'         => 'required|max:500|in:TFN,Extension',
+            'tfn_price'         => 'required|max:255',
+            'extension_price'   => 'required|max:255',
         ],[
             'company_id'   => 'The company field is required and company should be registered with us!',
         ]);
@@ -220,16 +222,17 @@ class MainPriceController extends Controller
         try { 
             DB::beginTransaction();
             $ResellerPrice = ResellerPrice::where('company_id', $request->company_id)
-                            ->where('product', $request->product)
+                            //->where('product', $request->product)
                             ->where('country_id', $request->country_id)
                             ->first();
             if(!$ResellerPrice){
                 $ResellerPrice = ResellerPrice::create([
                     'country_id'        => $request->country_id,
-                    'commission_type'   => $request->commission_type,
                     'company_id'	    => $request->company_id,
-                    'product'   => $request->product,
-                    'price'     => $request->price,
+                    'tfn_commission_type'   => $request->tfn_commission_type,
+                    'tfn_price'             => $request->tfn_price,
+                    'extension_commission_type' => $request->extension_commission_type,
+                    'extension_price'           => $request->extension_price,
                     'status'    => isset($request->status) ? $request->status : 0,
                 ]);
                 
@@ -320,14 +323,18 @@ class MainPriceController extends Controller
 			return $this->output(false, 'This Price details not exist with us. Please try again!.', [], 404);
 		} else {
 			$validator = Validator::make($request->all(), [              
-                'price'             => 'required|max:255',                
-                'commission_type'   => 'required|max:255',                
+                'tfn_price'             => 'required|max:255',                
+                'tfn_commission_type'   => 'required|max:255',
+                'extension_price'             => 'required|max:255',                
+                'extension_commission_type'   => 'required|max:255',                
             ]);
             if ($validator->fails()){
                 return $this->output(false, $validator->errors()->first(), [], 409);
             }		
-			$ResellerPrice->price           = $request->price;		
-			$ResellerPrice->commission_type = $request->commission_type;		
+			$ResellerPrice->tfn_price           = $request->tfn_price;		
+			$ResellerPrice->tfn_commission_type = $request->tfn_commission_type;
+            $ResellerPrice->extension_price           = $request->extension_price;		
+			$ResellerPrice->extension_commission_type = $request->extension_commission_type;		
 			$ResellerPriceRes 			    = $ResellerPrice->save();
 			if ($ResellerPriceRes) {
 				$ResellerPrice = ResellerPrice::where('id', $id)->first();
