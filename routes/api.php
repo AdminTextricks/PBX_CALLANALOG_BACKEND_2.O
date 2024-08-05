@@ -1,6 +1,7 @@
 <?php
 
 
+use App\Http\Controllers\NowPaymentsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -279,6 +280,10 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/Striperefund', [PaymentController::class, 'RefundStripePayment']);
 		Route::post('/paywithwallet', [PaymentController::class, 'PaywithWallet']);
 		Route::post('/addbalance', [PaymentController::class, 'addToWallet']);
+		Route::post('/nowpayment/create', [NowPaymentsController::class, 'createPayment']);
+		Route::get('/nowpayment/status/{paymentId}', [NowPaymentsController::class, 'checkPaymentStatus']);
+		Route::post('/nowpayment/add-to-wallet', [NowPaymentsController::class, 'nowPaymentsAddToWallet']);
+		Route::get('/nowpayment/add-to-wallet/status/{paymentId}', [NowPaymentsController::class, 'nowPaymentsWalletcheckPaymentsStatus']);
 	});	
 
 
