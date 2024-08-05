@@ -271,6 +271,12 @@ class InvoiceController extends Controller
         $invoice_get_id = $request->id ?? NULL;
         $fromDate = $request->get('from_date');
         $toDate = $request->get('to_date');
+        if ($fromDate) {
+            $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $fromDate)->startOfDay();
+        }
+        if ($toDate) {
+            $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $toDate)->endOfDay();
+        }
         if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
             if ($invoice_get_id) {
                 $getinvoicedata = Invoice::with('invoice_items')
