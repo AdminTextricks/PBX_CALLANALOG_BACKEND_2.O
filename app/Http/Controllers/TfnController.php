@@ -742,6 +742,7 @@ class TfnController extends Controller
             'tfn_type'   => 'required',
         ], [
             'company_id.required' => 'The company is required.',
+            'tfn_type.required' => 'Payment Type Field is required.',
         ]);
 
         if ($validator->fails()) {
