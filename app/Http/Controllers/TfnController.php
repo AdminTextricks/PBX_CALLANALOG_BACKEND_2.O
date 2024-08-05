@@ -255,7 +255,9 @@ class TfnController extends Controller
                     'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
                     'tfn_destinations.destinationType:id,destination_type'
                 ])
-                    ->select('*')->where('id', $tfn_id)->withTrashed()->get();
+                    ->select('*')->where('id', $tfn_id)->withTrashed()
+                    ->orderBy('id', 'DESC')
+                    ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
             } else {
                 if ($params !== "") {
                     $tfngetAll = Tfn::select('*')
@@ -305,7 +307,8 @@ class TfnController extends Controller
                                 });
                         })
                         ->withTrashed()
-                        ->paginate($perPageNo, ['*'], 'page');
+                        ->orderBy('id', 'DESC')
+                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 } else {
                     $tfngetAll = Tfn::with([
                         'countries:id,country_name,phone_code,currency_symbol',
@@ -317,7 +320,9 @@ class TfnController extends Controller
                         'tfn_destinations.destinationType:id,destination_type'
                     ])
                         ->withTrashed()
-                        ->select('*')->withTrashed()->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
+                        ->select('*')                
+                        ->orderBy('id', 'DESC')
+                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 }
             }
         } else {
@@ -333,7 +338,9 @@ class TfnController extends Controller
                     'tfn_destinations.destinationType:id,destination_type'
                 ])
                     ->where('company_id', '=', $user->company_id)
-                    ->where('id', $tfn_id)->get();
+                    ->where('id', $tfn_id)               
+                     ->orderBy('id', 'DESC')
+                    ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
             } else {
                 if ($params !== "") {
                     $tfngetAll = Tfn::select('*')
@@ -386,7 +393,8 @@ class TfnController extends Controller
                                 });
                         })
                         ->where('company_id', '=', $user->company_id)
-                        ->paginate($perPageNo, ['*'], 'page');
+                        ->orderBy('id', 'DESC')
+                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 } else {
                     $tfngetAll = Tfn::with([
                         'countries:id,country_name,phone_code,currency_symbol',
@@ -398,7 +406,8 @@ class TfnController extends Controller
                         'tfn_destinations.destinationType:id,destination_type'
                     ])
                         ->where('company_id', '=', $user->company_id)
-                        ->paginate($perPageNo, ['*'], 'page');
+                        ->orderBy('id', 'DESC')
+                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 }
             }
         }
@@ -448,6 +457,8 @@ class TfnController extends Controller
     public function getAllActiveTfns(Request $request)
     {
         $user = \Auth::user();
+        $perPageNo   = isset($request->perpage) ? $request->perpage : 10;
+        $params      = $request->params ?? "";
         if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
             $tfngetAll = Tfn::with([
                 'countries:id,country_name,phone_code,currency_symbol',
@@ -460,7 +471,8 @@ class TfnController extends Controller
             ])
                 // ->where('tfn_destinations.destination_id', '=', 'destination_types.id')
                 ->where('tfns.status', "=", 1)
-                ->get();
+                ->orderBy('id', 'DESC')
+                ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
         } else {
 
             $tfngetAll = Tfn::with([
@@ -474,7 +486,8 @@ class TfnController extends Controller
             ])
                 ->where('company_id', $user->company_id)
                 ->where('status', 1)
-                ->get();
+                ->orderBy('id', 'DESC')
+                ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
         }
 
         $tfngetAll->each(function ($tfn) {
@@ -1029,7 +1042,8 @@ class TfnController extends Controller
                 ->where('country_id', $country_id)
                 ->where('company_id', $company_id)
                 ->where('status', 1)
-                ->where('activated', '1')->get();
+                ->where('activated', '1')
+                ->orderBy('id', 'DESC')->get();
         } else {
             $data = Tfn::select('id', 'tfn_number', 'country_id', 'company_id')
                 /*->with('company:id,company_name,email,mobile')
@@ -1037,7 +1051,8 @@ class TfnController extends Controller
                 ->where('company_id', '=',  $user->company_id)
                 ->where('country_id', $country_id)
                 ->where('status', 1)
-                ->where('activated', '1')->get();
+                ->where('activated', '1')
+                ->orderBy('id', 'DESC')->get();
         }
 
         if ($data->isNotEmpty()) {
