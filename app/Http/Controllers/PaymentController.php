@@ -447,8 +447,6 @@ class PaymentController extends Controller
             if ($chargeJson['amount_refunded'] == 0 && empty($chargeJson['failure_code']) && $chargeJson['paid'] == 1 && $chargeJson['captured'] == 1) {
                 $status = 1;
                 $price_mail = $charge->amount / 100;
-                $item_numbers = $price_mail . 'Added to Wallet';
-                $itemTpyes = $createinvoice->id;
                 // DB::beginTransaction();
                 $payment = Payments::create([
                     'company_id' => $user->company_id,
