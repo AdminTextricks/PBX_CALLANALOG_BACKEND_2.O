@@ -70,10 +70,10 @@ class NowPaymentsController extends Controller
                 $price_amount = $request->payment_price;
                 $orderId = $request->invoice_number . '-UID-' . $user->id;
                 $pay_currency = 'usddtrc20';
-                $payment = $this->nowPaymentsService->createPayment($price_currency, $price_amount, $orderId, $pay_currency, $user->company->email);
-                if ($payment) {
-                    $paymentId = $payment['payment_id'];
-                    $paymentUrl = $payment['pay_address'];
+                $paymentAPI = $this->nowPaymentsService->createPayment($price_currency, $price_amount, $orderId, $pay_currency, $user->company->email);
+                if ($paymentAPI) {
+                    $paymentId = $paymentAPI['payment_id'];
+                    $paymentUrl = $paymentAPI['pay_address'];
                     // $invoice_items = InvoiceItems::where('invoice_id', '=', $request->invoice_id)->get();
                     foreach ($invoice_items as $item) {
                         $itemNumbers[] = $item['item_number'];
@@ -99,7 +99,7 @@ class NowPaymentsController extends Controller
                     $qrCodePath = public_path('qr_codes/' . $paymentId . '.png');
                     $result->saveToFile($qrCodePath);
                     return response()->json([
-                        'payment' =>  $payment,
+                        'payment' =>  $paymentAPI,
                         'qr_code_url' => asset('qr_codes/' . $paymentId . '.png'),
                         'items' => $request->items,
                         'invoice_id' => $request->invoice_id,
