@@ -99,11 +99,12 @@ class MainPriceController extends Controller
             $MainPrice_data = MainPrice::select('*') 
                             ->with(['user:id,name,email,mobile']) 
                             ->with('country:id,country_name')
-                            ->where('id', $price_id)->get();
+                            ->where('id', $price_id)->orderBy('id', 'DESC')->get();
         }else{
             $MainPrice_data = MainPrice::select('*') 
                                 ->with(['user:id,name,email,mobile']) 
                                 ->with('country:id,country_name')
+                                ->orderBy('id', 'DESC')
                                 ->paginate(
                                 $perPage = $perPageNo,
                                 $columns = ['*'],

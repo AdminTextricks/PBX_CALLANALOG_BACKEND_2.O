@@ -79,11 +79,12 @@ class ConferenceController extends Controller
 				$data = Conference::select()
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
-                        ->where('id', $Conference_id)->get();
+                        ->where('id', $Conference_id)->orderBy('id', 'DESC')->get();
 			} else {
                 $data = Conference::select()
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
+						->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 			}
 		} else {
@@ -94,18 +95,21 @@ class ConferenceController extends Controller
 					->select()
 					->where('id', $Conference_id)
 					->where('company_id', '=',  $user->company_id)
+					->orderBy('id', 'DESC')
 					->get();
 			} else {
 				if ($params != "") {
 					$data = Conference::with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
 						->where('company_id', '=',  $user->company_id)
+						->orderBy('id', 'DESC')
 						//->orWhere('did_number', 'LIKE', "%$params%")
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
 					$data = Conference::with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
 						->where('company_id', '=',  $user->company_id)
+						->orderBy('id', 'DESC')
 						->select()->paginate(
 							$perPage = $perPageNo,
 							$columns = ['*'],
