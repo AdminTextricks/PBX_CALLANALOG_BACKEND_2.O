@@ -35,9 +35,9 @@ class NowPaymentsController extends Controller
         $invoice_balance = Invoice::select('invoice_amount')->where('id', $request->invoice_id)->where('payment_status', '=', 'Unpaid')->first();
         $getcountry = Country::select('*')->where('id', $user->company->country_id)->first();
         $getstate = State::select('state_name')->where('id', $user->company->state_id)->first();
-
+        $invoice_items = InvoiceItems::where('invoice_id', '=', $request->invoice_id)->get();
         if ($invoice_balance->invoice_amount === $request->payment_price) {
-            foreach ($request->items as $item) {
+            foreach ($invoice_items as $item) {
                 $itemType = $item['item_type'];
                 $itemNumber = $item['item_number'];
                 $cart = Cart::select('*')->where('item_number', '=', $itemNumber)->first();
@@ -71,20 +71,44 @@ class NowPaymentsController extends Controller
                 $orderId = $request->invoice_number . '-UID-' . $user->id;
                 $pay_currency = 'usddtrc20';
                 $payment = $this->nowPaymentsService->createPayment($price_currency, $price_amount, $orderId, $pay_currency, $user->company->email);
-                $paymentId = $payment['payment_id'];
-                $paymentUrl = $payment['pay_address'];
-                $qrCode = new QrCode($paymentUrl);
-                $writer = new PngWriter();
-                $result = $writer->write($qrCode);
-                $qrCodePath = public_path('qr_codes/' . $paymentId . '.png');
-                $result->saveToFile($qrCodePath);
-                return response()->json([
-                    'payment' =>  $payment,
-                    'qr_code_url' => asset('qr_codes/' . $paymentId . '.png'),
-                    'items' => $request->items,
-                    'invoice_id' => $request->invoice_id,
-                    'invoice_number' => $request->invoice_number
-                ]);
+                if ($payment) {
+                    $paymentId = $payment['payment_id'];
+                    $paymentUrl = $payment['pay_address'];
+                    // $invoice_items = InvoiceItems::where('invoice_id', '=', $request->invoice_id)->get();
+                    foreach ($invoice_items as $item) {
+                        $itemNumbers[] = $item['item_number'];
+                        $itemTypes[] = $item['item_type'];
+                    }
+                    $payment = Payments::create([
+                        'company_id' => $user->company_id,
+                        'invoice_id'  => $request->invoice_id,
+                        'ip_address' => $request->ip(),
+                        'invoice_number'  => $request->invoice_number,
+                        'order_id'        => $request->invoice_number . '-UID-' . $user->id,
+                        'item_numbers'    => implode(', ', $itemNumbers),
+                        'payment_type'    => 'Crypto Payment',
+                        'payment_currency' => $request->currency ?? 'USD',
+                        'transaction_id'  => $paymentId,
+                        'stripe_charge_id' => NULL,
+                        'status' => 0,
+                    ]);
+
+                    $qrCode = new QrCode($paymentUrl);
+                    $writer = new PngWriter();
+                    $result = $writer->write($qrCode);
+                    $qrCodePath = public_path('qr_codes/' . $paymentId . '.png');
+                    $result->saveToFile($qrCodePath);
+                    return response()->json([
+                        'payment' =>  $payment,
+                        'qr_code_url' => asset('qr_codes/' . $paymentId . '.png'),
+                        'items' => $request->items,
+                        'invoice_id' => $request->invoice_id,
+                        'invoice_number' => $request->invoice_number
+                    ]);
+                } else {
+                    DB::rollback();
+                    return response()->json(['error' => 'Payment creation failed.'], 500);
+                }
             } catch (\Exception $e) {
                 DB::rollback();
                 \Log::error('Payment creation failed: ' . $e->getMessage());
@@ -99,90 +123,85 @@ class NowPaymentsController extends Controller
     public function checkPaymentStatus(Request $request, $paymentId)
     {
         $user = \Auth::user();
-        $NowPaymentData = $this->nowPaymentsService->getPaymentStatus($paymentId);
         $itemNumbers = [];
         $itemTypes = [];
-        $invoice_items = InvoiceItems::where('invoice_id', '=', $request->invoice_id)->get();
-        foreach ($invoice_items as $item) {
-            $itemNumbers[] = $item['item_number'];
-            $itemTypes[] = $item['item_type'];
-        }
-
+        $nowPayment_charge_id = Str::random(30);
+        $NowPaymentData = $this->nowPaymentsService->getPaymentStatus($paymentId);
         if ($NowPaymentData && $NowPaymentData['payment_status'] == "partially_paid") {
             //partially_paid - it shows that the customer sent the less than the actual price. Appears when the funds have arrived in your wallet.
             return $this->output(false, 'Oops! Something Went Wrong. Mismatch values', 409);
         } elseif ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
-            $transaction_id = Str::random(10);
-            $nowPayment_charge_id = Str::random(30);
             DB::beginTransaction();
-            $payment = Payments::create([
-                'company_id' => $user->company_id,
-                'invoice_id'  => $request->invoice_id,
-                'ip_address' => $request->ip(),
-                'invoice_number'  => $request->invoice_number,
-                'order_id'        => $request->invoice_number . '-UID-' . $user->id,
-                'item_numbers'    => implode(', ', $itemNumbers),
-                'payment_type'    => 'Crypto Payment',
-                'payment_currency' => $request->currency ?? 'USD',
-                'payment_price' => $NowPaymentData['pay_amount'],
-                'transaction_id'  => $paymentId,
-                'stripe_charge_id' => $nowPayment_charge_id,
-                'status' => 1,
-            ]);
-
+            $payment = Payments::where('transaction_id', '=', $paymentId)->first();
+            $invoice_items = InvoiceItems::where('invoice_id', '=', $payment->invoice_id)->get();
             foreach ($invoice_items as $item) {
-                $itemType = $item['item_type'];
-                $itemNumber = $item['item_number'];
-                if ($itemType === "TFN") {
-                    $numbers_list = Tfn::where('tfn_number', $itemNumber)->first();
-                    if ($numbers_list) {
-                        $numbers_list->company_id = $user->company->id;
-                        $numbers_list->assign_by = $user->id;
-                        $numbers_list->activated = '1';
-                        $numbers_list->startingdate = date('Y-m-d H:i:s');
-                        $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
-                        $numbers_list->save();
-                    } else {
-                        DB::rollback();
-                        return $this->output(false, 'Tfn Number ' . $itemNumber . ' not found.', 400);
-                    }
-                } else {
-                    $numbers_list = Extension::where('name', $itemNumber)->first();
-                    if ($numbers_list) {
-                        $numbers_list->startingdate = date('Y-m-d H:i:s');
-                        $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
-                        $numbers_list->host = 'dynamic';
-                        $numbers_list->sip_temp = 'WEBRTC';
-                        $numbers_list->status = 1;
-                        $numbers_list->save();
-                    } else {
-                        DB::rollback();
-                        return $this->output(false, 'Extension Number ' . $itemNumber . ' not found.', 400);
-                    }
-                }
-
-                Cart::where('item_number', $itemNumber)->delete();
+                $itemNumbers[] = $item['item_number'];
+                $itemTypes[] = $item['item_type'];
             }
-
-            $invoice_update = Invoice::select('*')->where('id', $request->invoice_id)->first();
-            if (!$invoice_update) {
+            if (is_null($payment)) {
                 DB::rollback();
-                return $this->output(false, 'Invoice not found.', 400);
+                return $this->output(false, 'Something Went Wrong. please try again', 400);
             } else {
-                // $invoice_update->payment_type =  'Cryto Payment';
-                $invoice_update->payment_status = "Paid";
-                $invoice_update->save();
 
-                $mailsend = $this->pdfmailSend($user, $itemNumbers, $NowPaymentData['price_amount'], $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
-                if ($mailsend) {
-                    DB::commit();
-                } else {
-                    DB::rollBack();
+                //Payments Table Update
+                $payment->payment_price = $NowPaymentData['pay_amount'];
+                $payment->status = 1;
+                $payment->save();
+
+                foreach ($invoice_items as $item) {
+                    $itemType = $item['item_type'];
+                    $itemNumber = $item['item_number'];
+                    if ($itemType === "TFN") {
+                        $numbers_list = Tfn::where('tfn_number', $itemNumber)->first();
+                        if ($numbers_list) {
+                            $numbers_list->company_id = $user->company->id;
+                            $numbers_list->assign_by = $user->id;
+                            $numbers_list->activated = '1';
+                            $numbers_list->startingdate = date('Y-m-d H:i:s');
+                            $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
+                            $numbers_list->save();
+                        } else {
+                            DB::rollback();
+                            return $this->output(false, 'Tfn Number ' . $itemNumber . ' not found.', 400);
+                        }
+                    } else {
+                        $numbers_list = Extension::where('name', $itemNumber)->first();
+                        if ($numbers_list) {
+                            $numbers_list->startingdate = date('Y-m-d H:i:s');
+                            $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
+                            $numbers_list->host = 'dynamic';
+                            $numbers_list->sip_temp = 'WEBRTC';
+                            $numbers_list->status = 1;
+                            $numbers_list->save();
+                        } else {
+                            DB::rollback();
+                            return $this->output(false, 'Extension Number ' . $itemNumber . ' not found.', 400);
+                        }
+                    }
+
+                    Cart::where('item_number', $itemNumber)->delete();
                 }
+
+                $invoice_update = Invoice::select('*')->where('id', $request->invoice_id)->first();
+                if (!$invoice_update) {
+                    DB::rollback();
+                    return $this->output(false, 'Invoice not found.', 400);
+                } else {
+                    // $invoice_update->payment_type =  'Cryto Payment';
+                    $invoice_update->payment_status = "Paid";
+                    $invoice_update->save();
+
+                    $mailsend = $this->pdfmailSend($user, $itemNumbers, $NowPaymentData['price_amount'], $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
+                    if ($mailsend) {
+                        DB::commit();
+                    } else {
+                        DB::rollBack();
+                    }
+                }
+                DB::commit();
+                $response['payment'] = $payment->toArray();
+                return $this->output(true, 'Payment successfully.', $response, 200);
             }
-            DB::commit();
-            $response['payment'] = $payment->toArray();
-            return $this->output(true, 'Payment successfully.', $response, 200);
         } else {
             $pstatus = $NowPaymentData['payment_status'];
             return $this->output(true, 'Payment Status ' . $pstatus, $pstatus, 200);
@@ -252,7 +271,7 @@ class NowPaymentsController extends Controller
         $NowPaymentData = $this->nowPaymentsService->getPaymentStatus($paymentId);
 
         if ($NowPaymentData && $NowPaymentData['payment_status'] == "partially_paid" || $NowPaymentData['payment_status'] == "finished") {
-        // if ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
+            // if ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
             if (isset($NowPaymentData['actually_paid']) && $NowPaymentData['actually_paid'] !== $NowPaymentData['pay_amount']) {
                 $paid_amount = $NowPaymentData['pay_amount'];
             }
