@@ -352,6 +352,7 @@ class CompanyController extends Controller
                     ->with('country:id,country_name')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
+                    ->with('user:id,company_id,name,email')
                     ->where('id', $company_id)->first();
                 //->where('status', 1)         
             } elseif ($params !== "") {
@@ -359,6 +360,7 @@ class CompanyController extends Controller
                     ->with('country:id,country_name,iso3')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
+                    ->with('user:id,company_id,name,email')
                     ->where('company_name', 'LIKE', "%$params%")
                     ->orWhere('email', 'LIKE', "%$params%")
                     ->orWhereHas('country', function ($query) use ($params) {
@@ -371,6 +373,7 @@ class CompanyController extends Controller
                     ->with('country:id,country_name')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
+                    ->with('user:id,company_id,name,email')
                     ->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             }
@@ -381,6 +384,7 @@ class CompanyController extends Controller
                     ->with('country:id,country_name')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
+                    ->with('user:id,company_id,name,email')
                     ->where('id', $company_id)
                     ->where('parent_id', $user->id)->first();
                 //->where('status', 1)         
@@ -389,6 +393,7 @@ class CompanyController extends Controller
                     ->with('country:id,country_name,iso3')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
+                    ->with('user:id,company_id,name,email')
                     ->where('parent_id', $user->id)
                     ->where('company_name', 'LIKE', "%$params%")
                     ->orWhere('email', 'LIKE', "%$params%")
@@ -402,6 +407,7 @@ class CompanyController extends Controller
                     ->with('country:id,country_name,iso3')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
+                    ->with('user:id,company_id,name,email')
                     ->where('parent_id', $user->id)
                     ->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
@@ -411,6 +417,7 @@ class CompanyController extends Controller
                 ->with('country:id,country_name')
                 ->with('state:id,state_name,state_code')
                 ->with('user_plan:id,name')
+                ->with('user:id,company_id,name,email')
                 ->where('id', $user->company_id)->first();
         }
 
