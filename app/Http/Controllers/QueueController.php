@@ -84,11 +84,12 @@ class QueueController extends Controller
 				$data = Queue::select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context','description','strategy', 'status')
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
-                        ->where('id', $Queue_id)->get();
+                        ->where('id', $Queue_id)->orderBy('id', 'DESC')->get();
 			} else {
                 $data = Queue::select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context','description','strategy', 'status')
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
+						->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 			}
 		} else {
@@ -99,6 +100,7 @@ class QueueController extends Controller
 					->select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context','description','strategy', 'status')
 					->where('id', $Queue_id)
 					->where('company_id', '=',  $user->company_id)
+					->orderBy('id', 'DESC')
 					->get();
 			} else {
 				if ($params != "") {
@@ -106,6 +108,7 @@ class QueueController extends Controller
 						->with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
 						->where('company_id', '=',  $user->company_id)
+						->orderBy('id', 'DESC')
 						//->orWhere('did_number', 'LIKE', "%$params%")
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
@@ -113,6 +116,7 @@ class QueueController extends Controller
                         ->with('country:id,country_name')
 						->where('company_id', '=',  $user->company_id)
 						->select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context','description','strategy', 'status')
+						->orderBy('id', 'DESC')
 						->paginate(
 							$perPage = $perPageNo,
 							$columns = ['*'],

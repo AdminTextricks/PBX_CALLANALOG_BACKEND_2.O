@@ -30,16 +30,17 @@ class BlockNumberController extends Controller
 			$block_number_id = $request->id ?? NULL;
 			if ($block_number_id) {
 				$data = BlockNumber::with('company:id,company_name,email,mobile')					
-					->select()->where('id', $block_number_id)->get();
+					->select()->where('id', $block_number_id)->orderBy('id', 'DESC')->get();
 			} else {
 				if ($params != "") {
 					$data = BlockNumber::with('company:id,company_name,email,mobile')							
 						->where('rule_number', 'LIKE', "%$params%")
+						->orderBy('id', 'DESC')
 						//->orWhere('did_number', 'LIKE', "%$params%")
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
 					$data = BlockNumber::with('company:id,company_name,email,mobile')							
-						->select()->paginate(
+						->select()->orderBy('id', 'DESC')->paginate(
 							$perPage = $perPageNo,
 							$columns = ['*'],
 							$pageName = 'page'
@@ -53,18 +54,20 @@ class BlockNumberController extends Controller
 					->select()
 					->where('id', $block_number_id)
 					->where('company_id', '=',  $user->company_id)
+					->orderBy('id', 'DESC')
 					->get();
 			} else {
 				if ($params != "") {
 					$data = BlockNumber::with('company:id,company_name,email,mobile')	
 						->where('company_id', '=',  $user->company_id)
+						->orderBy('id', 'DESC')
 						->orWhere('digits', 'LIKE', "%$params%")
 						//->orWhere('did_number', 'LIKE', "%$params%")
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
 					$data = BlockNumber::with('company:id,company_name,email,mobile')	
 						->where('company_id', '=',  $user->company_id)
-						->select()->paginate(
+						->select()->orderBy('id', 'DESC')->paginate(
 							$perPage = $perPageNo,
 							$columns = ['*'],
 							$pageName = 'page'

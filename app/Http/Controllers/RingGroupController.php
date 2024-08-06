@@ -84,11 +84,12 @@ class RingGroupController extends Controller
 				$data = RingGroup::select()
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
-                        ->where('id', $RingGroup_id)->get();
+                        ->where('id', $RingGroup_id)->orderBy('id', 'DESC')->get();
 			} else {				
                 $data = RingGroup::select()
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
+						->orderBy('id', 'DESC')
                         ->paginate(
                         $perPage = $perPageNo,
                         $columns = ['*'],
@@ -103,19 +104,21 @@ class RingGroupController extends Controller
 					->select()
 					->where('id', $RingGroup_id)
 					->where('company_id', '=',  $user->company_id)
+					->orderBy('id', 'DESC')
 					->get();
 			} else {
 				if ($params != "") {
 					$data = RingGroup::with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
 						->where('company_id', '=',  $user->company_id)
+						->orderBy('id', 'DESC')
 						//->orWhere('did_number', 'LIKE', "%$params%")
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
 					$data = RingGroup::with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
 						->where('company_id', '=',  $user->company_id)
-						->select()->paginate(
+						->select()->orderBy('id', 'DESC')->paginate(
 							$perPage = $perPageNo,
 							$columns = ['*'],
 							$pageName = 'page'
