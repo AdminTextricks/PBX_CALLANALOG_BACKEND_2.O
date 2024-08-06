@@ -79,7 +79,7 @@ class NowPaymentsController extends Controller
                         $itemNumbers[] = $item['item_number'];
                         $itemTypes[] = $item['item_type'];
                     }
-                    $payment = Payments::create([
+                    $payment_data = Payments::create([
                         'company_id' => $user->company_id,
                         'invoice_id'  => $request->invoice_id,
                         'ip_address' => $request->ip(),
