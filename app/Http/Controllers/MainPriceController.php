@@ -73,6 +73,7 @@ class MainPriceController extends Controller
                             ->with(['user:id,name,email,mobile']) 
                             ->with('country:id,country_name')
                             ->where('price_for', $price_for)
+                            ->orderBy('id', 'DESC')
                             ->paginate(
                             $perPage = $perPageNo,
                             $columns = ['*'],
