@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\Country;
 use App\Models\Extension;
 use App\Models\Invoice;
+use App\Models\InvoiceItems;
 use App\Models\Payments;
 use App\Models\State;
 use App\Models\Tfn;
@@ -101,7 +102,8 @@ class NowPaymentsController extends Controller
         $NowPaymentData = $this->nowPaymentsService->getPaymentStatus($paymentId);
         $itemNumbers = [];
         $itemTypes = [];
-        foreach ($request->items as $item) {
+        $invoice_items = InvoiceItems::where('invoice_id', '=', $request->invoice_id)->get();
+        foreach ($invoice_items as $item) {
             $itemNumbers[] = $item['item_number'];
             $itemTypes[] = $item['item_type'];
         }
@@ -128,7 +130,7 @@ class NowPaymentsController extends Controller
                 'status' => 1,
             ]);
 
-            foreach ($request->items as $item) {
+            foreach ($invoice_items as $item) {
                 $itemType = $item['item_type'];
                 $itemNumber = $item['item_number'];
                 if ($itemType === "TFN") {
