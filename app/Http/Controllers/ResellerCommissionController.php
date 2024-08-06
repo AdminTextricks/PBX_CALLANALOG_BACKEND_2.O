@@ -196,8 +196,8 @@ class ResellerCommissionController extends Controller
         }
         if ($invoice_get_id) {
             $queryInvoiceData
-                ->where('invoices.id', '=', $invoice_get_id)
-                ->orderBy('invoices.id', 'DESC');
+                ->where('invoices.id', '=', $invoice_get_id);
+                // ->orderBy('invoices.id', 'DESC');
         } elseif ($params !== "" || $request->has('from_date') || $request->has('to_date')) {
             if ($fromDate) {
                 $queryInvoiceData->where('invoices.updated_at', '>=', $fromDate);
@@ -232,7 +232,7 @@ class ResellerCommissionController extends Controller
             'payments',
             'reseller_prices'
         ])
-            ->whereIn('id', $paginatedInvoiceIds)->get();
+            ->whereIn('id', $paginatedInvoiceIds)->orderBy('id', 'DESC')->get();
         $paginatedData = new \Illuminate\Pagination\LengthAwarePaginator(
             $getinvoicedata,
             $distinctInvoiceIds->count(),
