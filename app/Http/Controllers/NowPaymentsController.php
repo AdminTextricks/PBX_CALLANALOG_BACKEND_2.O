@@ -111,7 +111,7 @@ class NowPaymentsController extends Controller
         if ($NowPaymentData && $NowPaymentData['payment_status'] == "partially_paid") {
             //partially_paid - it shows that the customer sent the less than the actual price. Appears when the funds have arrived in your wallet.
             return $this->output(false, 'Oops! Something Went Wrong. Mismatch values', 409);
-        } elseif ($NowPaymentData && $NowPaymentData['payment_status'] == "finished") {
+        } elseif ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
             $transaction_id = Str::random(10);
             $nowPayment_charge_id = Str::random(30);
             DB::beginTransaction();
