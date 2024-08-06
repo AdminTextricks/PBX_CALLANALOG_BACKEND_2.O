@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Company extends Model
 {
     use HasFactory;
-	
-	protected $fillable = [
+
+    protected $fillable = [
         'id',
         'parent_id',
         'plan_id',
@@ -24,10 +24,10 @@ class Company extends Model
         'zip',
         'balance',
         'inbound_permission',
-        'status'        
+        'status'
     ];
 
-    
+
     public function blockNumbers()
     {
         return $this->hasMany(BlockNumber::class);
@@ -48,11 +48,15 @@ class Company extends Model
     }
     public function user_plan()
     {
-        return $this->belongsTo(MainPlan::class,'plan_id');
+        return $this->belongsTo(MainPlan::class, 'plan_id');
     }
 
     public function main_prices()
     {
         return $this->hasOne(MainPrice::class, 'reseller_id', 'parent_id');
+    }
+    public function user()
+    {
+        return $this->hasOne(User::class, 'id', 'parent_id');
     }
 }
