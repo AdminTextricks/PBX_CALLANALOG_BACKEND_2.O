@@ -127,84 +127,92 @@ class NowPaymentsController extends Controller
         $itemTypes = [];
         $nowPayment_charge_id = Str::random(30);
         $NowPaymentData = $this->nowPaymentsService->getPaymentStatus($paymentId);
-        if ($NowPaymentData && $NowPaymentData['payment_status'] == "partially_paid") {
-            //partially_paid - it shows that the customer sent the less than the actual price. Appears when the funds have arrived in your wallet.
-            return $this->output(false, 'Oops! Something Went Wrong. Mismatch values', 409);
-        } elseif ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
-            DB::beginTransaction();
-            $payment = Payments::where('transaction_id', '=', $paymentId)->first();
-            $invoice_items = InvoiceItems::where('invoice_id', '=', $payment->invoice_id)->get();
-            foreach ($invoice_items as $item) {
-                $itemNumbers[] = $item['item_number'];
-                $itemTypes[] = $item['item_type'];
-            }
-            if (is_null($payment)) {
-                DB::rollback();
-                return $this->output(false, 'Something Went Wrong. please try again', 400);
-            } else {
-
-                //Payments Table Update
-                $payment->payment_price = $NowPaymentData['pay_amount'];
-                $payment->status = 1;
-                $payment->save();
-
+        try {
+            if ($NowPaymentData && $NowPaymentData['payment_status'] == "partially_paid") {
+                //partially_paid - it shows that the customer sent the less than the actual price. Appears when the funds have arrived in your wallet.
+                $response['crypto_payment_status'] = $NowPaymentData['payment_status'];
+                return $this->output(true, 'Oops! Something Went Wrong. Mismatch values', $response, 200);
+            } elseif ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
+                DB::beginTransaction();
+                $payment = Payments::where('transaction_id', '=', $paymentId)->first();
+                $invoice_items = InvoiceItems::where('invoice_id', '=', $payment->invoice_id)->get();
                 foreach ($invoice_items as $item) {
-                    $itemType = $item['item_type'];
-                    $itemNumber = $item['item_number'];
-                    if ($itemType === "TFN") {
-                        $numbers_list = Tfn::where('tfn_number', $itemNumber)->first();
-                        if ($numbers_list) {
-                            $numbers_list->company_id = $user->company->id;
-                            $numbers_list->assign_by = $user->id;
-                            $numbers_list->activated = '1';
-                            $numbers_list->startingdate = date('Y-m-d H:i:s');
-                            $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
-                            $numbers_list->save();
-                        } else {
-                            DB::rollback();
-                            return $this->output(false, 'Tfn Number ' . $itemNumber . ' not found.', 400);
-                        }
-                    } else {
-                        $numbers_list = Extension::where('name', $itemNumber)->first();
-                        if ($numbers_list) {
-                            $numbers_list->startingdate = date('Y-m-d H:i:s');
-                            $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
-                            $numbers_list->host = 'dynamic';
-                            $numbers_list->sip_temp = 'WEBRTC';
-                            $numbers_list->status = 1;
-                            $numbers_list->save();
-                        } else {
-                            DB::rollback();
-                            return $this->output(false, 'Extension Number ' . $itemNumber . ' not found.', 400);
-                        }
-                    }
-
-                    Cart::where('item_number', $itemNumber)->delete();
+                    $itemNumbers[] = $item['item_number'];
+                    $itemTypes[] = $item['item_type'];
                 }
-
-                $invoice_update = Invoice::select('*')->where('id', $payment->invoice_id)->first();
-                if (!$invoice_update) {
+                if (is_null($payment)) {
                     DB::rollback();
-                    return $this->output(false, 'Invoice not found.', 400);
+                    return $this->output(false, 'Something Went Wrong. please try again', 400);
                 } else {
-                    // $invoice_update->payment_type =  'Cryto Payment';
-                    $invoice_update->payment_status = "Paid";
-                    $invoice_update->save();
 
-                    $mailsend = $this->pdfmailSend($user, $itemNumbers, $NowPaymentData['price_amount'], $payment->invoice_id, $invoice_update->invoice_number, $itemTypes);
-                    if ($mailsend) {
-                        DB::commit();
-                    } else {
-                        DB::rollBack();
+                    //Payments Table Update
+                    $payment->payment_price = $NowPaymentData['pay_amount'];
+                    $payment->status = 1;
+                    $payment->save();
+
+                    foreach ($invoice_items as $item) {
+                        $itemType = $item['item_type'];
+                        $itemNumber = $item['item_number'];
+                        if ($itemType === "TFN") {
+                            $numbers_list = Tfn::where('tfn_number', $itemNumber)->first();
+                            if ($numbers_list) {
+                                $numbers_list->company_id = $user->company->id;
+                                $numbers_list->assign_by = $user->id;
+                                $numbers_list->activated = '1';
+                                $numbers_list->startingdate = date('Y-m-d H:i:s');
+                                $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
+                                $numbers_list->save();
+                            } else {
+                                DB::rollback();
+                                return $this->output(false, 'Tfn Number ' . $itemNumber . ' not found.', 400);
+                            }
+                        } else {
+                            $numbers_list = Extension::where('name', $itemNumber)->first();
+                            if ($numbers_list) {
+                                $numbers_list->startingdate = date('Y-m-d H:i:s');
+                                $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
+                                $numbers_list->host = 'dynamic';
+                                $numbers_list->sip_temp = 'WEBRTC';
+                                $numbers_list->status = 1;
+                                $numbers_list->save();
+                            } else {
+                                DB::rollback();
+                                return $this->output(false, 'Extension Number ' . $itemNumber . ' not found.', 400);
+                            }
+                        }
+
+                        Cart::where('item_number', $itemNumber)->delete();
                     }
+
+                    $invoice_update = Invoice::select('*')->where('id', $request->invoice_id)->first();
+                    if (!$invoice_update) {
+                        DB::rollback();
+                        return $this->output(false, 'Invoice not found.', 400);
+                    } else {
+                        // $invoice_update->payment_type =  'Cryto Payment';
+                        $invoice_update->payment_status = "Paid";
+                        $invoice_update->save();
+
+                        $mailsend = $this->pdfmailSend($user, $itemNumbers, $NowPaymentData['price_amount'], $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
+                        if ($mailsend) {
+                            DB::commit();
+                        } else {
+                            DB::rollBack();
+                        }
+                    }
+                    DB::commit();
+                    $response['crypto_payment_status'] = $NowPaymentData['payment_status'];
+                    $response['payment'] = $payment->toArray();
+                    return $this->output(true, 'Payment successfully.', $response, 200);
                 }
-                DB::commit();
-                $response['payment'] = $payment->toArray();
-                return $this->output(true, 'Payment successfully.', $response, 200);
+            } else {
+                $pstatus['crypto_payment_status'] = $NowPaymentData['payment_status'];
+                return $this->output(true, 'Payment Status ' . $pstatus['crypto_payment_status'], $pstatus, 200);
             }
-        } else {
-            $pstatus = $NowPaymentData['payment_status'];
-            return $this->output(true, 'Payment Status ' . $pstatus, $pstatus, 200);
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Payment failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Payment failed.'], 500);
         }
     }
 
