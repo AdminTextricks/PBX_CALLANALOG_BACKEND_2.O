@@ -184,7 +184,7 @@ class NowPaymentsController extends Controller
                         Cart::where('item_number', $itemNumber)->delete();
                     }
 
-                    $invoice_update = Invoice::select('*')->where('id', $request->invoice_id)->first();
+                    $invoice_update = Invoice::select('*')->where('id', $payment->invoice_id)->first();
                     if (!$invoice_update) {
                         DB::rollback();
                         return $this->output(false, 'Invoice not found.', 400);
@@ -193,7 +193,7 @@ class NowPaymentsController extends Controller
                         $invoice_update->payment_status = "Paid";
                         $invoice_update->save();
 
-                        $mailsend = $this->pdfmailSend($user, $itemNumbers, $NowPaymentData['price_amount'], $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
+                        $mailsend = $this->pdfmailSend($user, $itemNumbers, $NowPaymentData['price_amount'], $payment->invoice_id, $invoice_update->invoice_number, $itemTypes);
                         if ($mailsend) {
                             DB::commit();
                         } else {
