@@ -132,7 +132,7 @@ class NowPaymentsController extends Controller
                 //partially_paid - it shows that the customer sent the less than the actual price. Appears when the funds have arrived in your wallet.
                 $response['crypto_payment_status'] = $NowPaymentData['payment_status'];
                 return $this->output(true, 'Oops! Something Went Wrong. Mismatch values', $response, 200);
-            } elseif ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
+            } elseif ($NowPaymentData && $NowPaymentData['payment_status'] == "finished") {
                 DB::beginTransaction();
                 $payment = Payments::where('transaction_id', '=', $paymentId)->first();
                 $invoice_items = InvoiceItems::where('invoice_id', '=', $payment->invoice_id)->get();
