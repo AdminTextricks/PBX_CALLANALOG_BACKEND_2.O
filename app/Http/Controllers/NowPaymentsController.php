@@ -89,7 +89,7 @@ class NowPaymentsController extends Controller
                         'payment_type'    => 'Crypto Payment',
                         'payment_currency' => $request->currency ?? 'USD',
                         'transaction_id'  => $paymentId,
-                        'stripe_charge_id' => NULL,
+                        'stripe_charge_id' => '',
                         'status' => 0,
                     ]);
 
