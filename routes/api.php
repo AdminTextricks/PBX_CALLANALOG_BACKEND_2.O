@@ -346,7 +346,9 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	#One Go User
 	Route::group(['prefix'=> 'one-go-user'], function () {
 		Route::post('/', [CompanyController::class, 'registrationByAdminOrReseller']);
-		Route::post('/manageApplication', [OneGoUserController::class, 'manageApplication']);
+		Route::post('/reserveTFN', [OneGoUserController::class, 'reserveTFN']);
+		Route::post('/createExtensions', [OneGoUserController::class, 'createExtensions']);
+		Route::post('/addRingGroup', [OneGoUserController::class, 'addRingGroup']);
 		//Route::delete('/{id}', [IvrController::class,'deleteIvr']);
 	});
 	

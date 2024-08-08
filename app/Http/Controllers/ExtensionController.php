@@ -206,6 +206,7 @@ class ExtensionController extends Controller
                                 }
                                 array_push($Cart, [
                                     'company_id' => $request->company_id,
+                                    'country_id' => $request->country_id,
                                     'item_id' => $id,
                                     'item_number' => $item,
                                     'item_type' => 'Extension',
@@ -269,6 +270,7 @@ class ExtensionController extends Controller
                                     $purchase_item[] = $item;
                                     $InvoiceItems = InvoiceItems::create([                                    
                                         'invoice_id'    => $Invoice->id,
+                                        'country_id'    => $request->country_id,
                                         'item_type'     => 'Extension',
                                         'item_number'   => $item,
                                         'item_price'    => $item_price,
@@ -281,27 +283,27 @@ class ExtensionController extends Controller
                                 }
                                 
                                 $payment = Payments::create([
-                                    'company_id' => $request->company_id,
-                                    'invoice_id'  => $Invoice->id,
-                                    'ip_address' => $request->ip(),
-                                    'invoice_number'  => $invoice_id,
-                                    'order_id'        =>  $invoice_id. '-UID-' .$request->company_id,
-                                    'item_numbers'    => implode(',', $purchase_item),
-                                    'payment_type'    => $payment_status,
-                                    'payment_currency' => 'USD',
-                                    'payment_price' => $TotalItemPrice,
-                                    'stripe_charge_id' => '',
-                                    'transaction_id'  => $TotalItemPrice.'-'.time(),
-                                    'status' => 1,
+                                    'company_id'        => $request->company_id,
+                                    'invoice_id'        => $Invoice->id,
+                                    'ip_address'        => $request->ip(),
+                                    'invoice_number'    => $invoice_id,
+                                    'order_id'          =>  $invoice_id. '-UID-' .$request->company_id,
+                                    'item_numbers'      => implode(',', $purchase_item),
+                                    'payment_type'      => $payment_status,
+                                    'payment_currency'  => 'USD',
+                                    'payment_price'     => $TotalItemPrice,
+                                    'stripe_charge_id'  => '',
+                                    'transaction_id'    => $TotalItemPrice.'-'.time(),
+                                    'status'            => 1,
                                 ]);
                                 
-                                $emailData['title'] = 'Invoice From Callanalog';
-                                $emailData['item_numbers'] = $item_ids;
-                                $emailData['item_types'] = 'Extension';
-                                $emailData['price'] = $TotalItemPrice;
-                                $emailData['invoice_number'] = $invoice_id;
-                                $emailData['email'] = $Company->email;
-                                $emailData['email_template'] = 'invoice';
+                                $emailData['title']         = 'Invoice From Callanalog';
+                                $emailData['item_numbers']  = $item_ids;
+                                $emailData['item_types']    = 'Extension';
+                                $emailData['price']         = $TotalItemPrice;
+                                $emailData['invoice_number']= $invoice_id;
+                                $emailData['email']         = $Company->email;
+                                $emailData['email_template']= 'invoice';
                                 dispatch(new \App\Jobs\SendEmailJob($emailData));
                                 
                                 $response['total_extension'] = count($item_ids);
@@ -437,7 +439,7 @@ class ExtensionController extends Controller
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')                        
-                        ->orWhere('name', 'LIKE', "%$params%")
+                        ->orWhere('name', 'like', "%$params%")
                         //->orWhere('callbackextension', 'LIKE', "%$params%")
                         //->orWhere('agent_name', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
@@ -483,7 +485,7 @@ class ExtensionController extends Controller
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
                         ->where('extensions.company_id', '=', $user->company_id)
                         //->orWhere('agent_name', 'LIKE', "%$params%")
-                        ->orWhere('name', 'LIKE', "%$params%")
+                        ->orWhere('name', 'like', "%$params%")
                         //->orWhere('callbackextension', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('company_name', 'like', "%{$params}%");

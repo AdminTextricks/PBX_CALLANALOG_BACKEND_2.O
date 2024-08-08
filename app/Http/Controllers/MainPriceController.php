@@ -233,7 +233,7 @@ class MainPriceController extends Controller
                     'tfn_price'             => $request->tfn_price,
                     'extension_commission_type' => $request->extension_commission_type,
                     'extension_price'           => $request->extension_price,
-                    'status'    => isset($request->status) ? $request->status : 0,
+                    'status'    => isset($request->status) ? $request->status : 1,
                 ]);
                 
                 $response 	= $ResellerPrice->toArray();               
