@@ -12,7 +12,28 @@ class Tfn extends Model
 
     protected $table = 'tfns';
     protected $fillable = [
-        'company_id', 'assign_by', 'plan_id', 'tfn_number', 'tfn_provider', 'tfn_group_id', 'country_id', 'time_condition', 'time_condition_id', 'activated', 'reserved', 'reserveddate', 'reservedexpirationdate', 'monthly_rate', 'connection_charge', 'selling_rate', 'aleg_retail_min_duration', 'aleg_billing_block', 'startingdate', 'expirationdate', 'call_screen_action', 'status',
+        'company_id',
+        'assign_by',
+        'plan_id',
+        'tfn_number',
+        'tfn_provider',
+        'tfn_group_id',
+        'country_id',
+        'time_condition',
+        'time_condition_id',
+        'activated',
+        'reserved',
+        'reserveddate',
+        'reservedexpirationdate',
+        'monthly_rate',
+        'connection_charge',
+        'selling_rate',
+        'aleg_retail_min_duration',
+        'aleg_billing_block',
+        'startingdate',
+        'expirationdate',
+        'call_screen_action',
+        'status',
     ];
 
     public function users()
