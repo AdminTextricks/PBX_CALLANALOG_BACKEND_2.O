@@ -4,6 +4,7 @@
 /public/hot
 /public/storage
 /public/userDocuments
+/public/conf_template
 /logs
 /storage/*.key
 /vendor
