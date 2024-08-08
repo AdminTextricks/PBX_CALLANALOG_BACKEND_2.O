@@ -4,7 +4,6 @@
 /public/hot
 /public/storage
 /public/userDocuments
-/public/conf_template
 /storage/*.key
 /vendor
 .env
@@ -19,4 +18,3 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
-/public/conf_template
