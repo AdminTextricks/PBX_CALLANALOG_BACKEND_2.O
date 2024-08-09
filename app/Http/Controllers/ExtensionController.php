@@ -863,10 +863,13 @@ class ExtensionController extends Controller
     public function updateExtensionsDetails(Request $request)
     {
         try {
+            $webrtc_template_url = config('app.webrtc_template_url');
+            $softphone_template_url = config('app.softphone_template_url');
             $user = \Auth::user();
             $validator = Validator::make($request->all(), [
                 'extension'               => 'required|array',
                 'extension.*.id'          => 'required|numeric|exists:extensions,id',
+                'extension.*.name'        => 'required|numeric|exists:extensions,name',
                 'extension.*.barge'       => 'required|numeric',
                 'extension.*.recording'   => 'required|numeric',
                 'extension.*.sip_temp'    => 'required|string',
@@ -885,7 +888,31 @@ class ExtensionController extends Controller
                         //$data = ['barge' => $data['barge'], 'recording' => $data['recording'], 'sip_temp' => $data['sip_temp'], 'secret' => $data['secret']];
                         $res = Extension::where('id', $id)->update($data);
                         $extension_details[]  = $res;
+
+                        if ($data['sip_temp'] == 'WEBRTC') {
+                            $addExtensionFile = $webrtc_template_url;
+                            $removeExtensionFile = $softphone_template_url;
+                        } else {
+                            $addExtensionFile = $softphone_template_url;
+                            $removeExtensionFile = $webrtc_template_url;
+                        }
+    
+                        Log::error('addExtensionFile : ' . $addExtensionFile . '  / removeExtensionFile: ' . $removeExtensionFile );
+    
+                        $ConfTemplate = ConfTemplate::select()->where('template_id', $data['sip_temp'])->first();
+                        $this->addExtensionInConfFile($data['name'], $addExtensionFile, $data['secret'], '12345', $ConfTemplate->template_contents);
+                        $this->removeExtensionFromConfFile($data['name'], $removeExtensionFile);    
                     }
+                    
+                    $server_flag = config('app.server_flag');
+                    if ($server_flag == 1) {
+                        $shell_script = config('app.shell_script');
+                        $result = shell_exec('sudo ' . $shell_script);
+                        Log::error('Extension Update File Transfer Log : ' . $result);
+                        $this->sipReload();
+                    }
+
+
                     if (count($extension_details) > 0 ) {
                         return $this->output(true, 'Success', $extension_details, 200);
                     } else {
