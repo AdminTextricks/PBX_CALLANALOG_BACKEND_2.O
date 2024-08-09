@@ -424,7 +424,7 @@ class ExtensionController extends Controller
     {
         $perPageNo = isset($request->perpage) ? $request->perpage : 25;
         $params = $request->params ?? "";
-        $user = \Auth::user();
+        return $user = \Auth::user();
         //echo $user->company_id;
         //if ($request->user()->hasRole('super-admin')) {
         if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
