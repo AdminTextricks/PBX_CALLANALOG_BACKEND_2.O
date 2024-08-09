@@ -8,6 +8,7 @@ use App\Models\Country;
 use App\Models\Extension;
 use App\Models\Invoice;
 use App\Models\Payments;
+use App\Models\RechargeHistory;
 use App\Models\State;
 use App\Models\Tfn;
 use Exception;
@@ -28,6 +29,9 @@ class PaymentController extends Controller
     {
         $user = \Auth::user();
         $invoice_balance = Invoice::select('invoice_amount')->where('id', $request->invoice_id)->where('payment_status', '=', 'Unpaid')->first();
+        if (!$invoice_balance) {
+            return $this->output(false, 'The Invoice is already Paid!!', 400);
+        }
         $getcountry = Country::select('*')->where('id', $user->company->country_id)->first();
         $getstate = State::select('state_name')->where('id', $user->company->state_id)->first();
 
@@ -192,13 +196,17 @@ class PaymentController extends Controller
                     } else {
                         // $invoice_update->payment_type =  'Stripe Card Payment';
                         $invoice_update->payment_status = "Paid";
-                        $invoice_update->save();
-
-                        $mailsend = $this->pdfmailSend($user, $itemNumbers, $price_mail, $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
-                        if ($mailsend) {
-                            DB::commit();
-                        } else {
-                            DB::rollBack();
+                        $invoice_data = $invoice_update->save();
+                        if ($invoice_data) {
+                            if ($user->company->parent_id > 1) {
+                                $this->ResellerCommissionCalculate($user, $request->items, $request->invoice_id, $request->payment_price);
+                            }
+                            $mailsend = $this->pdfmailSend($user, $itemNumbers, $price_mail, $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
+                            if ($mailsend) {
+                                DB::commit();
+                            } else {
+                                DB::rollBack();
+                            }
                         }
                     }
 
@@ -447,7 +455,6 @@ class PaymentController extends Controller
             if ($chargeJson['amount_refunded'] == 0 && empty($chargeJson['failure_code']) && $chargeJson['paid'] == 1 && $chargeJson['captured'] == 1) {
                 $status = 1;
                 $price_mail = $charge->amount / 100;
-                // DB::beginTransaction();
                 $payment = Payments::create([
                     'company_id' => $user->company_id,
                     'invoice_id'  => $createinvoice->id,
@@ -468,23 +475,36 @@ class PaymentController extends Controller
                     return $this->output(false, 'Company not found.');
                 } else {
 
-                    $user_payment->balance = $user_payment->balance + $request->amount;
-                    $user_result = $user_payment->save();
-                    DB::commit();
+                    //Recharge History Update::
+                    $rechargeHistory_data = RechargeHistory::create([
+                        'company_id' => $user->company->id,
+                        'invoice_id' => $createinvoice->id,
+                        'invoice_number' => $createinvoice->invoice_id,
+                        'current_balance' => $user_payment->balance,
+                        'added_balance'   => $charge->amount / 100,
+                        'total_balance'   => $user_payment->balance + $charge->amount / 100,
+                        'currency'        => 'USD',
+                        'recharged_by'    => 'Self'
+                    ]);
+                    if (!$rechargeHistory_data) {
+                        DB::rollback();
+                        return $this->output(false, 'Failed to Create Recharge History!!.', 400);
+                    } else {
+                        $user_payment->balance = $user_payment->balance + $request->amount;
+                        $user_result = $user_payment->save();
+                    }
                 }
                 $invoice_update = Invoice::where('id', $createinvoice->id)->first();
                 if (!$invoice_update) {
                     DB::rollback();
                     return $this->output(false, 'Invoice not found.');
                 } else {
-                    // $invoice_update->payment_type =  'Add to Wallet Payment';
                     $invoice_update->payment_status = "Paid";
                     $price_mail = $charge->amount / 100;
                     $item_numbers[] = $price_mail;
                     $itemTpyes[] = 'Wallet Payment';
                     $this->pdfmailSend($user, $item_numbers, $price_mail, $createinvoice->id, $createinvoice->invoice_id, $itemTpyes);
                     $invoice_result = $invoice_update->save();
-                    DB::commit();
                 }
                 $response = $payment->toArray();
                 DB::commit();
@@ -517,7 +537,9 @@ class PaymentController extends Controller
             ->where('id', $request->invoice_id)
             ->where('payment_status', '=', 'Unpaid')
             ->first();
-
+        if (!$invoice_balance) {
+            return $this->output(false, 'The Invoice already Paid!!', 400);
+        }
         $invoice_amount = $invoice_balance->invoice_amount;
         $payment_price = $request->payment_price;
 
@@ -633,13 +655,19 @@ class PaymentController extends Controller
                     $price_mail = $payment_price;
                     // $invoice_update->payment_type =  'Wallet Payment';
                     $invoice_update->payment_status = "Paid";
-                    $invoice_update->save();
-                    $mailsend = $this->pdfmailSend($user, $itemNumbers, $price_mail, $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
-                    if ($mailsend) {
-                        DB::commit();
-                    } else {
-                        DB::rollBack();
-                        return $this->output(false, 'Failed to send mail.', 500);
+                    $invoice_data = $invoice_update->save();
+                    if ($invoice_data) {
+                        if ($user->company->parent_id > 1) {
+                            $this->ResellerCommissionCalculate($user, $request->items, $request->invoice_id, $request->payment_price);
+                        }
+
+                        $mailsend = $this->pdfmailSend($user, $itemNumbers, $price_mail, $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
+                        if ($mailsend) {
+                            DB::commit();
+                        } else {
+                            DB::rollBack();
+                            return $this->output(false, 'Failed to send mail.', 500);
+                        }
                     }
                 }
 

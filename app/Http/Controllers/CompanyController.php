@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\RechargeHistory;
 use Illuminate\Http\Request;
 
 use App\Models\Company;
@@ -448,12 +449,27 @@ class CompanyController extends Controller
                 if (is_null($companydataforbalanceupdate)) {
                     return $this->output(true, 'Something Went Wrong!!', []);
                 } else {
-                    $companydataforbalanceupdate->balance += $request->amount;
-                    $resCompanyBalance = $companydataforbalanceupdate->save();
-                    if ($resCompanyBalance) {
-                        return $this->output(true, 'Amount Added successfully!', $resCompanyBalance, 200);
+
+                    $rechargeHistory_data = RechargeHistory::create([
+                        'company_id' => $request->company_id,
+                        'invoice_id' => 0,
+                        'invoice_number' => 'Added by Admin',
+                        'current_balance' => $companydataforbalanceupdate->balance,
+                        'added_balance'   => $request->amount,
+                        'total_balance'   => $companydataforbalanceupdate->balance + $request->amount,
+                        'currency'        => 'USD',
+                        'recharged_by'    => 'Admin'
+                    ]);
+                    if (!$rechargeHistory_data) {
+                        return $this->output(false, 'Failed to Create Recharge History!!.', 400);
                     } else {
-                        return $this->output(false, 'Error occurred While adding Amount. Please try again!.', [], 200);
+                        $companydataforbalanceupdate->balance += $request->amount;
+                        $resCompanyBalance = $companydataforbalanceupdate->save();
+                        if ($resCompanyBalance) {
+                            return $this->output(true, 'Amount Added successfully!', $resCompanyBalance, 200);
+                        } else {
+                            return $this->output(false, 'Error occurred While adding Amount. Please try again!.', [], 200);
+                        }
                     }
                 }
             }

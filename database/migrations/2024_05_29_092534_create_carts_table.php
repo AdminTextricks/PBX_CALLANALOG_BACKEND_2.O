@@ -15,6 +15,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             // $table->foreignId('user_id')->constrained()->onDelete('cascade')->onUpdate('cascade');
             $table->bigInteger('company_id')->index()->nullable()->default(0);
+            $table->integer('country_id');
             $table->integer('item_id');
             $table->bigInteger('item_number');
             $table->enum('item_type', ['TFN', 'Extension']);
