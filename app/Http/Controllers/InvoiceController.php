@@ -19,6 +19,7 @@ class InvoiceController extends Controller
         $user = \Auth::user();
         $validator = Validator::make($request->all(), [
             'items' => 'required|array',
+            'items.*.country_id' => 'required|numeric',
             'items.*.item_id' => 'required|numeric',
             'items.*.item_number' => 'required|numeric',
             'items.*.item_price' => 'required',
@@ -54,6 +55,7 @@ class InvoiceController extends Controller
             ]);
 
             foreach ($request->items as $item) {
+                $itemCountry = $item['country_id'];
                 $itemType = $item['item_type'];
                 $itemId = $item['item_id'];
                 $itemNumber = $item['item_number'];
@@ -88,7 +90,7 @@ class InvoiceController extends Controller
                         $cartinvoicenumber->item_price == $itemPrice
                     ) {
                         InvoiceItems::create([
-                            'company_id' => $user->company->id,
+                            'country_id' => $itemCountry,
                             'invoice_id' => $createinvoice->id,
                             'item_type' => $itemType,
                             'item_number' => $itemNumber,
