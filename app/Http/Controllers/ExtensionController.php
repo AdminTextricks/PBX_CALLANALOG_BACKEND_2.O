@@ -87,7 +87,7 @@ class ExtensionController extends Controller
             'country_id' => 'required|numeric',
             'company_id' => 'required|numeric',
             'name.*' => 'required|unique:extensions,name',
-            'callbackextension' => 'required|integer|digits_between:2,5',
+            //'callbackextension' => 'required|integer|digits_between:2,5',
             'agent_name' => 'required|max:150',
             'callgroup' => 'required|in:0,1', // Outbound call yes or no
             'callerid' => 'required_if:callgroup,1',
@@ -140,12 +140,13 @@ class ExtensionController extends Controller
                             }
 
                             foreach ($extension_name as $item) {
+                                $callbackextension = str_pad(rand(1, 9999), 4, "0", STR_PAD_LEFT);
                                 $data = [];
                                 $data = [
                                     'country_id' => $request->country_id,
                                     'company_id' => $request->company_id,
                                     'name' => $item,
-                                    'callbackextension' => $request->callbackextension,
+                                    'callbackextension' => $callbackextension,
                                     'account_code' => $Company->account_code,
                                     'agent_name' => $request->agent_name,
                                     'callgroup' => $request->callgroup,
