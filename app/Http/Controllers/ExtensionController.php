@@ -534,7 +534,7 @@ class ExtensionController extends Controller
                     'country_id'=> 'required|numeric',
                     'company_id'=> 'required|numeric',
                     'name'      => 'required|unique:extensions,name,' . $Extension->id,
-                    'callbackextension' => 'required|unique:extensions,callbackextension,' . $Extension->company_id,
+                    'callbackextension' => 'required|unique:extensions,callbackextension,' . $Extension->id,
                     'agent_name'=> 'required',
                     'secret'    => 'required',
                     'barge'     => 'required|in:0,1',
