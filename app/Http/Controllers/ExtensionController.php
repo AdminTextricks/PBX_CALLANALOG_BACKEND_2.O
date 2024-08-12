@@ -479,14 +479,15 @@ class ExtensionController extends Controller
                     ->where('extensions.company_id', '=', $user->company_id)
                     ->orderBy('id', 'DESC')
                     ->get();
-            } else {
+            } else {                
                 if ($params != "") {
+                    //DB::enableQueryLog();
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
+                        ->where('extensions.company_id', '=', $user->company_id)
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-                        ->where('extensions.company_id', '=', $user->company_id)
-                        ->orWhere('name', 'like', "%{$params}%")
+                        ->where('name', 'like', "%{$params}%")
                         ->orWhereHas('country', function ($query) use ($params) {
                             $query->where('country_name', 'like', "%{$params}%");
                         })
@@ -532,7 +533,7 @@ class ExtensionController extends Controller
                     'country_id'=> 'required|numeric',
                     'company_id'=> 'required|numeric',
                     'name'      => 'required|unique:extensions,name,' . $Extension->id,
-                    'callbackextension' => 'required',
+                    'callbackextension' => 'required|unique:extensions,callbackextension,' . $Extension->company_id,
                     'agent_name'=> 'required',
                     'secret'    => 'required',
                     'barge'     => 'required|in:0,1',
