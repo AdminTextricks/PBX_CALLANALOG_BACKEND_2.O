@@ -483,14 +483,16 @@ class ExtensionController extends Controller
                 if ($params != "") {
                     //DB::enableQueryLog();
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
-                        ->where('extensions.company_id', '=', $user->company_id)
-                        ->with('company:id,company_name,email,mobile')
+						->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-                        ->where('name', 'like', "%{$params}%")
-                        ->orWhereHas('country', function ($query) use ($params) {
-                            $query->where('country_name', 'like', "%{$params}%");
-                        })
+                        ->where('extensions.company_id', '=', $user->company_id) 
+						->where(function($query) use($params) {
+							$query->where('name', 'like', "%{$params}%")
+							->orWhereHas('country', function ($query) use ($params) {
+								$query->where('country_name', 'like', "%{$params}%");
+							});
+						})
                         ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
                 } else {
