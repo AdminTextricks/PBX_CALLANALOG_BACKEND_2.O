@@ -482,10 +482,10 @@ class ExtensionController extends Controller
             } else {                
                 if ($params != "") {
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
+                        ->where('extensions.company_id', '=', $user->company_id)
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-                        ->where('extensions.company_id', '=', $user->company_id)
                         ->orWhere('name', 'like', "%{$params}%")
                         ->orWhereHas('country', function ($query) use ($params) {
                             $query->where('country_name', 'like', "%{$params}%");
