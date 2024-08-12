@@ -75,40 +75,80 @@ class ResellerCallCommissionController extends Controller
 			$ResellerCallCommission_id = $request->id ?? NULL;
 			if ($ResellerCallCommission_id) {
 				$data = ResellerCallCommission::select('id','company_id','country_id','reseller_id','inbound_call_commission','outbound_call_commission','status')
+						->with('reseller:id,name,email')
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->where('id', $ResellerCallCommission_id)->orderBy('id', 'DESC')->get();
 			} else {
-                $data = ResellerCallCommission::select('id','company_id','country_id','reseller_id','inbound_call_commission','outbound_call_commission','status')
-                        ->with('reseller:id,name,email')
-                        ->with('company:id,company_name,email,mobile')
-                        ->with('country:id,country_name')
-						->orderBy('id', 'DESC')
-                        ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+				if ($params != "") {
+					DB::enableQueryLog();
+					$data = ResellerCallCommission::select('id','company_id','country_id','reseller_id','inbound_call_commission','outbound_call_commission','status')
+					->with('reseller:id,name,email')
+					->with('company:id,company_name,email,mobile')	
+					->with('country:id,country_name')
+					->orWhere(function($query) use($params) {
+							$query->orWhereHas('reseller', function($query) use($params) {
+									$query->where('name', 'LIKE', "%{$params}%");
+								})
+								->orWhereHas('company', function($query) use($params) {
+									$query->where('company_name', 'LIKE', "%{$params}%");
+								})
+								->orWhereHas('company', function ($query) use ($params) {
+									$query->where('email', 'LIKE', "%{$params}%");
+								})
+								->orWhereHas('country', function ($query) use ($params) {
+									$query->where('country_name', 'LIKE', "%{$params}%");
+								});
+						})
+						->orderBy('id', 'DESC')						
+						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+						dd(DB::getQueryLog());
+				} else {
+					$data = ResellerCallCommission::select('id','company_id','country_id','reseller_id','inbound_call_commission','outbound_call_commission','status')
+							->with('reseller:id,name,email')
+							->with('company:id,company_name,email,mobile')
+							->with('country:id,country_name')
+							->orderBy('id', 'DESC')
+							->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+				}
+                        
 			}
 		} else {
             $ResellerCallCommission_id = $request->id ?? NULL;
 			if ($ResellerCallCommission_id) {
 				$data = ResellerCallCommission::with('company:id,company_name,email,mobile')
                     ->with('country:id,country_name')
+					->with('reseller:id,name,email')
 					->select('id','company_id','country_id','reseller_id','inbound_call_commission','outbound_call_commission','status')
 					->where('id', $ResellerCallCommission_id)
-					->where('company_id', '=',  $user->company_id)
+					->where('reseller_id', '=',  $user->id)
 					->orderBy('id', 'DESC')
 					->get();
 			} else {
 				if ($params != "") {
 					$data = ResellerCallCommission::select('id','company_id','country_id','reseller_id','inbound_call_commission','outbound_call_commission','status')
+						->with('reseller:id,name,email')
 						->with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
-						->where('company_id', '=',  $user->company_id)
-						->orderBy('id', 'DESC')
-						//->orWhere('did_number', 'LIKE', "%$params%")
+						->where('reseller_id', '=',  $user->id)
+						->where(function($query) use($params) {
+							$query->orWhereHas('company', function($query) use($params) {
+									$query->where('company_name', 'LIKE', "%{$params}%");
+								})
+								->orWhereHas('company', function ($query) use ($params) {
+									$query->where('email', 'LIKE', "%{$params}%");
+								})
+								->orWhereHas('country', function ($query) use ($params) {
+									$query->where('country_name', 'LIKE', "%{$params}%");
+								});
+						})
+						->orderBy('id', 'DESC')						
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
 					$data = ResellerCallCommission::with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
-						->where('company_id', '=',  $user->company_id)
+						->with('reseller:id,name,email')
+						->where('reseller_id', '=',  $user->id)
 						->select('id','company_id','country_id','reseller_id','inbound_call_commission','outbound_call_commission','status')
 						->orderBy('id', 'DESC')
 						->paginate(
@@ -127,4 +167,40 @@ class ResellerCallCommissionController extends Controller
 			return $this->output(true, 'No Record Found', []);
 		}
 	}
+
+
+	public function changeResellerCallCommissionStatus(Request $request, $id)
+	{
+		try { 
+			DB::beginTransaction(); 
+			$validator = Validator::make($request->all(), [
+				'status' => 'required',
+			]);
+			if ($validator->fails()){
+				DB::commit();
+				return $this->output(false, $validator->errors()->first(), [], 409);
+			}		
+			$ResellerCallCommission = ResellerCallCommission::find($id);
+			if(is_null($ResellerCallCommission)){
+				DB::commit();
+				return $this->output(false, 'This Reseller Call Commission not exist with us. Please try again!.', [], 409);
+			}else{				
+				$ResellerCallCommission->status = $request->status;
+				$ResellerCallCommissionsRes = $ResellerCallCommission->save();
+				if($ResellerCallCommissionsRes){
+					$ResellerCallCommission = ResellerCallCommission::where('id', $id)->first();        
+					$response = $ResellerCallCommission->toArray();
+					DB::commit();
+					return $this->output(true, 'Reseller Call Commission status updated successfully.', $response, 200);
+				}else{
+					DB::commit();
+					return $this->output(false, 'Error occurred in Reseller Call Commission Updating. Please try again!.', [], 200);
+				}				
+			}
+		} catch (\Exception $e) {
+			DB::rollback();
+			Log::error('Error occurred in Reseller Call Commission Updating : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+		}
+    }
 }
