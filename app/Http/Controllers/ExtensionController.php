@@ -486,7 +486,7 @@ class ExtensionController extends Controller
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-                        ->orWhere('name', 'like', "%{$params}%")
+                        ->where('name', 'like', "%{$params}%")
                         ->orWhereHas('country', function ($query) use ($params) {
                             $query->where('country_name', 'like', "%{$params}%");
                         })
