@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Extension;
+use App\Models\RechargeHistory;
 use Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -265,7 +266,7 @@ class InvoiceController extends Controller
     }
 
 
-    public function getRechargehistoryInvoiceData(Request $request)
+    public function getRechargehistoryInvoiceData_old(Request $request)
     {
         $user  = \Auth::user();
         $perPageNo = $request->filled('perpage') ? $request->perpage : 10;
@@ -414,6 +415,86 @@ class InvoiceController extends Controller
             return $this->output(true, 'Success', $response, 200);
         } else {
             return $this->output(true, 'No Record Found', []);
+        }
+    }
+
+    public function getRechargehistoryInvoiceData(Request $request)
+    {
+        $user  = \Auth::user();
+        $perPageNo = $request->filled('perpage') ? $request->perpage : 10;
+        $params      = $request->params ?? "";
+        $recharge_id = $request->id ?? NULL;
+        $fromDate = $request->get('from_date');
+        $toDate = $request->get('to_date');
+        if ($fromDate) {
+            $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $fromDate)->startOfDay();
+        }
+        if ($toDate) {
+            $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $toDate)->endOfDay();
+        }
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+            if ($recharge_id) {
+                $getrechargehistorydata = RechargeHistory::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
+                    ->select('*')
+                    ->where('id', $recharge_id)->first();
+            } else {
+                if ($params !== "" || $request->has('from_date') || $request->has('to_date')) {
+                    $getrechargehistorydata = RechargeHistory::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
+                        ->select('*')->where('recharged_by', 'LIKE', "%$params%");
+
+                    if ($fromDate) {
+                        $getrechargehistorydata->where('updated_at', '>=', $fromDate);
+                    }
+                    if ($toDate) {
+                        $getrechargehistorydata->where('updated_at', '<=', $toDate);
+                    }
+                    $getrechargehistorydata->orWhereHas('company', function ($subQuery) use ($params) {
+                        $subQuery->where('company_name', 'LIKE', "%$params%")
+                            ->orWhere('email', 'LIKE', "%{$params}%");
+                    });
+                    $getrechargehistorydata = $getrechargehistorydata->orderBy('id', 'DESC')
+                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
+                } else {
+                    $getrechargehistorydata = RechargeHistory::select('*')->with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
+                        ->orderBy('id', 'DESC')
+                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
+                }
+            }
+        } else {
+            if ($recharge_id) {
+                $getrechargehistorydata = RechargeHistory::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
+                    ->select('*')
+                    ->where('id', $recharge_id)->where('company_id', $user->company->id)->first();
+            } else {
+                if ($params !== "" || $request->has('from_date') || $request->has('to_date')) {
+                    $getrechargehistorydata = RechargeHistory::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
+                        ->select('*')->where('recharged_by', 'LIKE', "%$params%");
+
+                    if ($fromDate) {
+                        $getrechargehistorydata->where('updated_at', '>=', $fromDate);
+                    }
+                    if ($toDate) {
+                        $getrechargehistorydata->where('updated_at', '<=', $toDate);
+                    }
+                    $getrechargehistorydata->orWhereHas('company', function ($subQuery) use ($params) {
+                        $subQuery->where('company_name', 'LIKE', "%$params%")
+                            ->orWhere('email', 'LIKE', "%{$params}%");
+                    });
+                    $getrechargehistorydata = $getrechargehistorydata->where('company_id', $user->company->id)->orderBy('id', 'DESC')
+                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
+                } else {
+                    $getrechargehistorydata = RechargeHistory::select('*')->with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')->where('company_id', $user->company->id)
+                        ->orderBy('id', 'DESC')
+                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
+                }
+            }
+        }
+
+        if ($getrechargehistorydata->isNotEmpty()) {
+            $response = $getrechargehistorydata->toArray();
+            return $this->output(true, 'Success', $response, 200);
+        } else {
+            return $this->output(true, 'No Record Found');
         }
     }
 }
