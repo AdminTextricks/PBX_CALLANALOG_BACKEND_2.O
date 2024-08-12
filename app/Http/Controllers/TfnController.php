@@ -739,11 +739,13 @@ class TfnController extends Controller
         $user = \Auth::user();
         $validator = Validator::make($request->all(), [
             'company_id' => 'required|numeric',
+            'country_id' => 'required|array',
             'tfn_number' => 'required|array',
             'tfn_type'   => 'required',
         ], [
             'company_id.required' => 'The company is required.',
             'tfn_type.required' => 'Payment Type Field is required.',
+            'country_id.required' => 'Country Field is required.',
         ]);
 
         if ($validator->fails()) {
@@ -850,8 +852,9 @@ class TfnController extends Controller
                 'payment_status' => $invoice_payments_status,
 
             ]);
-            foreach ($request->tfn_number as $tfn_number) {
+            foreach ($request->tfn_number as $key => $tfn_number) {
                 InvoiceItems::create([
+                    'country_id' => $request->country_id[$key],
                     'invoice_id' => $createInvoices->id,
                     'item_type'  => 'TFN',
                     'item_number' => $tfn_number,
