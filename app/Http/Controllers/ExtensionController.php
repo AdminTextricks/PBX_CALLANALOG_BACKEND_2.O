@@ -87,7 +87,7 @@ class ExtensionController extends Controller
             'country_id' => 'required|numeric',
             'company_id' => 'required|numeric',
             'name.*' => 'required|unique:extensions,name',
-            'callbackextension' => 'required|integer|digits_between:2,5',
+            //'callbackextension' => 'required|integer|digits_between:2,5',
             'agent_name' => 'required|max:150',
             'callgroup' => 'required|in:0,1', // Outbound call yes or no
             'callerid' => 'required_if:callgroup,1',
@@ -140,12 +140,13 @@ class ExtensionController extends Controller
                             }
 
                             foreach ($extension_name as $item) {
+                                $callbackextension = str_pad(rand(1, 9999), 4, "0", STR_PAD_LEFT);
                                 $data = [];
                                 $data = [
                                     'country_id' => $request->country_id,
                                     'company_id' => $request->company_id,
                                     'name' => $item,
-                                    'callbackextension' => $request->callbackextension,
+                                    'callbackextension' => $callbackextension,
                                     'account_code' => $Company->account_code,
                                     'agent_name' => $request->agent_name,
                                     'callgroup' => $request->callgroup,
@@ -478,27 +479,21 @@ class ExtensionController extends Controller
                     ->where('extensions.company_id', '=', $user->company_id)
                     ->orderBy('id', 'DESC')
                     ->get();
-            } else {
+            } else {                
                 if ($params != "") {
+                    //DB::enableQueryLog();
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
+                        ->where('extensions.company_id', '=', $user->company_id)
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-                        ->where('extensions.company_id', '=', $user->company_id)
-                        //->orWhere('agent_name', 'LIKE', "%$params%")
-                        ->orWhere('name', 'like', "%$params%")
-                        //->orWhere('callbackextension', 'LIKE', "%$params%")
-                        ->orWhereHas('company', function ($query) use ($params) {
-                            $query->where('company_name', 'like', "%{$params}%");
-                        })
-                        ->orWhereHas('company', function ($query) use ($params) {
-                            $query->where('email', 'like', "%{$params}%");
-                        })
+                        ->where('name', 'like', "%{$params}%")
                         ->orWhereHas('country', function ($query) use ($params) {
                             $query->where('country_name', 'like', "%{$params}%");
                         })
                         ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+                        //dd(DB::getQueryLog());
                 } else {
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
                         ->with('company:id,company_name,email,mobile')
