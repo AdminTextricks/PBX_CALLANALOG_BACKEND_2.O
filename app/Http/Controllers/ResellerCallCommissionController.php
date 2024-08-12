@@ -81,7 +81,7 @@ class ResellerCallCommissionController extends Controller
                         ->where('id', $ResellerCallCommission_id)->orderBy('id', 'DESC')->get();
 			} else {
 				if ($params != "") {
-					DB::enableQueryLog();
+					//DB::enableQueryLog();
 					$data = ResellerCallCommission::select('id','company_id','country_id','reseller_id','inbound_call_commission','outbound_call_commission','status')
 					->with('reseller:id,name,email')
 					->with('company:id,company_name,email,mobile')	
@@ -102,7 +102,7 @@ class ResellerCallCommissionController extends Controller
 						})
 						->orderBy('id', 'DESC')						
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
-						dd(DB::getQueryLog());
+						//dd(DB::getQueryLog());
 				} else {
 					$data = ResellerCallCommission::select('id','company_id','country_id','reseller_id','inbound_call_commission','outbound_call_commission','status')
 							->with('reseller:id,name,email')
