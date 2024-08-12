@@ -349,14 +349,14 @@ class ExtensionController extends Controller
             DB::beginTransaction();
             $Extension = Extension::where('id', $id)->first();
             if($Extension){
-                if ($Extension->sip_temp == 'WEBRTC') {
-                    $removeExtensionFile = config('app.webrtc_template_url');
-                } else {
-                    $removeExtensionFile = config('app.softphone_template_url');
-                }
-                Log::error('removeExtensionFile: ' . $removeExtensionFile );
-
+                
+                $removeExtensionFile = config('app.webrtc_template_url');
                 $this->removeExtensionFromConfFile($Extension->name, $removeExtensionFile);
+                
+                $removeExtensionFile = config('app.softphone_template_url');                
+                $this->removeExtensionFromConfFile($Extension->name, $removeExtensionFile);
+
+                Log::error('removeExtensionFile: ' . $removeExtensionFile );
 
                 $server_flag = config('app.server_flag');
                 if ($server_flag == 1) {
@@ -922,5 +922,66 @@ class ExtensionController extends Controller
             Log::error('Error in fetching extension Details : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());            
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }  
+    }
+
+
+    public function multipleDeleteExtension(Request $request)
+    {
+        try {
+            $user = \Auth::user();
+            $validator = Validator::make($request->all(), [
+                'extension'     => 'required|array',
+                'extension.*'   => 'required|numeric|exists:extensions,id',
+            ]);
+            if ($validator->fails()) {
+                return $this->output(false, $validator->errors()->first(), [], 409);
+            }else{
+                $input = $request->all();
+                $extensionsId = $input['extension'];
+                if (is_array($extensionsId)) {
+                    foreach ($extensionsId as $id) {
+                        DB::beginTransaction();
+                        $Extension = Extension::where('id', $id)->first();
+                        if($Extension){
+
+                            $removeExtensionFile = config('app.webrtc_template_url');
+                            $this->removeExtensionFromConfFile($Extension->name, $removeExtensionFile);
+                            
+                            $removeExtensionFile = config('app.softphone_template_url');                
+                            $this->removeExtensionFromConfFile($Extension->name, $removeExtensionFile);
+
+                            Log::error('Multiple Remove Extension From File: ' . $removeExtensionFile );
+
+                            $server_flag = config('app.server_flag');
+                            if ($server_flag == 1) {
+                                $shell_script = config('app.shell_script');
+                                $result = shell_exec('sudo ' . $shell_script);
+                                Log::error('Extension Update File Transfer Log : ' . $result);
+                                $this->sipReload();
+                            }
+                            $resdelete = $Extension->delete();
+                            if ($resdelete) {
+                                Cart::where('item_id', '=', $id)->delete();
+                                DB::commit();
+                                //return $this->output(true,'Success',200);
+                            } else {
+                                DB::commit();
+                                return $this->output(false, 'Error occurred in Extension deleting. Please try again!.', [], 209);                    
+                            }
+                        }else{
+                            DB::commit();
+                            return $this->output(false,'Extension not exist with us.', [], 409);
+                        }
+                    }
+                    return $this->output(true,'Success',200);
+                }else{
+                    return $this->output(false, 'Wrong extension value format.');
+                }
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error occurred in Multi Extension Deleting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
     }
 }

@@ -34,6 +34,7 @@ use App\Http\Controllers\IvrController;
 use App\Http\Controllers\CdrController;
 use App\Http\Controllers\ResellerCommissionController;
 use App\Http\Controllers\OneGoUserController;
+use App\Http\Controllers\ResellerCallCommissionController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -219,6 +220,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ExtensionController::class, 'getExtensionsByCountryIdAndCompanyId']);		
 		Route::post('/adToCart', [ExtensionController::class, 'extensionAddToCArt']);
 		Route::delete('/{id}', [ExtensionController::class, 'deleteExtension']);
+		Route::delete('/', [ExtensionController::class, 'multipleDeleteExtension']);
 		
 	});
 
@@ -366,6 +368,15 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/commission', [ResellerCommissionController::class, 'getCommissionExtensionOrTfnForReseller']);
 	});
 
+	# Reseller Call  Commission
+	Route::group(['prefix' => 'reseller-call-commission'], function () {
+		Route::post('/', [ResellerCallCommissionController::class, 'addResellerCallCommission']);
+		Route::get('/{id?}', [ResellerCallCommissionController::class, 'getAllResellerCallCommission']);
+
+		Route::patch('/changeStatus/{id}', [ResellerCallCommissionController::class, 'changeResellerPriceStatus']);
+		Route::put('/{id}', [ResellerCallCommissionController::class, 'updateResellerPrice']);
+		Route::delete('/{id}', [ResellerCallCommissionController::class, 'deleteResellerPrice']);
+	});
 });
 /*
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
