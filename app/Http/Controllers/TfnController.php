@@ -852,14 +852,25 @@ class TfnController extends Controller
                 'payment_status' => $invoice_payments_status,
 
             ]);
+            $itemsData = [];
             foreach ($request->tfn_number as $key => $tfn_number) {
-                InvoiceItems::create([
+                $ind_data = InvoiceItems::create([
                     'country_id' => $request->country_id[$key],
                     'invoice_id' => $createInvoices->id,
                     'item_type'  => 'TFN',
                     'item_number' => $tfn_number,
-                    'item_price' => $total_price,
+                    'item_price' => $prices[$key],
                 ]);
+                if ($ind_data) {
+                    $itemsData[] = $ind_data->toArray();
+                }
+            }
+
+            if (!empty($itemsData)) {
+                $user_data = User::select('*')->where('company_id', $company->id)->first();
+                if ($company->parent_id > 1 && $request->tfn_type == "Paid") {
+                    $this->ResellerCommissionCalculate($user_data, $itemsData, $createInvoices->id, $total_price);
+                }
             }
             $payments = Payments::create([
                 'company_id' => $company->id,
