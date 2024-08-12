@@ -18,17 +18,17 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-      protected $fillable = [
-		'company_id',
-		'name',
+    protected $fillable = [
+        'company_id',
+        'name',
         'email',
         'password',
-		'mobile',
+        'mobile',
         'address',
         'country_id',
         'state_id',
         'city',
-        'zip',    
+        'zip',
         'role_id',
         'is_verified',
         'is_verified_doc',
@@ -45,7 +45,7 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-	public function company()
+    public function company()
     {
         return $this->belongsTo(Company::class);
     }
@@ -104,5 +104,10 @@ class User extends Authenticatable
     public function mainPrices()
     {
         return $this->hasMany(MainPrice::class, 'user_id');
+    }
+
+    public function user_plan()
+    {
+        return $this->hasOneThrough(MainPlan::class, Company::class, 'user_id', 'id', 'id', 'plan_id');
     }
 }

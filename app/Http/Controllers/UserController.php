@@ -485,6 +485,7 @@ class UserController extends Controller
                 ->with('state:id,state_name') 
                 ->with('roles')
                 ->with('userDocuments')
+                ->with(['company', 'company.mainPlans:id,name'])
                 ->where('email', $request->email)->first();
 		if ($user) {
             if ($user->is_verified == 1) {
