@@ -9,6 +9,7 @@ use App\Models\Extension;
 use App\Models\Invoice;
 use App\Models\InvoiceItems;
 use App\Models\Payments;
+use App\Models\RechargeHistory;
 use App\Models\State;
 use App\Models\Tfn;
 use App\Services\NowPaymentsService;
@@ -33,6 +34,9 @@ class NowPaymentsController extends Controller
     {
         $user = \Auth::user();
         $invoice_balance = Invoice::select('invoice_amount')->where('id', $request->invoice_id)->where('payment_status', '=', 'Unpaid')->first();
+        if (!$invoice_balance) {
+            return $this->output(false, 'The Invoice is Paid!!', 400);
+        }
         $getcountry = Country::select('*')->where('id', $user->company->country_id)->first();
         $getstate = State::select('state_name')->where('id', $user->company->state_id)->first();
         $invoice_items = InvoiceItems::where('invoice_id', '=', $request->invoice_id)->get();
@@ -189,15 +193,19 @@ class NowPaymentsController extends Controller
                         DB::rollback();
                         return $this->output(false, 'Invoice not found.', 400);
                     } else {
-                        // $invoice_update->payment_type =  'Cryto Payment';
                         $invoice_update->payment_status = "Paid";
-                        $invoice_update->save();
+                        $invoice_data = $invoice_update->save();
+                        if ($invoice_data) {
+                            if ($user->company->parent_id > 1) {
+                                $this->ResellerCommissionCalculate($user, $invoice_items, $payment->invoice_id, $payment->payment_price);
+                            }
 
-                        $mailsend = $this->pdfmailSend($user, $itemNumbers, $NowPaymentData['price_amount'], $payment->invoice_id, $invoice_update->invoice_number, $itemTypes);
-                        if ($mailsend) {
-                            DB::commit();
-                        } else {
-                            DB::rollBack();
+                            $mailsend = $this->pdfmailSend($user, $itemNumbers, $NowPaymentData['price_amount'], $payment->invoice_id, $invoice_update->invoice_number, $itemTypes);
+                            if ($mailsend) {
+                                DB::commit();
+                            } else {
+                                DB::rollBack();
+                            }
                         }
                     }
                     DB::commit();
@@ -304,9 +312,30 @@ class NowPaymentsController extends Controller
                 DB::rollback();
                 return $this->output(false, 'Company not found.', 400);
             } else {
-                $balance_total = $companydata->balance + $paid_amount * 0.05;
-                $companydata->balance = $paid_amount + $balance_total;
-                $companydata->save();
+                //Recharge History Update::
+                $balance_total_data = $companydata->balance + $paid_amount + $paid_amount * 0.05;
+                $added_balance_data = $paid_amount + $paid_amount * 0.05;
+                $added_balance = number_format($added_balance_data, 2, '.', '');
+                $balance_total = number_format($balance_total_data, 2, '.', '');
+                $rechargeHistory_data = RechargeHistory::create([
+
+                    'company_id' => $companydata->id,
+                    'invoice_id' => $payment->invoice_id,
+                    'invoice_number' => $payment->invoice_number,
+                    'current_balance' => $companydata->balance,
+                    'added_balance'   => $added_balance,
+                    'total_balance'   => $balance_total,
+                    'currency'        => 'USDT',
+                    'recharged_by'    => 'Self'
+                ]);
+                if (!$rechargeHistory_data) {
+                    DB::rollback();
+                    return $this->output(false, 'Failed to Create Recharge History!!.', 400);
+                } else {
+
+                    $companydata->balance = $balance_total;
+                    $companydata->save();
+                }
             }
             $invoice_update = Invoice::select('*')->where('id', $request->invoice_id)->first();
             if (!$invoice_update) {

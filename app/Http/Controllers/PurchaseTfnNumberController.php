@@ -25,7 +25,7 @@ class PurchaseTfnNumberController extends Controller
         $validator = Validator::make($request->all(), [
             'country_id'        => 'required',
             'type'              => 'required',
-            'starting_digits'   => 'nullable', 
+            'starting_digits'   => 'nullable',
         ]);
 
         if ($validator->fails()) {
@@ -35,7 +35,7 @@ class PurchaseTfnNumberController extends Controller
         $country_id = $request->country_id;
         $type       = $request->type;
         $starting_digits = $request->starting_digits;
-        
+
         $reseller_id = '';
         if ($user->company->parent_id > 1) {
             $price_for = 'Reseller';
@@ -44,20 +44,20 @@ class PurchaseTfnNumberController extends Controller
             $price_for = 'Company';
         }
         $item_price_arr = $this->getItemPrice($user->company_id, $request->country_id, $price_for, $reseller_id, 'TFN');
-        if ($item_price_arr['Status'] == 'true') {        
+        if ($item_price_arr['Status'] == 'true') {
             $item_price = $item_price_arr['TFN_price'];
             $company = Company::where('id', $user->company->id)->first();
             $inbound_trunk = explode(',', $company->inbound_permission);
 
-            $searchQry = Tfn::select('id', 'tfn_number')
-                        ->where('country_id', $country_id)
-                        ->where('company_id', 0)
-                        ->where('assign_by', 0)
-                        ->whereIn('tfn_provider', $inbound_trunk)
-                        ->where('activated', '0')
-                        ->where('reserved', '0')
-                        ->where('status', 1);
-            
+            $searchQry = Tfn::select('id', 'tfn_number', 'country_id')
+                ->where('country_id', $country_id)
+                ->where('company_id', 0)
+                ->where('assign_by', 0)
+                ->whereIn('tfn_provider', $inbound_trunk)
+                ->where('activated', '0')
+                ->where('reserved', '0')
+                ->where('status', 1);
+
             if ($type == 'Local') {
                 $data = $searchQry->paginate($perPageNo);
             } else {
@@ -172,6 +172,7 @@ class PurchaseTfnNumberController extends Controller
     {
         $user = \Auth::user();
         $validator = Validator::make($request->all(), [
+            'country_id'    => 'required|numeric',
             'item_id'       => 'required|numeric',
             'item_number'   => 'required|numeric',
             'item_price'    => 'required',
@@ -179,32 +180,34 @@ class PurchaseTfnNumberController extends Controller
         ]);
         if ($validator->fails()) {
             return $this->output(false, $validator->errors()->first(), [], 409);
-        } else {            
-            try {                
+        } else {
+            try {
                 DB::beginTransaction();
                 if (in_array($user->roles->first()->slug, array('admin', 'user'))) {
                     $cart = Cart::where('item_number', $request->item_number)
-                                ->where('company_id', $user->company_id)->get();
+                        ->where('company_id', $user->company_id)
+                        ->where('country_id', $request->country_id)->get();
                     if ($cart->count() > 0) {
                         DB::rollBack();
-                        return $this->output(false,  $request->item_type. ' Number is already in the cart', 409);
-                    }else{
+                        return $this->output(false,  $request->item_type . ' Number is already in the cart', 409);
+                    } else {
                         if (strtoupper($request->item_type) == 'TFN') {
                             $tfnNumber = Tfn::where('id', $request->item_id)->where('reserved', '0')->first();
                             if ($tfnNumber) {
                                 $tfnNumber->reserved = '1';
                                 $tfnNumber->reserveddate = date('Y-m-d H:i:s');
                                 $tfnNumber->reservedexpirationdate = date('Y-m-d H:i:s', strtotime('+1 day'));
-                                if($tfnNumber->save()){
+                                if ($tfnNumber->save()) {
                                     $addCart = Cart::create([
                                         'company_id'    => $user->company_id,
+                                        'country_id'    => $request->country_id,
                                         'item_id'       => $request->item_id,
                                         'item_number'   => $request->item_number,
                                         'item_type'     => $request->item_type,
                                         'item_price'    => $request->item_price,
                                     ]);
                                     if ($addCart) {
-                                        $response = $addCart->toArray();                                   
+                                        $response = $addCart->toArray();
                                         DB::commit();
                                         return $this->output(true, 'Item has been added into cart successfully.', $response);
                                     } else {
@@ -220,16 +223,16 @@ class PurchaseTfnNumberController extends Controller
                             }
                         } else {
                             $extNumber = Extension::where('id', $request->item_id)
-                                        ->where(function($query) {
-                                            $query->where('host','<>','dynamic')
-                                                  ->orWhereNull('host');
-                                        })
-                                        ->where('status', 0)->first();
+                                ->where(function ($query) {
+                                    $query->where('host', '<>', 'dynamic')
+                                        ->orWhereNull('host');
+                                })
+                                ->where('status', 0)->first();
                             if ($extNumber) {
-                                $reseller_id = '';                           
+                                $reseller_id = '';
                                 if ($user->company->parent_id > 1) {
                                     $price_for = 'Reseller';
-                                    $reseller_id = $user->company->parent_id ;
+                                    $reseller_id = $user->company->parent_id;
                                 } else {
                                     $price_for = 'Company';
                                 }
@@ -238,6 +241,7 @@ class PurchaseTfnNumberController extends Controller
                                     $item_price = $item_price_arr['Extension_price'];
                                     $addCart = Cart::create([
                                         'company_id'    => $user->company_id,
+                                        'country_id'    => $request->country_id,
                                         'item_id'       => $request->item_id,
                                         'item_number'   => $request->item_number,
                                         'item_type'     => $request->item_type,
@@ -250,18 +254,18 @@ class PurchaseTfnNumberController extends Controller
                                     } else {
                                         DB::rollBack();
                                         return $this->output(false, 'Error occurred in add to cart process.');
-                                    }                                
-                                }else{
+                                    }
+                                } else {
                                     DB::rollBack();
                                     return $this->output(false, $item_price_arr['Message']);
                                 }
                             } else {
                                 DB::rollBack();
                                 return $this->output(false, 'This Extension number not exist with us OR in running process.', 409);
-                            }                            
+                            }
                         }
                     }
-                }else{
+                } else {
                     DB::rollBack();
                     return $this->output(false, 'You are not authorized user to use this functionality.', 409);
                 }

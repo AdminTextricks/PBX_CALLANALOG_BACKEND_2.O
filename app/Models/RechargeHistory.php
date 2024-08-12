@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Cart extends Model
+class RechargeHistory extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-       'company_id', 'country_id', 'item_id', 'item_number', 'item_type', 'item_price',
+        'company_id', 'invoice_id', 'invoice_number', 'current_balance', 'added_balance', 'total_balance', 'currency', 'recharged_by',
     ];
 }

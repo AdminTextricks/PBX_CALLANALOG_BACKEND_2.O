@@ -5,11 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Cart extends Model
+class ResellerCommissionOfCalls extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-       'company_id', 'country_id', 'item_id', 'item_number', 'item_type', 'item_price',
+        'company_id',
+        'reseller_id',
+        'tfn_id',
+        'country_id',
+        'total_amount',
+        'commission_amount',
     ];
 }

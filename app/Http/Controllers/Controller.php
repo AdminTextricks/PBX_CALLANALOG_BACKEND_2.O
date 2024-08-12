@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ResellerCommissionOfItems;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -133,6 +134,67 @@ class Controller extends BaseController
             return array('Status' => 'true', $product.'_price' => $itemPrice);
         }else{
             return array('Status' => 'false', 'Message' => 'Price not available for this country. Please contact with support team.');
+        }
+    }
+
+    public function ResellerCommissionCalculate($user, $total_items, $invoice_id, $totalPrice)
+    {
+
+        $companyId = $user->company->id;
+        $parentID  = $user->company->parent_id;
+        $planId    = $user->company->plan_id;
+        $noofItems = count($total_items);
+        $total_price_ext_items = 0;
+        $total_price_tfn_items = 0;
+        $resellerPrice = ResellerPrice::where('company_id', $companyId)->first();
+        if ($resellerPrice && $parentID > 1) {
+            foreach ($total_items as $itemData) {
+                $mainPrice = MainPrice::where('reseller_id', $parentID)->where('country_id', $itemData['country_id'])->first();
+                if (is_null($mainPrice)) {
+                    return $this->output(false, 'No price found for ' . $itemData['country_id'], 400);
+                }
+                if ($planId == 1) {
+                    if ($itemData['item_type'] == "Extension") {
+                        if ($resellerPrice->extension_commission_type == "Fixed Amount") {
+                            $total_price_ext_items += $resellerPrice->extension_price;
+                        } else {
+                            $total_price_ext_items +=  $mainPrice->extension_price * $resellerPrice->extension_price / 100;
+                        }
+                    } else {
+                        if ($resellerPrice->tfn_commission_type == "Fixed Amount") {
+                            $total_price_tfn_items += $resellerPrice->tfn_price;
+                        } else {
+                            $total_price_tfn_items += $mainPrice->tfn_price * $resellerPrice->tfn_price / 100;
+                        }
+                    }
+                } else {
+                    if ($itemData['item_type'] == "TFN") {
+                        if ($resellerPrice->tfn_commission_type == "Fixed Amount") {
+                            $total_price_tfn_items += $resellerPrice->tfn_price;
+                        } else {
+                            $total_price_tfn_items += $mainPrice->tfn_price * $resellerPrice->tfn_price / 100;
+                        }
+                    }
+                }
+            }
+            $total_price_items_Commission = $total_price_ext_items + $total_price_tfn_items;
+        } else {
+            $total_price_items_Commission = 0;
+        }
+
+        $resellercommissionofitems = ResellerCommissionOfItems::create([
+            'company_id' => $companyId,
+            'reseller_id' => $parentID,
+            'invoice_id'  => $invoice_id,
+            'no_of_items' => $noofItems,
+            'total_amount' => $totalPrice,
+            'commission_amount' => $total_price_items_Commission,
+        ]);
+
+        if (!is_null($resellercommissionofitems)) {
+            return array('Status' => 'true', 'resellerCommissionOfItems' => $resellercommissionofitems);
+        } else {
+            return array('Status' => 'false', 'Message' => 'No Commission Found.');
         }
     }
 }
