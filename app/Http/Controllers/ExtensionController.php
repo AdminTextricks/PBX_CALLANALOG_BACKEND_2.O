@@ -544,6 +544,8 @@ class ExtensionController extends Controller
                     'callerid'  => 'required_if:callgroup,1',
                     'sip_temp'  => 'required|in:WEBRTC,SOFTPHONE',
                     'dial_timeout'  => 'required',
+                ],[
+                    'callbackextension' => 'Intercom number already exists.',
                 ]);
                 if ($validator->fails()) {
                     return $this->output(false, $validator->errors()->first(), [], 409);
