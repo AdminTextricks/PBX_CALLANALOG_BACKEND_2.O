@@ -85,6 +85,7 @@ class ResellerCallCommissionController extends Controller
                         ->with('country:id,country_name')
 						->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+                        
 			}
 		} else {
             $ResellerCallCommission_id = $request->id ?? NULL;
