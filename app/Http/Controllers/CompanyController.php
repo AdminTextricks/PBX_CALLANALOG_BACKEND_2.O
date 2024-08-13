@@ -480,10 +480,10 @@ class CompanyController extends Controller
 
 
 
-    public function getAllActiveCompanyOfResellersByPlanId(Request $request, $plan_id)
+    public function getAllActiveCompanyOfResellersByPlanId(Request $request, $reseller_id, $plan_id)
     {
         $data = Company::select('id', 'company_name', 'account_code', 'email')
-                        ->where('parent_id', '>', 1)
+                        ->where('parent_id', $reseller_id)
                         ->where('plan_id',  $plan_id)
                         ->where('status', 1)->get();
         if ($data->isNotEmpty()) {
