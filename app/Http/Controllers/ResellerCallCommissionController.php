@@ -265,7 +265,7 @@ class ResellerCallCommissionController extends Controller
     {
         try {  
             DB::beginTransaction();            
-            return $ResellerCallCommission = ResellerCallCommission::where('id', $id)->first();
+            $ResellerCallCommission = ResellerCallCommission::where('id', $id)->first();
             if($ResellerCallCommission){
 				$resdelete = $ResellerCallCommission->delete();
                 if ($resdelete) {
