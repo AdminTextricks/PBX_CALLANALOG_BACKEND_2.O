@@ -25,7 +25,7 @@ class OneGoUserController extends Controller
         $user = \Auth::user();
 			$data = OneGoUser::select('*')
 					->with('user:id,name,email')
-					->with('company:id,parent_id, company_name,email,mobile')
+					->with('company:id,parent_id,company_name,email,mobile')
                     ->with('country:id,country_name')->get();
 
 		if($data->isNotEmpty()){
