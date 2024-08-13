@@ -360,6 +360,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/reserveTFN', [OneGoUserController::class, 'reserveTFN']);
 		Route::post('/createExtensions', [OneGoUserController::class, 'createExtensions']);
 		Route::post('/addRingGroup', [OneGoUserController::class, 'addRingGroup']);
+		Route::get('/', [OneGoUserController::class,'getOneGoUser']);
 		//Route::delete('/{id}', [IvrController::class,'deleteIvr']);
 	});
 	

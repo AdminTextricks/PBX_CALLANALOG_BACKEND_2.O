@@ -15,6 +15,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->unsignedBigInteger('company_id');
 			$table->unsignedBigInteger('user_id');
+            $table->integer('country_id')->index()->nullable();
 			$table->integer('tfn_id')->nullable();
 			$table->string('extension_id',100)->nullable();
 			$table->integer('ring_id')->nullable();
