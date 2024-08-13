@@ -279,6 +279,7 @@ class ResellerCallCommissionController extends Controller
                 DB::commit();
                 return $this->output(false,'Reseller Call Commission not exist with us.', [], 409);
             }
+			
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Error occurred in Reseller Call Commission Deleting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
