@@ -6,6 +6,7 @@ use App\Models\Extension;
 use App\Models\Invoice;
 use App\Models\InvoiceItems;
 use App\Models\MainPrice;
+use App\Models\ResellerCommissionOfItems;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -159,7 +160,7 @@ class ResellerCommissionController extends Controller
     }
 
 
-    public function getCommissionExtensionOrTfnForReseller(Request $request)
+    public function getCommissionExtensionOrTfnForResellerOLD2(Request $request)
     {
         $user = \Auth::user();
         $perPageNo = $request->filled('perpage') ? $request->perpage : 10;
@@ -197,7 +198,7 @@ class ResellerCommissionController extends Controller
         if ($invoice_get_id) {
             $queryInvoiceData
                 ->where('invoices.id', '=', $invoice_get_id);
-                // ->orderBy('invoices.id', 'DESC');
+            // ->orderBy('invoices.id', 'DESC');
         } elseif ($params !== "" || $request->has('from_date') || $request->has('to_date')) {
             if ($fromDate) {
                 $queryInvoiceData->where('invoices.updated_at', '>=', $fromDate);
@@ -286,11 +287,71 @@ class ResellerCommissionController extends Controller
         return $this->output(true, 'Success', $paginatedData, 200);
     }
 
+
+    public function getCommissionExtensionOrTfnForReseller(Request $request)
+    {
+        $user = \Auth::user();
+        $perPageNo = $request->filled('perpage') ? $request->perpage : 10;
+        $params = $request->params ?? "";
+        $fromDate = $request->get('from_date') ? \Carbon\Carbon::createFromFormat('Y-m-d', $request->get('from_date'))->startOfDay() : null;
+        $toDate = $request->get('to_date') ? \Carbon\Carbon::createFromFormat('Y-m-d', $request->get('to_date'))->endOfDay() : null;
+        $commission_id = $request->id ?? null;
+
+        $query = ResellerCommissionOfItems::select('*')->with('company:id,company_name,email');
+
+        if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
+            if ($commission_id) {
+                $query->where('id', $commission_id);
+            }
+
+            if ($params !== "") {
+                $query->where('updated_at', 'LIKE', "%$params%")
+                    ->orWhereHas('company', function ($query) use ($params) {
+                        $query->where('company_name', 'like', "%{$params}%")
+                            ->orWhere('email', 'like', "%{$params}%");
+                    });
+            }
+        } elseif ($request->user()->hasRole('reseller')) {
+            $query->where('reseller_id', $user->id);
+
+            if ($commission_id) {
+                $query->where('id', $commission_id)->where('reseller_id', $user->id);
+            }
+
+            if ($params !== "") {
+                $query->where('updated_at', 'LIKE', "%$params%")
+                    ->orWhereHas('company', function ($query) use ($params) {
+                        $query->where('company_name', 'like', "%{$params}%")
+                            ->orWhere('email', 'like', "%{$params}%");
+                    });
+            }
+        } else {
+            return $this->output(false, 'Unauthorized Action');
+        }
+
+        if ($fromDate) {
+            $query->where('updated_at', '>=', $fromDate);
+        }
+
+        if ($toDate) {
+            $query->where('updated_at', '<=', $toDate);
+        }
+
+        $getAllResellercommission = $query->orderBy('id', 'DESC')->paginate($perPageNo);
+
+        if ($getAllResellercommission->isNotEmpty()) {
+            $response = $getAllResellercommission->toArray();
+            return $this->output(true, 'Success', $response, 200);
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
+    }
+
     public function numberofItemsforResellerCommission(Request $request, $id)
     {
         $user = \Auth::user();
         // $invoice_id = $request->invoice_id ?? NULL;
-        if(is_null($id)){
+        if (is_null($id)) {
             return $this->output(false, 'Invoice Not Found!', 400);
         }
         $getNumberData = InvoiceItems::where('invoice_id', '=', $id)->get();

@@ -17,4 +17,9 @@ class ResellerCommissionOfItems extends Model
         'total_amount',
         'commission_amount',
     ];
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 }
