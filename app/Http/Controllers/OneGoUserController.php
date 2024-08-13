@@ -75,6 +75,15 @@ class OneGoUserController extends Controller
                     $tfnNumber->reservedexpirationdate = date('Y-m-d H:i:s', strtotime('+1 day'));                    
                     $tfnNumber_res = $tfnNumber->save();
                     if ($tfnNumber_res) {
+                        DB::table('one_go_user_steps')
+                            ->where('company_id', $request->company_id)
+                            ->where('user_id', $request->user_id)
+                            ->update([
+                                'tfn_id' => $tfnNumber->id,
+                                'step_no' => '2.1',
+                                'updated_at' => Carbon::now(),
+                            ]);
+
                         $tfnNumberRR = Tfn::where('id', $tfnNumber->id)->first();
                         DB::commit();
                         return $this->output(true, 'Success UPDATE', $tfnNumberRR->toArray(), 200);
