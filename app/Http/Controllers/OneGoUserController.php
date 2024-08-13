@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
+use App\Models\OneGoUser;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\Tfn;
@@ -20,6 +20,20 @@ use Carbon\Carbon;
 
 class OneGoUserController extends Controller
 {
+
+    public function getOneGoUser(Request $request){
+        $user = \Auth::user();
+			$data = OneGoUser::select('*')
+					->with('user:id,name,email')
+					->with('company:id,company_name,email,mobile')
+                    ->with('country:id,country_name')->get();
+
+		if($data->isNotEmpty()){
+			return $this->output(true, 'Success', $data->toArray());
+		}else{
+			return $this->output(true, 'No Record Found', []);
+		}
+    }
     public function reserveTFN(Request $request)
     {
         try {
@@ -171,7 +185,7 @@ class OneGoUserController extends Controller
                             ];
                             $Extension = Extension::create($data);
                             $response = $Extension->toArray();
-                            $item_ids[] = $response;
+                            $item_ids[] = $Extension->id;
 
                             $addExtensionFile = config('app.webrtc_template_url');
                             $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
@@ -185,7 +199,15 @@ class OneGoUserController extends Controller
                             Log::error('Extension File Transfer Log : ' . $result);
                             $this->sipReload();
                         }
-                        $item_ids['total_extension'] = count($item_ids);
+                        //$item_ids['total_extension'] = count($item_ids);
+                        DB::table('one_go_user_steps')
+                            ->where('company_id', $request->company_id)
+                            ->where('user_id', $request->user_id)
+                            ->update([
+                                'extension_id' => implode(',', $item_ids),
+                                'step_no' => '2.2',
+                                'updated_at' => Carbon::now(),
+                            ]);
                         DB::commit();
                         return $this->output(true, 'Extension added successfully.', $item_ids);
                     } else {
