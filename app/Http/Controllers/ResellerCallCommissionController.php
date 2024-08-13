@@ -203,4 +203,86 @@ class ResellerCallCommissionController extends Controller
 			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
 		}
     }
+
+	public function updateResellerCallCommission(Request $request, $id)
+	{
+		try { 
+			DB::beginTransaction(); 
+			$CallCommission = ResellerCallCommission::find($id);		
+			if(is_null($CallCommission)){
+				DB::commit();
+				return $this->output(false, 'This Reseller Call Commission not exist with us. Please try again!.', [], 409);
+			}
+			else
+			{
+				$validator = Validator::make($request->all(), [
+					'reseller_id'	=> 'required|numeric|exists:users,id', 
+					'country_id'    => 'required|numeric|exists:countries,id',
+					'company_id'	=> 'required|numeric|exists:companies,id',	
+					'inbound_call_commission'   => 'required',
+					'outbound_call_commission'  => 'required',
+				],[
+					'country_id'    => 'The country field is required.',
+                	'company_id'    => 'The company field is required.',
+				]);
+				if ($validator->fails()){
+					return $this->output(false, $validator->errors()->first(), [], 409);
+				}
+				
+				$CallCommissionOld = ResellerCallCommission::where('reseller_id', $request->reseller_id)
+							->where('company_id', $request->company_id)
+							->where('country_id', $request->country_id)
+							->where('id','!=', $id)->first();
+
+				if(!$CallCommissionOld)
+				{					
+					$CallCommission->inbound_call_commission	= $request->inbound_call_commission;
+					$CallCommission->outbound_call_commission   = $request->outbound_call_commission;
+					$CallCommissionsRes							= $CallCommission->save();
+					if($CallCommissionsRes){
+						$CallCommission = ResellerCallCommission::where('id', $id)->first();        
+						$response = $CallCommission->toArray();
+						DB::commit();
+						return $this->output(true, 'Reseller Call Commission updated successfully.', $response, 200);
+					}else{
+						DB::commit();
+						return $this->output(false, 'Error occurred in Reseller Call Commission Updating. Please try again!.', [], 200);
+					}
+				}else{
+					DB::commit();
+					return $this->output(false, 'This Reseller Call Commission already exist with us.',[], 409);
+				}
+			}
+		} catch (\Exception $e) {
+			DB::rollback();
+            Log::error('Error occurred in Reseller Call Commission updating : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+		}	
+	}
+
+
+	public function deleteResellerCallCommission(Request $request, $id)
+    {
+        try {  
+            DB::beginTransaction();            
+            $ResellerCallCommission = ResellerCallCommission::where('id', $id)->first();
+            if($ResellerCallCommission){
+				$resdelete = $ResellerCallCommission->delete();
+                if ($resdelete) {
+                    DB::commit();
+                    return $this->output(true,'Success',200);
+                } else {
+                    DB::commit();
+                    return $this->output(false, 'Error occurred in Reseller Call Commission deleting. Please try again!.', [], 209);                    
+                }
+            }else{
+                DB::commit();
+                return $this->output(false,'Reseller Call Commission not exist with us.', [], 409);
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error occurred in Reseller Call Commission Deleting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
 }
