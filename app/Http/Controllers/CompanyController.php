@@ -126,7 +126,8 @@ class CompanyController extends Controller
 
                 if (isset($request->one_go_user)) {
                     DB::table('one_go_user_steps')->insert([
-                        'company_id' => $company->id,
+                        'parent_id' => $company->parent_id,
+                        'company_id'=> $company->id,
                         'user_id'   => $user->id,
                         'step_no'   => 1,
                         'created_at' => Carbon::now(),
