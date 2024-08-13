@@ -23,9 +23,9 @@ class OneGoUser extends Model
         'step_no',
     ];
 
-    public function reseller()
+    public function parent()
     {
-        return $this->belongsTo(User::class, 'reseller_id');
+        return $this->belongsTo(User::class, 'parent_id');
     }
 
     public function user()
