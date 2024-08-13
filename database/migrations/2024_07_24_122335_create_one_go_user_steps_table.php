@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('one_go_user_steps', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->integer('parent_id')->nullable();
             $table->unsignedBigInteger('company_id');
 			$table->unsignedBigInteger('user_id');
             $table->integer('country_id')->index()->nullable();
