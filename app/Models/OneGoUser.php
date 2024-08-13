@@ -11,6 +11,7 @@ class OneGoUser extends Model
     protected $table = 'one_go_user_steps';
     protected $fillable = [
         'id',
+        'parent_id',
         'country_id',
         'company_id',
         'user_id',
