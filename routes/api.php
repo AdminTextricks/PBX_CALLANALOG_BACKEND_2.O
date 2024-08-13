@@ -372,10 +372,9 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'reseller-call-commission'], function () {
 		Route::post('/', [ResellerCallCommissionController::class, 'addResellerCallCommission']);
 		Route::get('/{id?}', [ResellerCallCommissionController::class, 'getAllResellerCallCommission']);
-		Route::patch('/changeStatus/{id}', [ResellerCallCommissionController::class, 'changeResellerCallCommissionStatus']);
-		
-		Route::put('/{id}', [ResellerCallCommissionController::class, 'updateResellerPrice']);
-		Route::delete('/{id}', [ResellerCallCommissionController::class, 'deleteResellerPrice']);
+		Route::patch('/changeStatus/{id}', [ResellerCallCommissionController::class, 'changeResellerCallCommissionStatus']);		
+		Route::put('/{id}', [ResellerCallCommissionController::class, 'updateResellerCallCommission']);
+		Route::delete('/{id}', [ResellerCallCommissionController::class, 'deleteResellerCallCommission']);
 	});
 });
 /*
