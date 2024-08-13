@@ -77,7 +77,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 		Route::get('/activeReseller/{reseller_id}', [CompanyController::class, 'getAllActiveCompanyOfReseller']);
 		Route::post('/add-to-wallet', [CompanyController::class, 'AddbalanceForCompanyBySuperAdmin']);
-
+		Route::get('/resellersCompany/{plan_id}', [CompanyController::class, 'getAllActiveCompanyOfResellersByPlanId']);
+		
 	});
 
 	Route::group(['prefix' => 'user'], function () {		
