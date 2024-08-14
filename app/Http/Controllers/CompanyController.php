@@ -133,6 +133,8 @@ class CompanyController extends Controller
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                     ]);
+                    $user['user_type'] = ($request->parent_id > 1) ? 'Reseller' : 'Company';
+                    $user['parent_id'] = $request->parent_id;
                 }
 
                 $this->sendPassword($user, $request->password); //PASSWORD SEND

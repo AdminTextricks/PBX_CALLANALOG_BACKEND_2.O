@@ -45,18 +45,18 @@ class OneGoUserController extends Controller
                 'user_id' => 'required|numeric|exists:users,id',
                 'country_id' => 'required|numeric|exists:countries,id',
                 'user_type' => 'required|string|in:Reseller,Company',
-                'reseller_id' => 'required_if:user_type,Reseller',
+                'parent_id' => 'required_if:user_type,Reseller',
             ]);
             if ($validator->fails()) {
                 return $this->output(false, $validator->errors()->first(), [], 409);
             }
             //$Company = Company::find($request->company_id);
-            $reseller_id = '';
+            $parent_id = '';
             $price_for = $request->user_type;
-            $reseller_id = $request->reseller_id;
+            $parent_id = $request->parent_id;
             $type = 'Toll Free';
             $starting_digits = '';
-            $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'TFN');
+            $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $parent_id, 'TFN');
             if ($item_price_arr['Status'] == 'true') {
                 $item_price = $item_price_arr['TFN_price'];
                 $company = Company::where('id', $request->company_id)->first();
@@ -118,7 +118,7 @@ class OneGoUserController extends Controller
             'agent_name' => 'required|max:150',
             'secret' => 'required',
             'user_type' => 'required|string|in:Reseller,Company',
-            'reseller_id' => 'required_if:user_type,Reseller',
+            'parent_id' => 'required_if:user_type,Reseller',
         ], [
             'name' => 'This Extension is already exist with us. Please try with different.',
         ]);
@@ -133,12 +133,12 @@ class OneGoUserController extends Controller
             $input = $request->all();
             $extension_name = $input['name'];
             if ($Company) {
-                $reseller_id = '';
+                $parent_id = '';
                 $price_for = $request->user_type;
                 if ($request->user_type == 'Reseller') {
-                    $reseller_id = $request->reseller_id;
+                    $parent_id = $request->parent_id;
                 }
-                $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'Extension');
+                $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $parent_id, 'Extension');
                 if ($item_price_arr['Status'] == 'true') {
                     $item_price = $item_price_arr['Extension_price'];
                     if (is_array($extension_name)) {
