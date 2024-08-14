@@ -95,7 +95,7 @@ class OneGoUserController extends Controller
 
                         $tfnNumberRR = Tfn::where('id', $tfnNumber->id)->first();
                         DB::commit();
-                        return $this->output(true, 'Success UPDATE', $tfnNumberRR->toArray(), 200);
+                        return $this->output(true, 'Success', $tfnNumberRR->toArray(), 200);
                     } else {
                         DB::commit();
                         return $this->output(false, 'Error occurred in reserving TFN for you. Please try after some time.');
@@ -119,12 +119,12 @@ class OneGoUserController extends Controller
     public function createExtensions(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'country_id' => 'required|numeric',
-            'company_id' => 'required|numeric',
-            'name.*' => 'required|unique:extensions,name',
-            'callbackextension' => 'required|integer|digits_between:2,5',
-            'agent_name' => 'required|max:150',
-            'secret' => 'required',
+            'company_id'=> 'required|numeric|exists:companies,id',
+            'user_id'   => 'required|numeric|exists:users,id',
+            'country_id'=> 'required|numeric|exists:countries,id',
+            'name.*'    => 'required|unique:extensions,name',
+            'agent_name'=> 'required|max:150',
+            'secret'    => 'required',
             'user_type' => 'required|string|in:Reseller,Company',
             'parent_id' => 'required_if:user_type,Reseller',
         ], [
@@ -164,11 +164,12 @@ class OneGoUserController extends Controller
                         }
 
                         foreach ($extension_name as $item) {
+                            $callbackextension = str_pad(rand(1, 9999), 4, "0", STR_PAD_LEFT);
                             $data = [
                                 'country_id' => $request->country_id,
                                 'company_id' => $request->company_id,
                                 'name' => $item,
-                                'callbackextension' => $request->callbackextension,
+                                'callbackextension' => $callbackextension,
                                 'account_code' => $Company->account_code,
                                 'agent_name' => $request->agent_name,
                                 'callgroup' => '0',
