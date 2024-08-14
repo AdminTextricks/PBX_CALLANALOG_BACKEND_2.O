@@ -83,6 +83,7 @@ class OneGoUserController extends Controller
                             'item_number'   => $tfnNumber->tfn_number,
                             'item_type'     => 'TFN',
                             'item_price'    => $item_price,
+                        ]);
                         DB::table('one_go_user_steps')
                             ->where('company_id', $request->company_id)
                             ->where('user_id', $request->user_id)
