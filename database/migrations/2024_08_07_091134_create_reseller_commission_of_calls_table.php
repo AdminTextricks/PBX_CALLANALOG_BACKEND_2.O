@@ -15,10 +15,11 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->unsignedBigInteger('company_id');
             $table->unsignedBigInteger('reseller_id');
-            $table->integer('tfn_id');
+            $table->integer('tfn_number');
             $table->smallInteger('country_id');
             $table->decimal('total_amount', total: 8, places: 2);
             $table->decimal('commission_amount', total: 8, places: 2)->nullable()->default(0);
+            $table->string('call_type');
             $table->timestamps();
             $table->foreign('company_id')->references('id')->on('companies');
             $table->foreign('reseller_id')->references('id')->on('users');

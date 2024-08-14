@@ -12,9 +12,20 @@ class ResellerCommissionOfCalls extends Model
     protected $fillable = [
         'company_id',
         'reseller_id',
-        'tfn_id',
+        'tfn_number',
         'country_id',
         'total_amount',
         'commission_amount',
+        'call_type',
     ];
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'reseller_id', 'id');
+    }
 }
