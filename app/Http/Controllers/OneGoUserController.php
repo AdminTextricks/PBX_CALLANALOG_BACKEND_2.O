@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\OneGoUser;
 use App\Models\Company;
-use App\Models\User;
+use App\Models\Cart;
 use App\Models\Tfn;
 use App\Models\RingGroup;
 use App\Models\ConfTemplate;
@@ -76,6 +76,13 @@ class OneGoUserController extends Controller
                     $tfnNumber->reservedexpirationdate = date('Y-m-d H:i:s', strtotime('+1 day'));                    
                     $tfnNumber_res = $tfnNumber->save();
                     if ($tfnNumber_res) {
+                        $addCart = Cart::create([
+                            'company_id'    => $request->company_id,
+                            'country_id'    => $request->country_id,
+                            'item_id'       => $tfnNumber->id,
+                            'item_number'   => $tfnNumber->tfn_number,
+                            'item_type'     => 'TFN',
+                            'item_price'    => $item_price,
                         DB::table('one_go_user_steps')
                             ->where('company_id', $request->company_id)
                             ->where('user_id', $request->user_id)
