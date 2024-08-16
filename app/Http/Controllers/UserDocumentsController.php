@@ -31,7 +31,7 @@ class UserDocumentsController extends Controller
             $response = array();
             $error_flag = 0; 
             foreach ($request->file('doc_images') as $key => $file) {
-                $allowedfileExtension = ['jpg', 'jpeg','png','pdf'];
+                $allowedfileExtension = ['jpg', 'jpeg','png','pdf','JPG', 'JPEG','PNG','PDF'];
                 $userDocuments = $request->file('doc_images');
                 $extension = $file->getClientOriginalExtension();
                
@@ -212,7 +212,7 @@ class UserDocumentsController extends Controller
                             ->first();
             if ($UserDocuments) {
                 $file = $request->file('doc_images');
-                $allowedfileExtension = ['jpg', 'jpeg','png','pdf'];
+                $allowedfileExtension = ['jpg', 'jpeg','png','pdf','JPG', 'JPEG','PNG','PDF'];
                 $userDocuments_file = $request->file('doc_images');
                 $extension = $file->getClientOriginalExtension();
                 
