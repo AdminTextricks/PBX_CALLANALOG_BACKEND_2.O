@@ -49,4 +49,9 @@ class RechargeHistory extends Model
     {
         return $this->hasOne(ResellerPrice::class, 'company_id', 'company_id');
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
