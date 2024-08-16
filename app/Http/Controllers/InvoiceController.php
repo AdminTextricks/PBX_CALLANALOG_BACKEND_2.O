@@ -146,120 +146,66 @@ class InvoiceController extends Controller
 
     public function getAllInvoiceData(Request $request)
     {
-        $user  = \Auth::user();
+        $user = \Auth::user();
         $perPageNo = $request->filled('perpage') ? $request->perpage : 10;
-        $params      = $request->params ?? "";
-        $invoice_get_id = $request->id ?? NULL;
+        $params = $request->params ?? "";
+        $invoice_get_id = $request->id ?? null;
 
-        $fromDate = $request->get('from_date');
-        $toDate = $request->get('to_date');
+        $fromDate = $request->get('from_date') ? \Carbon\Carbon::createFromFormat('Y-m-d', $request->get('from_date'))->startOfDay() : null;
+        $toDate = $request->get('to_date') ? \Carbon\Carbon::createFromFormat('Y-m-d', $request->get('to_date'))->endOfDay() : null;
 
-        if ($fromDate) {
-            $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $fromDate)->startOfDay();
-        }
-        if ($toDate) {
-            $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $toDate)->endOfDay();
-        }
+        $query = Invoice::with([
+            'invoice_items',
+            'countries:id,country_name,phone_code,currency,currency_symbol',
+            'states:id,country_id,state_name',
+            'company:id,company_name,account_code,email,mobile,billing_address,city,zip',
+            'payments'
+        ])
+            ->select('*')
+            ->where(function ($q) {
+                $q->where('payment_status', 'Paid')
+                    ->orWhere('payment_status', 'Free');
+            })
+            ->whereHas('payments', function ($query) {
+                $query->where('payment_type', '!=', 'Added to Wallet');
+            });
 
-        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
-            if ($invoice_get_id) {
-                $getinvoicedata = Invoice::with(['invoice_items', 'countries:id,country_name,phone_code,currency,currency_symbol', 'states:id,country_id,state_name', 'company:id,company_name,account_code,email,mobile,billing_address,city,zip', 'payments'])
-                    ->select('*')
-                    ->where('payment_status', 'Paid')
-                    ->whereHas('payments', function ($query) {
-                        $query->where('payment_type', '!=', 'Added to Wallet');
-                    })
-                    ->where('id', $invoice_get_id);
-            } else {
-                $getinvoicedata = Invoice::with(['invoice_items', 'countries:id,country_name,phone_code,currency,currency_symbol', 'states:id,country_id,state_name', 'company:id,company_name,account_code,email,mobile,billing_address,city,zip', 'payments'])
-                    ->select('*')
-                    ->where('payment_status', 'Paid')
-                    ->whereHas('payments', function ($query) {
-                        $query->where('payment_type', '!=', 'Added to Wallet');
-                    });
-
-                if ($fromDate) {
-                    $getinvoicedata->where('updated_at', '>=', $fromDate);
-                }
-                if ($toDate) {
-                    $getinvoicedata->where('updated_at', '<=', $toDate);
-                }
-
-                if ($params !== "") {
-                    $getinvoicedata->where(function ($query) use ($params) {
-                        $query->orWhere('invoice_id', 'LIKE', "%$params%")
-                            ->orWhere('invoice_amount', 'LIKE', "%$params%")
-                            ->orWhere('updated_at', 'LIKE', "%$params%")
-                            ->orWhereHas('company', function ($subQuery) use ($params) {
-                                $subQuery->where('company_name', 'LIKE', "%$params%")
-                                    ->orWhere('email', 'LIKE', "%{$params}%");
-                            })
-                            ->orWhereHas('payments', function ($subQuery) use ($params) {
-                                $subQuery->where('payment_type', 'LIKE', "%{$params}%")
-                                    ->orWhere('transaction_id', 'LIKE', "%{$params}%");
-                            })
-                            ->orWhereHas('countries', function ($subQuery) use ($params) {
-                                $subQuery->where('country_name', 'LIKE', "%{$params}%");
-                            });
-                    });
-                }
-
-                $getinvoicedata = $getinvoicedata->orderBy('id', 'DESC')
-                    ->paginate($perPageNo, ['*'], 'page');
-            }
+        if ($invoice_get_id) {
+            $query->where('id', $invoice_get_id);
         } else {
-            if ($invoice_get_id) {
-                $getinvoicedata = Invoice::with(['invoice_items', 'countries:id,country_name,phone_code,currency,currency_symbol', 'states:id,country_id,state_name', 'company:id,company_name,account_code,email,mobile,billing_address,city,zip', 'payments'])
-                    ->select('*')
-                    ->whereHas('payments', function ($query) {
-                        $query->where('payment_type', '!=', 'Added to Wallet');
-                    })
-                    ->where('company_id', $user->company_id)
-                    ->where('payment_status', 'Paid')
-                    ->where('id', $invoice_get_id);
-            } else {
-                $getinvoicedata = Invoice::with(['invoice_items', 'countries:id,country_name,phone_code,currency,currency_symbol', 'states:id,country_id,state_name', 'company:id,company_name,account_code,email,mobile,billing_address,city,zip', 'payments'])
-                    ->select('*')
-                    ->where('company_id', $user->company_id)
-                    ->where('payment_status', 'Paid')
-                    ->whereHas('payments', function ($query) {
-                        $query->where('payment_type', '!=', 'Added to Wallet');
-                    });
+            if ($fromDate) {
+                $query->where('updated_at', '>=', $fromDate);
+            }
+            if ($toDate) {
+                $query->where('updated_at', '<=', $toDate);
+            }
 
-                if ($fromDate) {
-                    $getinvoicedata->where('updated_at', '>=', $fromDate);
-                }
-                if ($toDate) {
-                    $getinvoicedata->where('updated_at', '<=', $toDate);
-                }
-
-                if ($params !== "" || $request->has('from_date') || $request->has('to_date')) {
-                    $getinvoicedata->where(function ($query) use ($params) {
-                        $query->orWhere('invoice_id', 'LIKE', "%$params%")
-                            ->orWhere('invoice_amount', 'LIKE', "%$params%")
-                            ->orWhere('updated_at', 'LIKE', "%$params%")
-                            ->orWhereHas('company', function ($subQuery) use ($params) {
-                                $subQuery->where('company_name', 'LIKE', "%$params%")
-                                    ->orWhere('email', 'LIKE', "%{$params}%");
-                            })
-                            ->orWhereHas('payments', function ($subQuery) use ($params) {
-                                $subQuery->where('payment_type', 'LIKE', "%{$params}%")
-                                    ->orWhere('transaction_id', 'LIKE', "%{$params}%");
-                            })
-                            ->orWhereHas('countries', function ($subQuery) use ($params) {
-                                $subQuery->where('country_name', 'LIKE', "%{$params}%");
-                            });
-                    });
-                }
-
-                $getinvoicedata = $getinvoicedata->orderBy('id', 'DESC')
-                    ->paginate($perPageNo, ['*'], 'page');
+            if ($params !== "") {
+                $query->where(function ($query) use ($params) {
+                    $query->where('invoice_id', 'LIKE', "%$params%")
+                        ->orWhere('invoice_amount', 'LIKE', "%$params%")
+                        ->orWhere('updated_at', 'LIKE', "%$params%")
+                        ->orWhereHas('company', function ($subQuery) use ($params) {
+                            $subQuery->where('company_name', 'LIKE', "%$params%")
+                                ->orWhere('email', 'LIKE', "%{$params}%");
+                        })
+                        ->orWhereHas('payments', function ($subQuery) use ($params) {
+                            $subQuery->where('payment_type', 'LIKE', "%{$params}%")
+                                ->orWhere('transaction_id', 'LIKE', "%{$params}%");
+                        })
+                        ->orWhereHas('countries', function ($subQuery) use ($params) {
+                            $subQuery->where('country_name', 'LIKE', "%{$params}%");
+                        });
+                });
             }
         }
+        if (!in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+            $query->where('company_id', $user->company_id);
+        }
+        $getinvoicedata = $query->orderBy('id', 'DESC')->paginate($perPageNo, ['*'], 'page');
 
         if ($getinvoicedata->isNotEmpty()) {
-            $response = $getinvoicedata->toArray();
-            return $this->output(true, 'Success', $response, 200);
+            return $this->output(true, 'Success', $getinvoicedata->toArray(), 200);
         } else {
             return $this->output(true, 'No Record Found', []);
         }
@@ -420,96 +366,47 @@ class InvoiceController extends Controller
 
     public function getRechargehistoryInvoiceData(Request $request)
     {
-        $user  = \Auth::user();
+        $user = \Auth::user();
         $perPageNo = $request->filled('perpage') ? $request->perpage : 10;
-        $params      = $request->params ?? "";
-        $recharge_id = $request->id ?? NULL;
-        $fromDate = $request->get('from_date');
-        $toDate = $request->get('to_date');
-        if ($fromDate) {
-            $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $fromDate)->startOfDay();
-        }
-        if ($toDate) {
-            $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $toDate)->endOfDay();
-        }
-        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
-            if ($recharge_id) {
-                $getrechargehistorydata = RechargeHistory::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
-                    ->with('user:id,name,email')
-                    ->select('*')
-                    ->where('id', $recharge_id)->first();
-            } else {
-                if ($params !== "" || $request->has('from_date') || $request->has('to_date')) {
-                    $getrechargehistorydata = RechargeHistory::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
-                        ->with('user:id,name,email')
-                        ->select('*')
-                        ->where('recharged_by', 'LIKE', "%$params%");
+        $params = $request->params ?? "";
+        $recharge_id = $request->id ?? null;
+        $fromDate = $request->get('from_date') ? \Carbon\Carbon::createFromFormat('Y-m-d', $request->get('from_date'))->startOfDay() : null;
+        $toDate = $request->get('to_date') ? \Carbon\Carbon::createFromFormat('Y-m-d', $request->get('to_date'))->endOfDay() : null;
 
-                    if ($fromDate) {
-                        $getrechargehistorydata->where('updated_at', '>=', $fromDate);
-                    }
-                    if ($toDate) {
-                        $getrechargehistorydata->where('updated_at', '<=', $toDate);
-                    }
-                    $getrechargehistorydata->orWhereHas('company', function ($subQuery) use ($params) {
-                        $subQuery->where('company_name', 'LIKE', "%$params%")
-                            ->orWhere('email', 'LIKE', "%{$params}%");
-                    });
-                    $getrechargehistorydata->orWhereHas('user', function ($subQuery) use ($params) {
-                        $subQuery->where('name', 'LIKE', "%$params%")
-                            ->orWhere('email', 'LIKE', "%{$params}%");
-                    });
-                    $getrechargehistorydata = $getrechargehistorydata->orderBy('id', 'DESC')
-                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
-                } else {
-                    $getrechargehistorydata = RechargeHistory::select('*')->with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
-                        ->with('user:id,name,email')
-                        ->orderBy('id', 'DESC')
-                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
-                }
-            }
+        $query = RechargeHistory::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip', 'user:id,name,email');
+
+        if ($recharge_id) {
+            $query->where('id', $recharge_id);
         } else {
-            if ($recharge_id) {
-                $getrechargehistorydata = RechargeHistory::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
-                    ->with('user:id,name,email')
-                    ->select('*')
-                    ->where('id', $recharge_id)
-                    ->where('company_id', $user->company->id)->first();
-            } else {
-                if ($params !== "" || $request->has('from_date') || $request->has('to_date')) {
-                    $getrechargehistorydata = RechargeHistory::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
-                        ->with('user:id,name,email')
-                        ->select('*')->where('recharged_by', 'LIKE', "%$params%");
+            if ($params !== "") {
+                $query->where(function ($query) use ($params) {
+                    $query->where('recharged_by', 'LIKE', "%$params%")
+                        ->orWhereHas('company', function ($subQuery) use ($params) {
+                            $subQuery->where('company_name', 'LIKE', "%$params%")
+                                ->orWhere('email', 'LIKE', "%{$params}%");
+                        })
+                        ->orWhereHas('user', function ($subQuery) use ($params) {
+                            $subQuery->where('name', 'LIKE', "%$params%")
+                                ->orWhere('email', 'LIKE', "%{$params}%");
+                        });
+                });
+            }
 
-                    if ($fromDate) {
-                        $getrechargehistorydata->where('updated_at', '>=', $fromDate);
-                    }
-                    if ($toDate) {
-                        $getrechargehistorydata->where('updated_at', '<=', $toDate);
-                    }
-                    $getrechargehistorydata->orWhereHas('company', function ($subQuery) use ($params) {
-                        $subQuery->where('company_name', 'LIKE', "%$params%")
-                            ->orWhere('email', 'LIKE', "%{$params}%");
-                    });
-                    $getrechargehistorydata->orWhereHas('user', function ($subQuery) use ($params) {
-                        $subQuery->where('name', 'LIKE', "%$params%")
-                            ->orWhere('email', 'LIKE', "%{$params}%");
-                    });
-                    $getrechargehistorydata = $getrechargehistorydata->where('company_id', $user->company->id)->orderBy('id', 'DESC')
-                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
-                } else {
-                    $getrechargehistorydata = RechargeHistory::select('*')->with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
-                        ->with('user:id,name,email')
-                        ->where('company_id', $user->company->id)
-                        ->orderBy('id', 'DESC')
-                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
-                }
+            if ($fromDate) {
+                $query->where('updated_at', '>=', $fromDate);
+            }
+            if ($toDate) {
+                $query->where('updated_at', '<=', $toDate);
+            }
+            if (!in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                $query->where('company_id', $user->company->id);
             }
         }
+
+        $getrechargehistorydata = $query->orderBy('id', 'DESC')->paginate($perPageNo);
 
         if ($getrechargehistorydata->isNotEmpty()) {
-            $response = $getrechargehistorydata->toArray();
-            return $this->output(true, 'Success', $response, 200);
+            return $this->output(true, 'Success', $getrechargehistorydata->toArray(), 200);
         } else {
             return $this->output(true, 'No Record Found');
         }
