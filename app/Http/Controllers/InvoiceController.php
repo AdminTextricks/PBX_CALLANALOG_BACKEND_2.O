@@ -442,7 +442,8 @@ class InvoiceController extends Controller
                 if ($params !== "" || $request->has('from_date') || $request->has('to_date')) {
                     $getrechargehistorydata = RechargeHistory::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
                         ->with('user:id,name,email')
-                        ->select('*')->where('recharged_by', 'LIKE', "%$params%");
+                        ->select('*')
+                        ->where('recharged_by', 'LIKE', "%$params%");
 
                     if ($fromDate) {
                         $getrechargehistorydata->where('updated_at', '>=', $fromDate);
@@ -461,7 +462,8 @@ class InvoiceController extends Controller
                     $getrechargehistorydata = $getrechargehistorydata->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 } else {
-                    $getrechargehistorydata = RechargeHistory::select('*')->with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')->with('user:id,name,email')
+                    $getrechargehistorydata = RechargeHistory::select('*')->with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
+                        ->with('user:id,name,email')
                         ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 }
@@ -469,8 +471,10 @@ class InvoiceController extends Controller
         } else {
             if ($recharge_id) {
                 $getrechargehistorydata = RechargeHistory::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
-                    ->select('*')->with('user:id,name,email')
-                    ->where('id', $recharge_id)->where('company_id', $user->company->id)->first();
+                    ->with('user:id,name,email')
+                    ->select('*')
+                    ->where('id', $recharge_id)
+                    ->where('company_id', $user->company->id)->first();
             } else {
                 if ($params !== "" || $request->has('from_date') || $request->has('to_date')) {
                     $getrechargehistorydata = RechargeHistory::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
@@ -494,7 +498,9 @@ class InvoiceController extends Controller
                     $getrechargehistorydata = $getrechargehistorydata->where('company_id', $user->company->id)->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 } else {
-                    $getrechargehistorydata = RechargeHistory::select('*')->with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')->with('user:id,name,email')->where('company_id', $user->company->id)
+                    $getrechargehistorydata = RechargeHistory::select('*')->with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
+                        ->with('user:id,name,email')
+                        ->where('company_id', $user->company->id)
                         ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 }
