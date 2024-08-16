@@ -478,6 +478,7 @@ class PaymentController extends Controller
                     //Recharge History Update::
                     $rechargeHistory_data = RechargeHistory::create([
                         'company_id' => $user->company->id,
+                        'user_id' => $user->id,
                         'invoice_id' => $createinvoice->id,
                         'invoice_number' => $createinvoice->invoice_id,
                         'current_balance' => $user_payment->balance,

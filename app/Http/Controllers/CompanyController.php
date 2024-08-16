@@ -452,6 +452,7 @@ class CompanyController extends Controller
 
                     $rechargeHistory_data = RechargeHistory::create([
                         'company_id' => $request->company_id,
+                        'user_id'    => $user->id,
                         'invoice_id' => 0,
                         'invoice_number' => 'Added by Admin',
                         'current_balance' => $companydataforbalanceupdate->balance,

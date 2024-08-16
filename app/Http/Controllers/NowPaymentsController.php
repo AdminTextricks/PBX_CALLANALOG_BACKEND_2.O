@@ -320,6 +320,7 @@ class NowPaymentsController extends Controller
                 $rechargeHistory_data = RechargeHistory::create([
 
                     'company_id' => $companydata->id,
+                    'user_id' => $user->id,
                     'invoice_id' => $payment->invoice_id,
                     'invoice_number' => $payment->invoice_number,
                     'current_balance' => $companydata->balance,
