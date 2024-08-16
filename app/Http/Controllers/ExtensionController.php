@@ -11,6 +11,8 @@ use App\Models\Invoice;
 use App\Models\Tfn;
 use App\Models\InvoiceItems;
 use App\Models\Payments;
+use App\Models\RingMember;
+use App\Models\QueueMember;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -368,6 +370,8 @@ class ExtensionController extends Controller
 				$resdelete = $Extension->delete();
                 if ($resdelete) {
                     Cart::where('item_id', '=', $id)->delete();
+                    RingMember::where('extension', $Extension->name)->delete();
+                    QueueMember::where('membername', $Extension->name)->delete();
                     DB::commit();
                     return $this->output(true,'Success',200);
                 } else {
@@ -536,7 +540,7 @@ class ExtensionController extends Controller
                     'country_id'=> 'required|numeric',
                     'company_id'=> 'required|numeric',
                     'name'      => 'required|unique:extensions,name,' . $Extension->id,
-                    'callbackextension' => 'required|unique:extensions,callbackextension,' . $Extension->id,
+                    'callbackextension' => 'required',
                     'agent_name'=> 'required',
                     'secret'    => 'required',
                     'barge'     => 'required|in:0,1',
@@ -561,6 +565,12 @@ class ExtensionController extends Controller
                     ->where('id', '!=', $id)
                     ->first();
                 if (!$ExtensionOld) {
+                    $Extension_intercom = Extension::where('callbackextension', $request->callbackextension)
+                    ->where('company_id', $request->company_id)->first();
+                    if ($Extension_intercom) {
+                        DB::commit();
+                        return $this->output(false, 'Intercom number already exists with us. Please try again with different!.', [], 409);
+                    }
                     $VoiceMail = VoiceMail::where('mailbox', $request->name)->first();
                     if ($VoiceMail) {
                         $VoiceMail->delete();
@@ -965,6 +975,8 @@ class ExtensionController extends Controller
                             $resdelete = $Extension->delete();
                             if ($resdelete) {
                                 Cart::where('item_id', '=', $id)->delete();
+                                RingMember::where('extension', $Extension->name)->delete();
+                                QueueMember::where('membername', $Extension->name)->delete();
                                 DB::commit();
                                 //return $this->output(true,'Success',200);
                             } else {
