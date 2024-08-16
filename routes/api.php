@@ -31,6 +31,7 @@ use App\Http\Controllers\QueueController;
 use App\Http\Controllers\ConferenceController;
 use App\Http\Controllers\IvrMediaController;
 use App\Http\Controllers\IvrController;
+use App\Http\Controllers\IvrOptionController;
 use App\Http\Controllers\CdrController;
 use App\Http\Controllers\ResellerCommissionController;
 use App\Http\Controllers\OneGoUserController;
@@ -346,6 +347,15 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/{id?}', [IvrController::class, 'getAllIvrList']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [IvrController::class, 'getIvrListByCompanyAndCountry']);
 		Route::delete('/{id}', [IvrController::class,'deleteIvr']);
+	});
+
+	#IVR Options Manage
+	Route::group(['prefix'=> 'ivr-options'], function () {
+		Route::post('/', [IvrOptionController::class,'addIvrOption']);
+		Route::put('/{id}', [IvrOptionController::class,'editIvrOption']);
+		Route::delete('/{id}', [IvrOptionController::class,'removeIvrOption']);	
+		Route::get('/{company_id}', [IvrOptionController::class,'getIvroptionsByCompanyId']);		
+	
 	});
 
 	#CDR 
