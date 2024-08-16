@@ -153,7 +153,8 @@ class OneGoUserController extends Controller
                         $TotalItemPrice = $item_price * count($extension_name);
                         $item_ids = [];
                         $status = '0';
-                        $startingdate = $expirationdate = $host = $sip_temp = NULL;
+                        $startingdate = $expirationdate = $host = NULL;
+                        $sip_temp = 'WEBRTC';
                         if ($Company->plan_id == 2) {
                             $status = '1';
                             $startingdate = Carbon::now();
@@ -205,7 +206,7 @@ class OneGoUserController extends Controller
                             $Extension = Extension::create($data);
                             $response = $Extension->toArray();
                             $item_ids[] = $Extension->id;
-
+                            
                             $addExtensionFile = config('app.webrtc_template_url');
                             $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
                             $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
