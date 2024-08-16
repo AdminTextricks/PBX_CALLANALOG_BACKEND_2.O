@@ -566,7 +566,7 @@ class ExtensionController extends Controller
                     ->first();
                 if (!$ExtensionOld) {
                     $Extension_intercom = Extension::where('callbackextension', $request->callbackextension)
-                    ->where('company_id', $request->company_id)->first();
+                    ->where('company_id', $request->company_id)->where('id', '!=', $id)->first();
                     if ($Extension_intercom) {
                         DB::commit();
                         return $this->output(false, 'Intercom number already exists with us. Please try again with different!.', [], 409);
