@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('recharge_histories', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('company_id');
+            $table->unsignedBigInteger('user_id');
             $table->integer('invoice_id');
             $table->string('invoice_number');
             $table->decimal('current_balance', total: 10, places: 2);
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->string('recharged_by');
             $table->timestamps();
             $table->foreign('company_id')->references('id')->on('companies');
+            $table->foreign('user_id')->references('id')->on('users');
         });
     }
 
