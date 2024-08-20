@@ -220,7 +220,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/{id?}', [ExtensionController::class, 'getAllExtensions']);
 		Route::put('/{id}', [ExtensionController::class, 'updateExtension']);	
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ExtensionController::class, 'getExtensionsByCountryIdAndCompanyId']);		
-		Route::post('/adToCart', [ExtensionController::class, 'extensionAddToCArt']);
+		//Route::post('/adToCart', [ExtensionController::class, 'extensionAddToCArt']);
 		Route::delete('/{id}', [ExtensionController::class, 'deleteExtension']);
 		Route::delete('/', [ExtensionController::class, 'multipleDeleteExtension']);
 		
