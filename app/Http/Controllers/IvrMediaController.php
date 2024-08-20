@@ -230,7 +230,13 @@ class IvrMediaController extends Controller
                 if ($params != "") {
                     $data = IvrMedia::with('company:id,company_name,email,mobile')
                         ->where('name', 'LIKE', "%$params%")
-                        ->orWhere('file_ext', 'LIKE', "%$params%")
+                        ->orWhere('media_file', 'LIKE', "%$params%")
+                        ->orWhereHas('company', function ($query) use ($params) {
+                            $query->where('company_name', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('company', function ($query) use ($params) {
+                            $query->where('email', 'like', "%{$params}%");
+                        })
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
                 } else {
                     $data = IvrMedia::with('company:id,company_name,email,mobile')
@@ -251,8 +257,10 @@ class IvrMediaController extends Controller
                 if ($params != "") {
                     $data = IvrMedia::with('company:id,company_name,email,mobile')
                         ->where('company_id', '=',  $user->company_id)
-                        ->orWhere('name', 'LIKE', "%$params%")
-                        ->orWhere('file_ext', 'LIKE', "%$params%")
+                        ->where(function($query) use($params) {
+							$query->where('name', 'like', "%{$params}%")
+                            ->orWhere('media_file', 'LIKE', "%$params%");							
+						})
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
                 } else {
                     $data = IvrMedia::with('company:id,company_name,email,mobile')
