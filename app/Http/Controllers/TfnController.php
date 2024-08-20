@@ -324,7 +324,7 @@ class TfnController extends Controller
                 });
             } elseif (!empty($options)) {
                 if ($options == 5) {
-                    $query->where('company_id', '>', 0)->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0);
+                    $query->where('company_id', '>', 0)->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0)->where('expirationdate', '<', Carbon::now());
                 } elseif ($options == 1) {
                     $query->where('reserved', '=', '0')->where('activated', '=', '0')->where('status', '=', 1);
                 } elseif ($options == 2) {
