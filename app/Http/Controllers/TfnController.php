@@ -288,7 +288,7 @@ class TfnController extends Controller
                                 ->orWhere('destination_id', 'like', "%{$params}%");
                         });
                 });
-            } elseif ($activated !== "" && $reserved !== "" && $status !== "" && $company_id !== "") {
+            } elseif ($activated !== "" && $reserved !== "" && $status !== "") {
                 $query->where(function ($query) use ($activated, $reserved, $status) {
                     if ($activated !== "") {
                         $query->where('activated', 'LIKE', "%{$activated}%");
