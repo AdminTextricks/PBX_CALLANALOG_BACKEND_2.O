@@ -86,11 +86,30 @@ class QueueController extends Controller
                         ->with('country:id,country_name')
                         ->where('id', $Queue_id)->orderBy('id', 'DESC')->get();
 			} else {
-                $data = Queue::select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context','description','strategy', 'status')
-                        ->with('company:id,company_name,email,mobile')
-                        ->with('country:id,country_name')
-						->orderBy('id', 'DESC')
-                        ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+				if ($params != "") {
+					$data = Queue::select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context','description','strategy', 'status')
+							->with('company:id,company_name,email,mobile')
+							->with('country:id,country_name')
+							->orWhere('name', 'LIKE', "%$params%")
+							->orWhereHas('company', function ($query) use ($params) {
+								$query->where('company_name', 'like', "%{$params}%");
+							})
+							->orWhereHas('company', function ($query) use ($params) {
+								$query->where('email', 'like', "%{$params}%");
+							})
+							->orWhereHas('country', function ($query) use ($params) {
+								$query->where('country_name', 'like', "%{$params}%");
+							})
+							->orderBy('id', 'DESC')
+							->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+				}else{
+					$data = Queue::select('id','company_id','country_id','name','queue_name','musiconhold', 'timeout', 'context','description','strategy', 'status')
+							->with('company:id,company_name,email,mobile')
+							->with('country:id,country_name')
+							->orderBy('id', 'DESC')
+							->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+				}
+                
 			}
 		} else {
             $Queue_id = $request->id ?? NULL;
@@ -108,6 +127,12 @@ class QueueController extends Controller
 						->with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
 						->where('company_id', '=',  $user->company_id)
+						->where(function($query) use($params) {
+							$query->where('name', 'like', "%{$params}%")
+							->orWhereHas('country', function ($query) use ($params) {
+								$query->where('country_name', 'like', "%{$params}%");
+							});
+						})
 						->orderBy('id', 'DESC')
 						//->orWhere('did_number', 'LIKE', "%$params%")
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
