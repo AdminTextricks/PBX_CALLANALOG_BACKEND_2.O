@@ -309,7 +309,6 @@ class TfnController extends Controller
             } elseif (!empty($params)) {
                 $query->where(function ($query) use ($params, $user) {
                     $query->where('tfn_number', 'LIKE', "%$params%")
-                        ->orWhere('tfn_type_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
                         ->orWhere('activated', 'LIKE', "%$params%")
                         ->orWhere('reserved', 'LIKE', "%$params%")
