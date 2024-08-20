@@ -85,16 +85,34 @@ class RingGroupController extends Controller
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->where('id', $RingGroup_id)->orderBy('id', 'DESC')->get();
-			} else {				
-                $data = RingGroup::select()
-                        ->with('company:id,company_name,email,mobile')
+			} else {		
+				if ($params != "") {
+					$data = RingGroup::with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
+						->orWhere('ringno', 'LIKE', "%$params%")
+						->orWhereHas('company', function ($query) use ($params) {
+                            $query->where('company_name', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('company', function ($query) use ($params) {
+                            $query->where('email', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('country', function ($query) use ($params) {
+                            $query->where('country_name', 'like', "%{$params}%");
+                        })
 						->orderBy('id', 'DESC')
-                        ->paginate(
-                        $perPage = $perPageNo,
-                        $columns = ['*'],
-                        $pageName = 'page'
-                    );
+						
+						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+				} else {		
+					$data = RingGroup::select()
+							->with('company:id,company_name,email,mobile')
+							->with('country:id,country_name')
+							->orderBy('id', 'DESC')
+							->paginate(
+							$perPage = $perPageNo,
+							$columns = ['*'],
+							$pageName = 'page'
+						);
+				}
 			}
 		} else {
             $RingGroup_id = $request->id ?? NULL;
@@ -111,6 +129,12 @@ class RingGroupController extends Controller
 					$data = RingGroup::with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
 						->where('company_id', '=',  $user->company_id)
+						->where(function($query) use($params) {
+							$query->where('ringno', 'like', "%{$params}%")
+							->orWhereHas('country', function ($query) use ($params) {
+								$query->where('country_name', 'like', "%{$params}%");
+							});
+						})
 						->orderBy('id', 'DESC')
 						//->orWhere('did_number', 'LIKE', "%$params%")
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
