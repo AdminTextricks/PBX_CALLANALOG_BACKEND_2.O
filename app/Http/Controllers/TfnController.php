@@ -283,16 +283,16 @@ class TfnController extends Controller
                         });
                 });
             } elseif (!empty($options)) {
-                if ($options == 0) {
-                    $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0);
+                if ($options == 5) {
+                    $query->where('company_id', '>', 0)->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0)->where('expirationdate', '<', Carbon::now());
                 } elseif ($options == 1) {
                     $query->where('reserved', '=', '0')->where('activated', '=', '0')->where('status', '=', 1);
                 } elseif ($options == 2) {
-                    $query->where('reserved', '=', '1')->where('activated', '=', '1')->where('status', '=', 1);
+                    $query->where('company_id', '>', 0)->where('reserved', '=', '1')->where('activated', '=', '1')->where('status', '=', 1);
                 } elseif ($options == 3) {
-                    $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
+                    $query->where('company_id', '=', 0)->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
                 } elseif ($options == 4) {
-                    $query->whereBetween('expirationdate', [Carbon::now(), Carbon::now()->addDays(3)]);
+                    $query->where('reserved', '=', '1')->whereBetween('expirationdate', [Carbon::now(), Carbon::now()->addDays(3)]);
                 }
             }
         } else {
@@ -323,14 +323,14 @@ class TfnController extends Controller
                         });
                 });
             } elseif (!empty($options)) {
-                if ($options == 0) {
-                    $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0);
+                if ($options == 5) {
+                    $query->where('company_id', '>', 0)->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0);
                 } elseif ($options == 1) {
                     $query->where('reserved', '=', '0')->where('activated', '=', '0')->where('status', '=', 1);
                 } elseif ($options == 2) {
-                    $query->where('reserved', '=', '1')->where('activated', '=', '1')->where('status', '=', 1);
+                    $query->where('company_id', '>', 0)->where('reserved', '=', '1')->where('activated', '=', '1')->where('status', '=', 1);
                 } elseif ($options == 3) {
-                    $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
+                    $query->where('company_id', '=', 0)->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
                 } elseif ($options == 4) {
                     $query->whereBetween('expirationdate', [Carbon::now(), Carbon::now()->addDays(3)]);
                 }
