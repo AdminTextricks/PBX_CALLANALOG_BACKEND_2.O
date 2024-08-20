@@ -99,8 +99,7 @@ class RingGroupController extends Controller
                         ->orWhereHas('country', function ($query) use ($params) {
                             $query->where('country_name', 'like', "%{$params}%");
                         })
-						->orderBy('id', 'DESC')
-						
+						->orderBy('id', 'DESC')						
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {		
 					$data = RingGroup::select()
