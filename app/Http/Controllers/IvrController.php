@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\LOG;
 use Illuminate\Support\Facades\DB;
 use App\Models\Ivr;
+use App\Models\IvrOption;
 use Validator;
 
 class IvrController extends Controller
@@ -231,6 +232,7 @@ class IvrController extends Controller
             if($Ivr){
 				$resdelete = $Ivr->delete();
                 if ($resdelete) {
+                    IvrOption::where('ivr_id', $id)->delete();
                     DB::commit();
                     return $this->output(true,'Success',200);
                 } else {

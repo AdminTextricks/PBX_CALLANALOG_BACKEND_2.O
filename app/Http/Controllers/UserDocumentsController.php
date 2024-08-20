@@ -84,8 +84,7 @@ class UserDocumentsController extends Controller
         $user = \Auth::user();
         $perPageNo = isset($request->perpage) ? $request->perpage : 10;
         $params = $request->params ?? "";
-
-        if ($request->user()->hasRole('super-admin') || $request->user()->hasRole('support') || $request->user()->hasRole('noc')) {
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
             $user_id = $request->id ?? NULL;
             if ($user_id) {
                 $UserDocuments_data = UserDocuments::with('user:id,name,email')
@@ -94,16 +93,37 @@ class UserDocumentsController extends Controller
                                 ->where('user_id', $user_id)
                                 ->get();
             } else {                
-                $UserDocuments_data = UserDocuments::select()                    
-                    ->with('user:id,name,email')
-                    ->with('company:id,company_name,email')
-                    ->orderBy('id', 'DESC')
-                    ->paginate(
-                    $perPage = $perPageNo,
-                    $columns = ['*'],
-                    $pageName = 'page'
-                );
-                
+                if ($params != "") {
+                    $UserDocuments_data = UserDocuments::select()                    
+                                ->with('user:id,name,email')
+                                ->with('company:id,company_name,email')
+                                ->orWhere('file_name', 'like', "%$params%")
+                                ->orWhereHas('company', function ($query) use ($params) {
+                                    $query->where('company_name', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('company', function ($query) use ($params) {
+                                    $query->where('email', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('user', function ($query) use ($params) {
+                                    $query->where('name', 'like', "%{$params}%");
+                                })
+                                ->orderBy('id', 'DESC')
+                                ->paginate(
+                                $perPage = $perPageNo,
+                                $columns = ['*'],
+                                $pageName = 'page'
+                            );
+                }else{                
+                    $UserDocuments_data = UserDocuments::select()
+                        ->with('user:id,name,email')
+                        ->with('company:id,company_name,email')
+                        ->orderBy('id', 'DESC')
+                        ->paginate(
+                        $perPage = $perPageNo,
+                        $columns = ['*'],
+                        $pageName = 'page'
+                    );
+                }                
             }
         } 
         
@@ -115,16 +135,30 @@ class UserDocumentsController extends Controller
                                 ->where('company_id', '=',  $user->company_id)
                                 ->where('user_id', $user_id)->get();
             } else {              
-                $UserDocuments_data = UserDocuments::select()
-                    ->with('company:id,company_name,email')
-                    ->with('user:id,name,email')
-                    ->where('user_id', '=',  $user->id)
-                    ->orderBy('id', 'DESC')
-                    ->paginate(
-                        $perPage = $perPageNo,
-                        $columns = ['*'],
-                        $pageName = 'page'
-                    );                
+                if ($params != "") {
+                    $UserDocuments_data = UserDocuments::select()                    
+                                ->with('user:id,name,email')
+                                ->with('company:id,company_name,email')
+                                ->where('extensions.company_id', '=', $user->company_id) 
+                                ->orWhere('file_name', 'like', "%$params%")                                    
+                                ->orderBy('id', 'DESC')
+                                ->paginate(
+                                $perPage = $perPageNo,
+                                $columns = ['*'],
+                                $pageName = 'page'
+                            );
+                }else{ 
+                    $UserDocuments_data = UserDocuments::select()
+                                ->with('company:id,company_name,email')
+                                ->with('user:id,name,email')
+                                ->where('user_id', '=',  $user->id)
+                                ->orderBy('id', 'DESC')
+                                ->paginate(
+                                    $perPage = $perPageNo,
+                                    $columns = ['*'],
+                                    $pageName = 'page'
+                                ); 
+                }               
             }
         }
         if ($UserDocuments_data->isNotEmpty()) {
