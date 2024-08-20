@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use function Laravel\Prompts\select;
+use Carbon\Carbon;
 
 class TfnController extends Controller
 {
@@ -291,7 +292,7 @@ class TfnController extends Controller
                 } elseif ($options == 3) {
                     $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
                 } elseif ($options == 4) {
-                    $query->whereBetween('expirationdate', [now(), now()->addDays(3)]);
+                    $query->whereBetween('expirationdate', [Carbon::now(), Carbon::now()->addDays(3)]);
                 }
             }
         } else {
@@ -331,7 +332,7 @@ class TfnController extends Controller
                 } elseif ($options == 3) {
                     $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
                 } elseif ($options == 4) {
-                    $query->whereBetween('expirationdate', [now(), now()->addDays(3)]);
+                    $query->whereBetween('expirationdate', [Carbon::now(), Carbon::now()->addDays(3)]);
                 }
             }
         }
