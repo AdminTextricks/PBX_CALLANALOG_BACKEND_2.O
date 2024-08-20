@@ -243,12 +243,8 @@ class TfnController extends Controller
         $user = \Auth::user();
         $perPageNo = $request->get('perpage', 10);
         $params = $request->get('params', "");
-        $activated = $request->get('activated', "");
-        $company_id = $request->get('company_id', "");
-        $reserved = $request->get('reserved', "");
-        $status = $request->get('status', "");
         $tfn_id = $request->get('id', null);
-
+        $options = $request->get('options', null);
         $query = Tfn::with([
             'countries:id,country_name,phone_code,currency_symbol',
             'trunks:id,type,name',
@@ -269,9 +265,6 @@ class TfnController extends Controller
                     $query->where('tfn_number', 'LIKE', "%$params%")
                         ->orWhere('company_id', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
-                        ->orWhere('activated', 'LIKE', "%$params%")
-                        ->orWhere('reserved', 'LIKE', "%$params%")
-                        ->orWhere('status', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($subQuery) use ($params) {
                             $subQuery->where('company_name', 'like', "%{$params}%");
                         })
@@ -288,18 +281,16 @@ class TfnController extends Controller
                                 ->orWhere('destination_id', 'like', "%{$params}%");
                         });
                 });
-            } elseif ($activated !== "" && $reserved !== "" && $status !== "") {
-                $query->where(function ($query) use ($activated, $reserved, $status) {
-                    if ($activated !== "") {
-                        $query->where('activated', 'LIKE', "%{$activated}%");
-                    }
-                    if ($reserved !== "") {
-                        $query->where('reserved', 'LIKE', "%{$reserved}%");
-                    }
-                    if ($status !== "") {
-                        $query->where('status', 'LIKE', "%{$status}%");
-                    }
-                });
+            } elseif ($options == 0) {
+                $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0);
+            } elseif ($options == 1) {
+                $query->where('reserved', '=', '0')->where('activated', '=', '0')->where('status', '=', 1);
+            } elseif ($options == 2) {
+                $query->where('reserved', '=', '1')->where('activated', '=', '1')->where('status', '=', 1);
+            } elseif ($options == 3) {
+                $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
+            } elseif ($options == 4) {
+                $query->where('reserved', '=', '1')->whereBetween('expirationdate', [now(), now()->addDays(3)]);
             }
         } else {
             $query->where('company_id', $user->company_id);
@@ -309,9 +300,8 @@ class TfnController extends Controller
             } elseif (!empty($params)) {
                 $query->where(function ($query) use ($params, $user) {
                     $query->where('tfn_number', 'LIKE', "%$params%")
+                        ->orWhere('tfn_type_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
-                        ->orWhere('activated', 'LIKE', "%$params%")
-                        ->orWhere('reserved', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($subQuery) use ($params) {
                             $subQuery->where('company_name', 'like', "%{$params}%");
                         })
@@ -329,18 +319,16 @@ class TfnController extends Controller
                                 ->orWhere('destination_id', 'like', "%{$params}%");
                         });
                 });
-            } elseif ($activated !== "" && $reserved !== "" && $status !== "") {
-                $query->where(function ($query) use ($activated, $reserved, $status) {
-                    if ($activated !== "") {
-                        $query->where('activated', 'LIKE', "%{$activated}%");
-                    }
-                    if ($reserved !== "") {
-                        $query->where('reserved', 'LIKE', "%{$reserved}%");
-                    }
-                    if ($status !== "") {
-                        $query->where('status', 'LIKE', "%{$status}%");
-                    }
-                });
+            } elseif ($options == 0) {
+                $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0);
+            } elseif ($options == 1) {
+                $query->where('reserved', '=', '0')->where('activated', '=', '0')->where('status', '=', 1);
+            } elseif ($options == 2) {
+                $query->where('reserved', '=', '1')->where('activated', '=', '1')->where('status', '=', 1);
+            } elseif ($options == 3) {
+                $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
+            } elseif ($options == 4) {
+                $query->where('reserved', '=', '1')->whereBetween('expirationdate', [now(), now()->addDays(3)]);
             }
         }
 
