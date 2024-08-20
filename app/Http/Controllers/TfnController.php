@@ -281,16 +281,18 @@ class TfnController extends Controller
                                 ->orWhere('destination_id', 'like', "%{$params}%");
                         });
                 });
-            } elseif ($options == 0) {
-                $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0);
-            } elseif ($options == 1) {
-                $query->where('reserved', '=', '0')->where('activated', '=', '0')->where('status', '=', 1);
-            } elseif ($options == 2) {
-                $query->where('reserved', '=', '1')->where('activated', '=', '1')->where('status', '=', 1);
-            } elseif ($options == 3) {
-                $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
-            } elseif ($options == 4) {
-                $query->where('reserved', '=', '1')->whereBetween('expirationdate', [now(), now()->addDays(3)]);
+            } elseif (!empty($options)) {
+                if ($options == 0) {
+                    $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0);
+                } elseif ($options == 1) {
+                    $query->where('reserved', '=', '0')->where('activated', '=', '0')->where('status', '=', 1);
+                } elseif ($options == 2) {
+                    $query->where('reserved', '=', '1')->where('activated', '=', '1')->where('status', '=', 1);
+                } elseif ($options == 3) {
+                    $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
+                } elseif ($options == 4) {
+                    $query->whereBetween('expirationdate', [now(), now()->addDays(3)]);
+                }
             }
         } else {
             $query->where('company_id', $user->company_id);
@@ -319,16 +321,18 @@ class TfnController extends Controller
                                 ->orWhere('destination_id', 'like', "%{$params}%");
                         });
                 });
-            } elseif ($options == 0) {
-                $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0);
-            } elseif ($options == 1) {
-                $query->where('reserved', '=', '0')->where('activated', '=', '0')->where('status', '=', 1);
-            } elseif ($options == 2) {
-                $query->where('reserved', '=', '1')->where('activated', '=', '1')->where('status', '=', 1);
-            } elseif ($options == 3) {
-                $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
-            } elseif ($options == 4) {
-                $query->where('reserved', '=', '1')->whereBetween('expirationdate', [now(), now()->addDays(3)]);
+            } elseif (!empty($options)) {
+                if ($options == 0) {
+                    $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0);
+                } elseif ($options == 1) {
+                    $query->where('reserved', '=', '0')->where('activated', '=', '0')->where('status', '=', 1);
+                } elseif ($options == 2) {
+                    $query->where('reserved', '=', '1')->where('activated', '=', '1')->where('status', '=', 1);
+                } elseif ($options == 3) {
+                    $query->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
+                } elseif ($options == 4) {
+                    $query->whereBetween('expirationdate', [now(), now()->addDays(3)]);
+                }
             }
         }
 
@@ -376,6 +380,7 @@ class TfnController extends Controller
             return $this->output(true, 'No Record Found', [], 200);
         }
     }
+
 
     public function getAllActiveTfns(Request $request)
     {
