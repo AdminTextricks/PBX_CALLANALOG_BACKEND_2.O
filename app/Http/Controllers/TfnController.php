@@ -241,184 +241,113 @@ class TfnController extends Controller
     public function getAllTfn(Request $request)
     {
         $user = \Auth::user();
-        $perPageNo = isset($request->perpage) ? $request->perpage : 10;
-        $params = $request->params ?? "";
+        $perPageNo = $request->get('perpage', 10);
+        $params = $request->get('params', "");
+        $activated = $request->get('activated', "");
+        $company_id = $request->get('company_id', "");
+        $reserved = $request->get('reserved', "");
+        $status = $request->get('status', "");
+        $tfn_id = $request->get('id', null);
 
-        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
-            $tfn_id = $request->id ?? NULL;
+        $query = Tfn::with([
+            'countries:id,country_name,phone_code,currency_symbol',
+            'trunks:id,type,name',
+            'company:id,company_name,email',
+            'tfn_groups:id,tfngroup_name',
+            'main_plans:id,name',
+            'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
+            'tfn_destinations.destinationType:id,destination_type'
+        ])
+            ->withTrashed()
+            ->orderBy('id', 'DESC');
+
+        if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
             if ($tfn_id) {
-                $tfngetAll = Tfn::with([
-                    'countries:id,country_name,phone_code,currency_symbol',
-                    'trunks:id,type,name',
-                    'company:id,company_name,email',
-                    'tfn_groups:id,tfngroup_name',
-                    'main_plans:id,name',
-                    'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
-                    'tfn_destinations.destinationType:id,destination_type'
-                ])
-                    ->select('*')->where('id', $tfn_id)->withTrashed()
-                    ->orderBy('id', 'DESC')
-                    ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
-            } else {
-                if ($params !== "") {
-                    $tfngetAll = Tfn::select('*')
-                        ->with([
-                            'countries:id,country_name,phone_code,currency_symbol',
-                            'trunks:id,type,name',
-                            'company:id,company_name,email',
-                            'tfn_groups:id,tfngroup_name',
-                            'main_plans:id,name',
-                            'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
-                            'tfn_destinations.destinationType:id,destination_type'
-                        ])
-                        ->where('tfn_number', 'LIKE', "%$params%")
+                $query->where('id', $tfn_id);
+            } elseif (!empty($params)) {
+                $query->where(function ($query) use ($params) {
+                    $query->where('tfn_number', 'LIKE', "%$params%")
+                        ->orWhere('company_id', 'LIKE', "%$params%")
                         ->orWhere('tfn_provider', 'LIKE', "%$params%")
                         ->orWhere('activated', 'LIKE', "%$params%")
                         ->orWhere('reserved', 'LIKE', "%$params%")
-                        ->orWhereHas('company', function ($query) use ($params) {
-                            $query->where('company_name', 'like', "%{$params}%")
-                                ->orWhere('email', 'like', "%{$params}%");
+                        ->orWhere('status', 'LIKE', "%$params%")
+                        ->orWhereHas('company', function ($subQuery) use ($params) {
+                            $subQuery->where('company_name', 'like', "%{$params}%");
                         })
-                        ->orWhereHas('countries', function ($query) use ($params) {
-                            $query->where('country_name', 'like', "%{$params}%");
+                        ->orWhereHas('countries', function ($subQuery) use ($params) {
+                            $subQuery->where('country_name', 'like', "%{$params}%");
                         })
-                        ->orWhereHas('trunks', function ($query) use ($params) {
-                            $query->where('name', 'like', "%{$params}%");
+                        ->orWhereHas('trunks', function ($subQuery) use ($params) {
+                            $subQuery->where('name', 'like', "%{$params}%");
                         })
-                        ->orWhereHas('tfn_destinations.destinationType', function ($query) use ($params) {
-                            $query->where('destination_type', 'like', "%{$params}%");
-                        })
-                        ->orWhereHas('tfn_destinations', function ($query) use ($params) {
-                            $query->where('destination_id', 'like', "%{$params}%")
-                                ->orWhereHas('queues', function ($subQuery) use ($params) {
-                                    $subQuery->where('name', 'like', "%{$params}%");
-                                })
-                                ->orWhereHas('extensions', function ($subQuery) use ($params) {
-                                    $subQuery->where('name', 'like', "%{$params}%");
-                                })
-                                ->orWhereHas('voiceMail', function ($subQuery) use ($params) {
-                                    $subQuery->where('fullname', 'like', "%{$params}%")
-                                        ->orWhere('email', 'like', "%{$params}%");
-                                })
-                                ->orWhereHas('conferences', function ($subQuery) use ($params) {
-                                    $subQuery->where('confno', 'like', "%{$params}%");
-                                })
-                                ->orWhereHas('ringGroups', function ($subQuery) use ($params) {
-                                    $subQuery->where('ringno', 'like', "%{$params}%");
-                                })
-                                ->orWhereHas('ivrs', function ($subQuery) use ($params) {
-                                    $subQuery->where('name', 'like', "%{$params}%");
-                                });
-                        })
-                        ->withTrashed()
-                        ->orderBy('id', 'DESC')
-                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
-                } else {
-                    $tfngetAll = Tfn::with([
-                        'countries:id,country_name,phone_code,currency_symbol',
-                        'trunks:id,type,name',
-                        'company:id,company_name,email',
-                        'tfn_groups:id,tfngroup_name',
-                        'main_plans:id,name',
-                        'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
-                        'tfn_destinations.destinationType:id,destination_type'
-                    ])
-                        ->withTrashed()
-                        ->select('*')
-                        ->orderBy('id', 'DESC')
-                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
-                }
+                        ->orWhereHas('tfn_destinations', function ($subQuery) use ($params) {
+                            $subQuery->whereHas('destinationType', function ($nestedQuery) use ($params) {
+                                $nestedQuery->where('destination_type', 'like', "%{$params}%");
+                            })
+                                ->orWhere('destination_id', 'like', "%{$params}%");
+                        });
+                });
+            } elseif ($activated !== "" && $reserved !== "" && $status !== "" && $company_id !== "") {
+                $query->where(function ($query) use ($activated, $reserved, $status) {
+                    if ($activated !== "") {
+                        $query->where('activated', 'LIKE', "%{$activated}%");
+                    }
+                    if ($reserved !== "") {
+                        $query->where('reserved', 'LIKE', "%{$reserved}%");
+                    }
+                    if ($status !== "") {
+                        $query->where('status', 'LIKE', "%{$status}%");
+                    }
+                });
             }
         } else {
-            $tfn_id = $request->id ?? NULL;
+            $query->where('company_id', $user->company_id);
+
             if ($tfn_id) {
-                $tfngetAll = Tfn::with([
-                    'countries:id,country_name,phone_code,currency_symbol',
-                    'trunks:id,type,name',
-                    'company:id,company_name,email',
-                    'tfn_groups:id,tfngroup_name',
-                    'main_plans:id,name',
-                    'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
-                    'tfn_destinations.destinationType:id,destination_type'
-                ])
-                    ->where('company_id', '=', $user->company_id)
-                    ->where('id', $tfn_id)
-                    ->orderBy('id', 'DESC')
-                    ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
-            } else {
-                if ($params !== "") {
-                    $tfngetAll = Tfn::select('*')
-                        ->with([
-                            'countries:id,country_name,phone_code,currency_symbol',
-                            'trunks:id,type,name',
-                            'company:id,company_name,email',
-                            'tfn_groups:id,tfngroup_name',
-                            'main_plans:id,name',
-                            'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
-                            'tfn_destinations.destinationType:id,destination_type'
-                        ])
-                        ->where(function ($query) use ($params, $user) {
-                            $query->where('tfn_number', 'LIKE', "%$params%")
-                                ->orWhere('tfn_provider', 'LIKE', "%$params%")
-                                ->orWhere('activated', 'LIKE', "%$params%")
-                                ->orWhere('reserved', 'LIKE', "%$params%")
-                                ->orWhereHas('company', function ($subQuery) use ($params) {
-                                    $subQuery->where('company_name', 'like', "%{$params}%")
-                                        ->orWhere('email', 'like', "%{$params}%");
-                                })
-                                ->orWhereHas('countries', function ($query) use ($params) {
-                                    $query->where('country_name', 'like', "%{$params}%");
-                                })
-                                ->orWhereHas('trunks', function ($subQuery) use ($params) {
-                                    $subQuery->where('name', 'like', "%{$params}%");
-                                })
-                                ->orWhereHas('tfn_destinations.destinationType', function ($subQuery) use ($params) {
-                                    $subQuery->where('destination_type', 'like', "%{$params}%");
-                                })
-                                ->orWhereHas('tfn_destinations', function ($subQuery) use ($params, $user) {
-                                    $subQuery->where('company_id', '=', $user->company_id)
-                                        ->where('destination_id', 'like', "%{$params}%")
-                                        ->orWhereHas('queues', function ($nestedQuery) use ($params) {
-                                            $nestedQuery->where('name', 'like', "%{$params}%");
-                                        })
-                                        ->orWhereHas('extensions', function ($nestedQuery) use ($params) {
-                                            $nestedQuery->where('name', 'like', "%{$params}%");
-                                        })
-                                        ->orWhereHas('voiceMail', function ($nestedQuery) use ($params) {
-                                            $nestedQuery->where('fullname', 'like', "%{$params}%")
-                                                ->orWhere('email', 'like', "%{$params}%");
-                                        })
-                                        ->orWhereHas('conferences', function ($nestedQuery) use ($params) {
-                                            $nestedQuery->where('confno', 'like', "%{$params}%");
-                                        })
-                                        ->orWhereHas('ringGroups', function ($nestedQuery) use ($params) {
-                                            $nestedQuery->where('ringno', 'like', "%{$params}%");
-                                        })
-                                        ->orWhereHas('ivrs', function ($nestedQuery) use ($params) {
-                                            $nestedQuery->where('name', 'like', "%{$params}%");
-                                        });
-                                });
+                $query->where('id', $tfn_id);
+            } elseif (!empty($params)) {
+                $query->where(function ($query) use ($params, $user) {
+                    $query->where('tfn_number', 'LIKE', "%$params%")
+                        ->orWhere('tfn_type_number', 'LIKE', "%$params%")
+                        ->orWhere('tfn_provider', 'LIKE', "%$params%")
+                        ->orWhere('activated', 'LIKE', "%$params%")
+                        ->orWhere('reserved', 'LIKE', "%$params%")
+                        ->orWhereHas('company', function ($subQuery) use ($params) {
+                            $subQuery->where('company_name', 'like', "%{$params}%");
                         })
-                        ->where('company_id', '=', $user->company_id)
-                        ->orderBy('id', 'DESC')
-                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
-                } else {
-                    $tfngetAll = Tfn::with([
-                        'countries:id,country_name,phone_code,currency_symbol',
-                        'trunks:id,type,name',
-                        'company:id,company_name,email',
-                        'tfn_groups:id,tfngroup_name',
-                        'main_plans:id,name',
-                        'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
-                        'tfn_destinations.destinationType:id,destination_type'
-                    ])
-                        ->where('company_id', '=', $user->company_id)
-                        ->orderBy('id', 'DESC')
-                        ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
-                }
+                        ->orWhereHas('countries', function ($subQuery) use ($params) {
+                            $subQuery->where('country_name', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('trunks', function ($subQuery) use ($params) {
+                            $subQuery->where('name', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('tfn_destinations', function ($subQuery) use ($params, $user) {
+                            $subQuery->where('company_id', '=', $user->company_id)
+                                ->whereHas('destinationType', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('destination_type', 'like', "%{$params}%");
+                                })
+                                ->orWhere('destination_id', 'like', "%{$params}%");
+                        });
+                });
+            } elseif ($activated !== "" && $reserved !== "" && $status !== "") {
+                $query->where(function ($query) use ($activated, $reserved, $status) {
+                    if ($activated !== "") {
+                        $query->where('activated', 'LIKE', "%{$activated}%");
+                    }
+                    if ($reserved !== "") {
+                        $query->where('reserved', 'LIKE', "%{$reserved}%");
+                    }
+                    if ($status !== "") {
+                        $query->where('status', 'LIKE', "%{$status}%");
+                    }
+                });
             }
         }
 
+        $tfngetAll = $query->paginate($perPageNo);
+
+        // Load additional relationships based on destination type
         $tfngetAll->each(function ($tfn) {
             $tfn->tfn_destinations->each(function ($destination) {
                 switch ($destination->destination_type_id) {
