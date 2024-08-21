@@ -267,7 +267,7 @@ class TfnController extends Controller
                 $query->where(function ($query) use ($params) {
                     $query->where('tfn_number', 'LIKE', "%$params%")
                         ->orWhere('company_id', 'LIKE', "%$params%")
-                        ->orWhere('tfn_provider', 'LIKE', "%$params%")
+                        //->orWhere('tfn_provider', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($subQuery) use ($params) {
                             $subQuery->where('company_name', 'like', "%{$params}%");
                         })
@@ -310,8 +310,8 @@ class TfnController extends Controller
             if (!empty($params)) {
                 $query->where(function ($query) use ($params, $user) {
                     $query->where('tfn_number', 'LIKE', "%$params%")
-                        ->orWhere('tfn_type_number', 'LIKE', "%$params%")
-                        ->orWhere('tfn_provider', 'LIKE', "%$params%")
+                        //->orWhere('tfn_type_number', 'LIKE', "%$params%")
+                        //->orWhere('tfn_provider', 'LIKE', "%$params%")
                         /* ->orWhereHas('company', function ($subQuery) use ($params) {
                             $subQuery->where('company_name', 'like', "%{$params}%");
                         }) */
