@@ -249,7 +249,7 @@ class TfnController extends Controller
         $query = Tfn::with([
             'countries:id,country_name,phone_code,currency_symbol',
             'trunks:id,type,name',
-            'company:id,company_name,email',
+            'company:id,company_name,email,balance',
             'tfn_groups:id,tfngroup_name',
             'main_plans:id,name',
             'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
