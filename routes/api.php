@@ -170,6 +170,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	# Tfn Number 
 	Route::group(['prefix' => 'tfn'], function () {
 		Route::post('/call-screen-action', [TfnController::class, 'callScreenAction']);
+		Route::post('/renew-tfn-number', [TfnController::class, 'assignTfnMainRenew']);
 		Route::get('/destination-type', [TfnController::class, 'destinationType']);
 		Route::post('/assign-tfn-number', [TfnController::class, 'assignTfnMain']);
 		Route::post('/assign-destination', [TfnController::class, 'assignDestinationType']);
