@@ -35,4 +35,9 @@ class Ivr extends Model
     {
         return $this->belongsTo(Country::class);
     }
+
+    public function IvrMedia()
+    {
+        return $this->belongsTo(IvrMedia::class,'ivr_media_id');
+    }
 }
