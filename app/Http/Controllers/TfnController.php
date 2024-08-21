@@ -261,7 +261,8 @@ class TfnController extends Controller
         if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
             if ($tfn_id) {
                 $query->where('id', $tfn_id);
-            } elseif (!empty($params)) {
+            }
+            if (!empty($params)) {
                 $query->where(function ($query) use ($params) {
                     $query->where('tfn_number', 'LIKE', "%$params%")
                         ->orWhere('company_id', 'LIKE', "%$params%")
@@ -282,7 +283,8 @@ class TfnController extends Controller
                                 ->orWhere('destination_id', 'like', "%{$params}%");
                         });
                 });
-            } elseif (!empty($options)) {
+            }
+            if (!empty($options)) {
                 if ($options == 5) {
                     $query->where('company_id', '>', 0)->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0)->where('expirationdate', '<', Carbon::now());
                 } elseif ($options == 1) {
@@ -300,7 +302,8 @@ class TfnController extends Controller
 
             if ($tfn_id) {
                 $query->where('id', $tfn_id);
-            } elseif (!empty($params)) {
+            } 
+            if (!empty($params)) {
                 $query->where(function ($query) use ($params, $user) {
                     $query->where('tfn_number', 'LIKE', "%$params%")
                         ->orWhere('tfn_type_number', 'LIKE', "%$params%")
@@ -322,7 +325,8 @@ class TfnController extends Controller
                                 ->orWhere('destination_id', 'like', "%{$params}%");
                         });
                 });
-            } elseif (!empty($options)) {
+            } 
+            if (!empty($options)) {
                 if ($options == 5) {
                     $query->where('company_id', '>', 0)->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0)->where('expirationdate', '<', Carbon::now());
                 } elseif ($options == 1) {
