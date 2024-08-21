@@ -154,8 +154,20 @@ class IvrController extends Controller
 				if ($params != "") {
 					$data = Ivr::with('company:id,company_name,email,mobile')
                             ->with('country:id,country_name')
+                            ->with('IvrMedia:id,name,media_file,file_ext')
                             ->where('name', 'LIKE', "%$params%")
-		    				->orWhere('file_ext', 'LIKE', "%$params%")
+                            ->orWhereHas('IvrMedia', function ($query) use ($params) {
+                                $query->where('name', 'like', "%{$params}%");
+                            })
+		    				->orWhereHas('company', function ($query) use ($params) {
+                                $query->where('company_name', 'like', "%{$params}%");
+                            })
+                            ->orWhereHas('company', function ($query) use ($params) {
+                                $query->where('email', 'like', "%{$params}%");
+                            })
+                            ->orWhereHas('country', function ($query) use ($params) {
+                                $query->where('country_name', 'like', "%{$params}%");
+                            })
 			    			->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
 					$data = Ivr::with('company:id,company_name,email,mobile')
@@ -177,9 +189,17 @@ class IvrController extends Controller
 				if ($params != "") {
 					$data = Ivr::with('company:id,company_name,email,mobile')
                             ->with('country:id,country_name')
-                            ->where('company_id', '=',  $user->company_id)
-                            ->orWhere('name', 'LIKE', "%$params%")
-                            ->orWhere('file_ext', 'LIKE', "%$params%")
+                            ->with('IvrMedia:id,name,media_file,file_ext')
+                            ->where('company_id', '=',  $user->company_id)                            
+                            ->where(function($query) use($params) {
+                                $query->orWhere('name', 'LIKE', "%$params%")
+                                ->orWhereHas('IvrMedia', function ($query) use ($params) {
+                                    $query->where('name', 'like', "%{$params}%");
+                                })
+                                ->orWhereHas('country', function ($query) use ($params) {
+                                    $query->where('country_name', 'like', "%{$params}%");
+                                });
+                            })
                             ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
 					$data = Ivr::with('company:id,company_name,email,mobile')
