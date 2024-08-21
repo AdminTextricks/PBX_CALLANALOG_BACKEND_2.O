@@ -857,6 +857,205 @@ class TfnController extends Controller
         }
     }
 
+
+    public function assignTfnMainRenew(Request $request)
+    {
+        $user = \Auth::user();
+        $validator = Validator::make($request->all(), [
+            'company_id' => 'required|numeric',
+            'country_id' => 'required|array',
+            'tfn_number' => 'required|array',
+            'tfn_type'   => 'required',
+        ], [
+            'company_id.required' => 'The company is required.',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+
+        $company = Company::find($request->company_id);
+        if (!$company) {
+            return $this->output(false, 'Company Not Found. Please try again!', [], 409);
+        }
+        DB::beginTransaction();
+        try {
+            $transaction_id = Str::random(10);
+            $stripe_charge_id = Str::random(30);
+            $transaction_id_pf = $request->tfn_type == "Free" ? "FREE" . $transaction_id : "PAID" . $transaction_id;
+            $stripe_charge_id_pf = $request->tfn_type == "Free" ? "FREE" . $stripe_charge_id : "PAID" . $stripe_charge_id;
+            $payment_assign_type = $request->tfn_type == "Free" ? "Free" : "Paid";
+            $invoice_payments_status = $request->tfn_type == "Free" ? "Free" : "Paid";
+
+            $total_price = 0;
+            $item_types = [];
+            $prices = [];
+
+            foreach ($request->tfn_number as $key => $tfn_number) {
+                $tfn = Tfn::where('tfn_number', $tfn_number)->first();
+
+                if ($tfn && $tfn->company_id == 0 && $tfn->reserved == 0) {
+                    return $this->output(false, "TFN Number ($tfn_number) is already purchased. Please try another TFN number.", [], 409);
+                } elseif ($tfn->company_id != $request->company_id) {
+                    return $this->output(false, "Company information does not match the provided TFN Number ($tfn_number).", [], 409);
+                }
+
+                $reseller_id = '';
+                if ($company->parent_id > 1) {
+                    $price_for = 'Reseller';
+                    $reseller_id = $company->parent_id;
+                } else {
+                    $price_for = 'Company';
+                }
+                $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id[$key], $price_for, $reseller_id, 'TFN');
+
+                if ($item_price_arr['Status'] == 'true') {
+                    $price = $item_price_arr['TFN_price'];
+                    $prices[] = $price;
+                    $total_price += $price;
+                } else {
+                    DB::rollBack();
+                    return $this->output(false, $item_price_arr['Message']);
+                }
+
+                $item_types[] = 'TFN';
+            }
+
+            if ($request->tfn_type == "Free") {
+                // Invoice Data
+                // $invoice_amount_assign = 0;
+                foreach ($request->tfn_number as $tfn_number) {
+                    $result = $this->assignTfnToCompanyRenew($tfn_number, $company, $user);
+                    if (!$result['success']) {
+                        DB::rollBack();
+                        return $this->output(false, $result['message'], null, 400);
+                    }
+                }
+            } else {
+                if ($total_price > 0 && $company->balance > $total_price) {
+                    //Company Balance 
+                    $company->balance -= $total_price;
+                    if ($company->save()) {
+                        foreach ($request->tfn_number as $tfn_number) {
+                            $result = $this->assignTfnToCompanyRenew($tfn_number, $company, $user);
+                            if (!$result['success']) {
+                                DB::rollBack();
+                                return $this->output(false, $result['message'], null, 400);
+                            }
+                        }
+                    } else {
+                        DB::rollBack();
+                        return $this->output(false, 'Something went wrong! Balance not credited.', null, 400);
+                    }
+                } else {
+                    DB::rollBack();
+                    return $this->output(false, 'Insufficient balance. Please Add balance in Wallet First.', null, 400);
+                }
+            }
+
+            $invoicetable_id = DB::table('invoices')->max('id');
+            if (!$invoicetable_id) {
+                $invoice_id = '#INV/' . date('Y') . '/00001';
+            } else {
+                $invoice_id = "#INV/" . date('Y') . "/000" . ($invoicetable_id + 1);
+            }
+            // return $company;
+            $createInvoices = Invoice::create([
+                'company_id' => $company->id,
+                'country_id' => $company->country_id,
+                'state_id' => $company->state_id,
+                'invoice_id' => $invoice_id,
+                'invoice_currency' => 'USD',
+                'invoice_subtotal_amount' => $total_price,
+                'invoice_amount' => $total_price,
+                'payment_status' => $invoice_payments_status,
+
+            ]);
+            $itemsData = [];
+            foreach ($request->tfn_number as $key => $tfn_number) {
+                $ind_data = InvoiceItems::create([
+                    'country_id' => $request->country_id[$key],
+                    'invoice_id' => $createInvoices->id,
+                    'item_type'  => 'TFN',
+                    'item_number' => $tfn_number,
+                    'item_price' => $prices[$key],
+                ]);
+                if ($ind_data) {
+                    $itemsData[] = $ind_data->toArray();
+                }
+            }
+
+            if (!empty($itemsData)) {
+                $user_data = User::select('*')->where('company_id', $company->id)->first();
+                if ($company->parent_id > 1 && $request->tfn_type == "Paid") {
+                    $this->ResellerCommissionCalculate($user_data, $itemsData, $createInvoices->id, $total_price);
+                }
+            }
+            $payments = Payments::create([
+                'company_id' => $company->id,
+                'invoice_id'  => $createInvoices->id,
+                'ip_address' => $request->ip(),
+                'invoice_number'  => $createInvoices->invoice_id,
+                'order_id'        => $createInvoices->invoice_id . '-UID-' . $company->id,
+                'item_numbers'    => implode(',', $request->tfn_number),
+                'payment_type'    => $payment_assign_type,
+                'payment_currency' => 'USD',
+                'payment_price' => $total_price,
+                'stripe_charge_id' => $stripe_charge_id_pf,
+                'transaction_id'  => $transaction_id_pf,
+                'status' => 1,
+            ]);
+
+            $this->pdfmailSend($company, $request->tfn_number, $total_price, $createInvoices->id, $createInvoices->invoice_id, $item_types);
+
+            DB::commit();
+            return $this->output(true, 'TFN numbers have been successfully renewed..', null, 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->output(false, 'An error occurred. Please try again.', null, 500);
+        }
+    }
+
+    private function assignTfnToCompanyRenew($tfn_number, $company, $user)
+    {
+        $inbound_trunk = explode(',', $company->inbound_permission);
+
+        $tfn = Tfn::where('tfn_number', $tfn_number)
+            ->where('company_id', '>', 0)
+            ->where('reserved', '1')
+            ->first();
+
+
+        $currentDate = Carbon::now();
+        $targetDate = Carbon::parse($tfn->expirationdate);
+        $daysDifference = $currentDate->diffInDays($targetDate, false);
+
+        if ($tfn) {
+            if ($daysDifference <= 3 && $daysDifference >= 1) {
+                $newDate = date('Y-m-d H:i:s', strtotime('+' . (29 + $daysDifference) . ' days'));
+            } elseif ($daysDifference > 3) {
+                $newDate = date('Y-m-d H:i:s', strtotime('+' . (29 + $daysDifference) . ' days'));
+            } else {
+                $newDate = date('Y-m-d H:i:s', strtotime('+29 days'));
+            }
+            if (in_array($tfn->tfn_provider, $inbound_trunk)) {
+                $tfn = $tfn->update([
+                    'company_id'     => $company->id,
+                    'assign_by'      => $user->id,
+                    'activated'      => '1',
+                    'startingdate'   => date('Y-m-d H:i:s'),
+                    'expirationdate' => $newDate,
+                    'status'         => 1,
+                ]);
+                Cart::where('item_number', $tfn_number)->delete();
+                return ['success' => true];
+            } else {
+                return ['success' => false, 'message' => "Inbound Trunk Permission not found for this TFN Number ($tfn_number)"];
+            }
+        } else {
+            return ['success' => false, 'message' => "TFN Number ($tfn_number) is already Assigned!!"];
+        }
+    }
     public function pdfmailSend($user, $item_numbers, $price_mail, $invoice_id, $invoice_number, $itemTpyes)
     {
         $email = $user->email;
