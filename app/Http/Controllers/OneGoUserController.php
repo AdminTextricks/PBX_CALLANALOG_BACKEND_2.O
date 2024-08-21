@@ -23,11 +23,22 @@ class OneGoUserController extends Controller
 
     public function getOneGoUser(Request $request){
         $user = \Auth::user();
+        /*
 			$data = OneGoUser::select('*')
                     ->with('parent:id,name,email')
 					->with('user:id,name,email')
 					->with('company:id,parent_id,company_name,email,mobile')
                     ->with('country:id,country_name')->get();
+                    */
+
+            $data = OneGoUser::select('one_go_user_steps.*',DB::raw("GROUP_CONCAT(extensions.name) as extension_name"))
+                    ->with('parent:id,name,email')
+					->with('user:id,name,email')
+					->with('company:id,parent_id,company_name,email,mobile')
+                    ->with('country:id,country_name')
+                    ->leftjoin("extensions",DB::raw("FIND_IN_SET(extensions.id,one_go_user_steps.extension_id)"),">",DB::raw('0'))
+                    ->groupBy("one_go_user_steps.id")
+                    ->get(); 
 
 		if($data->isNotEmpty()){
 			return $this->output(true, 'Success', $data->toArray());
