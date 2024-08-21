@@ -149,6 +149,7 @@ class IvrController extends Controller
 			if ($Ivr_id) {
 				$data = Ivr::with('company:id,company_name,email,mobile')
                             ->with('country:id,country_name')
+                            ->with('IvrMedia:id,name,media_file,file_ext')
 				    	    ->select()->where('id', $Ivr_id)->get();
 			} else {
 				if ($params != "") {
@@ -172,6 +173,7 @@ class IvrController extends Controller
 				} else {
 					$data = Ivr::with('company:id,company_name,email,mobile')
                             ->with('country:id,country_name')
+                            ->with('IvrMedia:id,name,media_file,file_ext')
 					    	->select()->paginate(
                                 $perPage = $perPageNo,
                                 $columns = ['*'],
@@ -184,6 +186,7 @@ class IvrController extends Controller
 			if ($Ivr_id) {
 				$data = Ivr::with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
+                        ->with('IvrMedia:id,name,media_file,file_ext')
 					    ->select()->where('id', $Ivr_id)->get();
 			} else {
 				if ($params != "") {
@@ -204,6 +207,7 @@ class IvrController extends Controller
 				} else {
 					$data = Ivr::with('company:id,company_name,email,mobile')
                             ->with('country:id,country_name')
+                            ->with('IvrMedia:id,name,media_file,file_ext')
                             ->where('company_id', '=',  $user->company_id)
                             ->select()->paginate(
                                 $perPage = $perPageNo,
