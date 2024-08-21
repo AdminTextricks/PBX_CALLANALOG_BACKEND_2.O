@@ -255,10 +255,11 @@ class TfnController extends Controller
             'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
             'tfn_destinations.destinationType:id,destination_type'
         ])
-            ->withTrashed()
+            
             ->orderBy('id', 'DESC');
 
         if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
+            $query->withTrashed();
             if ($tfn_id) {
                 $query->where('id', $tfn_id);
             }
