@@ -10,6 +10,6 @@ class RemovedTfn extends Model
     use HasFactory;
 
     protected $fillable = [
-        'tfn_number', 'country_id', 'status',
+        'tfn_number', 'country_id', 'deleted_by', 'company_id', 'status',
     ];
 }
