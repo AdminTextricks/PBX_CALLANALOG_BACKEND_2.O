@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('reseller_prices', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('reseller_id');
-			$table->unsignedBigInteger('company_id');
+            $table->unsignedBigInteger('reseller_id')->index();
+			$table->unsignedBigInteger('company_id')->index();
 			$table->integer('country_id')->default(0);
             $table->enum('tfn_commission_type', ['Fixed Amount', 'Percentage'])->nullable();
             //$table->enum('product',['TFN', 'Extension'])->nullable();    
