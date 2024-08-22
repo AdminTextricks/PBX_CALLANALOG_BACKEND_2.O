@@ -217,7 +217,7 @@ class TfnController extends Controller
             if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
                 $companyID = 0;
             }else{
-                $companyID = $user->company_id
+                $companyID = $user->company_id;
             }
             RemovedTfn::create([
                 'tfn_number' => $tfnnumbermove->tfn_number,
