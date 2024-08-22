@@ -29,4 +29,8 @@ class ResellerPrice extends Model
     {
         return $this->belongsTo(Country::class);
     }
+
+    public function reseller(){
+        return $this->belongsTo(User::class, 'reseller_id');
+    }
 }
