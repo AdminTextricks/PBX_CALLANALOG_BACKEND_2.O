@@ -46,4 +46,12 @@ class OneGoUser extends Model
     {
         return $this->belongsTo(Country::class);
     }
+
+    public function tfn(){
+        return $this->belongsTo(Tfn::class, 'tfn_id');
+    }
+
+    public function ring(){
+        return $this->belongsTo(RingGroup::class, 'ring_id');
+    }
 }

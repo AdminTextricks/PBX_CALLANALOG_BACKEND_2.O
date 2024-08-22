@@ -206,7 +206,8 @@ class MainPriceController extends Controller
 
     public function addResellerPrice(Request $request)
     {
-        $validator = Validator::make($request->all(), [            
+        $validator = Validator::make($request->all(), [ 
+            'reseller_id'   => 'required|numeric|exists:users,id',
             'country_id'    => 'required|numeric',
             'company_id'    => 'required|numeric|exists:companies,id',          
             'tfn_commission_type'       => 'required|max:500|in:Fixed Amount,Percentage',             
@@ -224,11 +225,12 @@ class MainPriceController extends Controller
         try { 
             DB::beginTransaction();
             $ResellerPrice = ResellerPrice::where('company_id', $request->company_id)
-                            //->where('product', $request->product)
+                            ->where('reseller_id', $request->reseller_id)
                             ->where('country_id', $request->country_id)
                             ->first();
             if(!$ResellerPrice){
                 $ResellerPrice = ResellerPrice::create([
+                    'reseller_id'       => $request->reseller_id,
                     'country_id'        => $request->country_id,
                     'company_id'	    => $request->company_id,
                     'tfn_commission_type'   => $request->tfn_commission_type,

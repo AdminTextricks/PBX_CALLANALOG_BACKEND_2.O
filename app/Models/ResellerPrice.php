@@ -10,6 +10,7 @@ class ResellerPrice extends Model
     use HasFactory;
     protected $fillable = [
         'id',
+        'reseller_id',
         'company_id',
         'country_id',
         'tfn_commission_type',

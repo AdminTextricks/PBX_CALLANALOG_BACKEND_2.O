@@ -371,6 +371,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/createExtensions', [OneGoUserController::class, 'createExtensions']);
 		Route::post('/addRingGroup', [OneGoUserController::class, 'addRingGroup']);
 		Route::get('/', [OneGoUserController::class,'getOneGoUser']);
+		Route::post('/createInvoice', [OneGoUserController::class,'createInvoice']);
 		//Route::delete('/{id}', [IvrController::class,'deleteIvr']);
 	});
 

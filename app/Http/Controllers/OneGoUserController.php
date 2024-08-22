@@ -20,7 +20,6 @@ use Carbon\Carbon;
 
 class OneGoUserController extends Controller
 {
-
     public function getOneGoUser(Request $request){
         $user = \Auth::user();
         /*
@@ -36,6 +35,8 @@ class OneGoUserController extends Controller
 					->with('user:id,name,email')
 					->with('company:id,parent_id,company_name,email,mobile')
                     ->with('country:id,country_name')
+                    ->with('tfn:id,tfn_number')
+                    ->with('ring:id,ringno')
                     ->leftjoin("extensions",DB::raw("FIND_IN_SET(extensions.id,one_go_user_steps.extension_id)"),">",DB::raw('0'))
                     ->groupBy("one_go_user_steps.id")
                     ->get(); 
@@ -100,7 +101,7 @@ class OneGoUserController extends Controller
                             ->where('user_id', $request->user_id)
                             ->update([
                                 'tfn_id' => $tfnNumber->id,
-                                'step_no' => '2.1',
+                                'step_no' => '2',
                                 'updated_at' => Carbon::now(),
                             ]);
 
@@ -221,6 +222,17 @@ class OneGoUserController extends Controller
                             $addExtensionFile = config('app.webrtc_template_url');
                             $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
                             $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
+
+                            if ($Company->plan_id == 1) {
+                                $addCart = Cart::create([
+                                    'company_id'    => $request->company_id,
+                                    'country_id'    => $request->country_id,
+                                    'item_id'       => $Extension->id,
+                                    'item_number'   => $item,
+                                    'item_type'     => 'Extension',
+                                    'item_price'    => $item_price,
+                                ]);
+                            }
                         }
 
                         $server_flag = config('app.server_flag');
@@ -236,7 +248,7 @@ class OneGoUserController extends Controller
                             ->where('user_id', $request->user_id)
                             ->update([
                                 'extension_id' => implode(',', $item_ids),
-                                'step_no' => '2.2',
+                                'step_no' => '3',
                                 'updated_at' => Carbon::now(),
                             ]);
                         DB::commit();
@@ -279,10 +291,23 @@ class OneGoUserController extends Controller
                 'strategy'  => 'ringall',
                 'ringtime'  => '60',
             ]);
-            $response = $RingGroup->toArray();
-            DB::commit();
-            return $this->output(true, 'Ring Group added successfully.', $response);
 
+            $steps_result = DB::table('one_go_user_steps')
+                ->where('company_id', $request->company_id)
+                ->where('user_id', $request->user_id)
+                ->update([
+                    'ring_id' => $RingGroup->id,
+                    'step_no' => '4',
+                    'updated_at' => Carbon::now(),
+                ]);
+            if($steps_result){
+                $response = $RingGroup->toArray();
+                DB::commit();
+                return $this->output(true, 'Ring Group added successfully.', $response);
+            }else{
+                DB::rollback();
+                return $this->output(false, 'Error occurred in updating One-Go-User Setps.', [], 409);
+            }
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Error in Ring Group Inserting : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
@@ -295,13 +320,7 @@ class OneGoUserController extends Controller
     {
         $user = \Auth::user();
         $validator = Validator::make($request->all(), [
-            'country_id' => 'required|numeric|exists:countries,id',
-            'company_id' => 'required|numeric|exists:companies,id',
-            'items' => 'required|array',
-            'items.*.item_id' => 'required|numeric',
-            'items.*.item_number' => 'required|numeric',
-            'items.*.item_price' => 'required',
-            'items.*.item_type' => 'required',
+            'oneGoUser_id' => 'required|numeric|exists:one_go_user_steps,id',            
         ]);
 
         if ($validator->fails()) {
@@ -310,6 +329,26 @@ class OneGoUserController extends Controller
 
         try {
             DB::beginTransaction();
+            $data = OneGoUser::select('one_go_user_steps.*',DB::raw("GROUP_CONCAT(extensions.name) as extension_name"))
+                    ->with('parent:id,name,email')
+					->with('user:id,name,email')
+					->with('company:id,email,parent_id,country_id,state_id')
+                    ->with('country:id,country_name')
+                    ->with('tfn:id,tfn_number')
+                    ->with('ring:id,ringno')
+                    ->leftjoin("extensions",DB::raw("FIND_IN_SET(extensions.id,one_go_user_steps.extension_id)"),">",DB::raw('0'))
+                    ->groupBy("one_go_user_steps.id")
+                    ->where('one_go_user_steps.id', $request->oneGoUser_id)
+                    ->first(); 
+                 
+            $oneGoUser = $data->toArray();
+            $oneGoUser['company'];
+            $parent_id = '';
+            $price_for = $request->user_type;
+            if ($request->user_type == 'Reseller') {
+                $parent_id = $request->parent_id;
+            }
+            $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $parent_id, 'Extension');
 
             $invoice_amount_main = array_sum(array_column($request->items, 'item_price'));
             $invoice_amount = number_format($invoice_amount_main, 2, '.', '');
@@ -412,7 +451,7 @@ class OneGoUserController extends Controller
     $emailData['email'] = $Company->email;
     $emailData['email_template'] = 'invoice';
     dispatch(new \App\Jobs\SendEmailJob($emailData));
-     */
+    */
 
 
     protected function addExtensionInConfFile($extensionName, $conf_file_path, $secret, $account_code, $template_contents)
