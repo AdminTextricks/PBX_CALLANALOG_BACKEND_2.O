@@ -201,35 +201,35 @@ class TfnController extends Controller
     // ReMove TFN from one table to another table (removed_tnfs)
     public function removeTfnfromTable(Request $request, $id)
     {
+        $user = \Auth::user();
         $tfnnumbermove = Tfn::find($id);
-
         if (!$tfnnumbermove) {
             return $this->output(false, 'This TFN Number does not exist with us. Please try again!', [], 200);
         }
-
         try {
             DB::beginTransaction();
-
             $removedTfn = RemovedTfn::where('tfn_number', $tfnnumbermove->tfn_number)->first();
             $cartTfn = Cart::where('item_number', $tfnnumbermove->tfn_number)->first();
-
-            if ($removedTfn) {
-                DB::rollBack();
-                return $this->output(true, 'This TFN Number is already removed!', [], 200);
+            // if ($removedTfn) {
+            //     DB::rollBack();
+            //     return $this->output(true, 'This TFN Number is already removed!', [], 200);
+            // }
+            if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                $companyID = 0;
+            }else{
+                $companyID = $user->company_id
             }
-
             RemovedTfn::create([
                 'tfn_number' => $tfnnumbermove->tfn_number,
                 'country_id' => $tfnnumbermove->country_id,
+                'deleted_by' => $user->id,
+                'company_id' => $companyID,
                 'status'     => $tfnnumbermove->status ?? 1,
             ]);
-
             $tfnnumbermove->forcedelete();
-
             if ($cartTfn) {
                 $cartTfn->delete();
             }
-
             DB::commit();
             return $this->output(true, 'This TFN Number was removed successfully!', [], 200);
         } catch (\Exception $e) {
