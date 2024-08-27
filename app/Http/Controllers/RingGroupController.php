@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\LOG;
 use App\Models\RingGroup;
 use App\Models\RingMember;
 use App\Models\Extension;
+use App\Models\TfnDestination;
 use Validator;
 use Carbon\Carbon;
 class RingGroupController extends Controller
@@ -308,6 +309,7 @@ class RingGroupController extends Controller
             DB::beginTransaction();            
             $RingGroup = RingGroup::where('id', $id)->first();
             if($RingGroup){
+				TfnDestination::where('destination_type_id', 6)->where('destination_id',$id)->delete();
 				RingMember::where('ring_id', $id)->delete();
                 $resdelete = $RingGroup->delete();
                 if ($resdelete) {

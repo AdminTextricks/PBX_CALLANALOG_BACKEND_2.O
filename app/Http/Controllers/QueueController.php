@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\LOG;
 use App\Models\Queue;
 use App\Models\QueueMember;
 use App\Models\Extension;
+use App\Models\TfnDestination;
 use Validator;
 use Carbon\Carbon;
 
@@ -310,6 +311,7 @@ class QueueController extends Controller
             DB::beginTransaction();            
             $Queue = Queue::where('id', $id)->first();
             if($Queue){
+				TfnDestination::where('destination_type_id', 1)->where('destination_id',$id)->delete();
 				QueueMember::where('queue_id', $id)->delete();
                 $resdelete = $Queue->delete();
                 if ($resdelete) {
