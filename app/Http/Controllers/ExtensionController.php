@@ -1001,4 +1001,32 @@ class ExtensionController extends Controller
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
+
+
+    public function getExtensionsByCompany(Request $request, $company_id)
+    {
+        $Company = Company::find($company_id);		
+        if(is_null($Company)){
+           
+            return $this->output(false, 'This Company not exist with us. Please try again!.', [], 409);
+        }
+        else
+        {
+            $data = Extension::with('company:id,company_name,email,mobile')
+                ->with('country:id,country_name')
+                ->select('id', 'name', 'agent_name', 'callbackextension', 'country_id', 'company_id')
+                ->where('company_id', $company_id)
+                ->where('status', 1)
+                ->orderBy('id', 'DESC')
+                ->get();
+
+            if ($data->isNotEmpty()) {
+                $dd = $data->toArray();
+                unset($dd['links']);
+                return $this->output(true, 'Success', $dd, 200);
+            } else {
+                return $this->output(true, 'No Record Found', []);
+            }
+        }        
+    }
 }

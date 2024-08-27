@@ -155,16 +155,17 @@ class VoiceMailController extends Controller
         }
         else
         {
-        $data = VoiceMail::select()
+            $data = VoiceMail::select()
                 ->with('company:id,company_name,email,mobile')
                 ->where('company_id', $company_id)
-                ->get();    
-        }
-		if($data->isNotEmpty()){
-			return $this->output(true, 'Success', $data->toArray());
-		}else{
-			return $this->output(true, 'No Record Found', []);
-		}
+                ->get();   
+
+            if($data->isNotEmpty()){
+                return $this->output(true, 'Success', $data->toArray());
+            }else{
+                return $this->output(true, 'No Record Found', []);
+            }
+        }		
 	}
 
 

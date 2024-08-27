@@ -223,7 +223,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		//Route::post('/adToCart', [ExtensionController::class, 'extensionAddToCArt']);
 		Route::delete('/{id}', [ExtensionController::class, 'deleteExtension']);
 		Route::delete('/', [ExtensionController::class, 'multipleDeleteExtension']);
-		
+		Route::get('/getByCompany/{company_id}', [ExtensionController::class, 'getExtensionsByCompany']);
 	});
 
 	#Conf Template Manage
