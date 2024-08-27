@@ -342,71 +342,92 @@ class OneGoUserController extends Controller
                     ->first(); 
                  
             $oneGoUser = $data->toArray();
-            $oneGoUser['company'];
-            $parent_id = '';
-            $price_for = $request->user_type;
-            if ($request->user_type == 'Reseller') {
-                $parent_id = $request->parent_id;
-            }
-            $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $parent_id, 'Extension');
 
-            $invoice_amount_main = array_sum(array_column($request->items, 'item_price'));
-            $invoice_amount = number_format($invoice_amount_main, 2, '.', '');
-
-            $invoicetable_id = DB::table('invoices')->max('id');
-            if (!$invoicetable_id) {
-                $invoice_id = '#INV/' . date('Y') . '/00001';
-            } else {
-                $invoice_id = "#INV/" . date('Y') . "/000" . ($invoicetable_id + 1);
-            }
-
-            $createinvoice = Invoice::create([
-                'company_id' => $user->company->id,
-                'country_id' => $user->company->country_id,
-                'state_id' => $user->company->state_id,
-                'invoice_id' => $invoice_id,
-                'invoice_currency' => 'USD',
-                'invoice_subtotal_amount' => $invoice_amount,
-                'invoice_amount' => $invoice_amount,
-                'payment_status' => 'Unpaid',
-            ]);
-
-            foreach ($request->items as $item) {
-                $itemType = $item['item_type'];
-                $itemId = $item['item_id'];
-                $itemNumber = $item['item_number'];
-                $itemPrice = $item['item_price'];
-
-                if ($itemType == "TFN") {
-                    $tfninvoicenumberTfn = Tfn::select('tfn_number')->where('tfn_number', '=', $itemNumber)->first();
-                    $tfninvoicenumber = $tfninvoicenumberTfn->tfn_number;
-                } else {
-                    $tfninvoicenumberExt = Extension::select('name')->where('name', '=', $itemNumber)->first();
-                    $tfninvoicenumber = $tfninvoicenumberExt->name;
+            if(!empty($oneGoUser['parent_id']) && !empty($oneGoUser['company_id']) && !empty($oneGoUser['user_id']) && !empty($oneGoUser['country_id']) && !empty($oneGoUser['tfn_id']) && !empty($oneGoUser['extension_id']) && !empty($oneGoUser['ring_id']))
+            {            
+                $parent_id = $oneGoUser['parent_id'];
+                $price_for = 'Company';
+                if ($parent_id > 1){
+                    $price_for = 'Reseller';
                 }
+                $tfn_price_arr = $this->getItemPrice($oneGoUser['company_id'],$oneGoUser['country_id'], $price_for, $parent_id, 'TFN');                
+                
+                if ($tfn_price_arr['Status'] == 'true') {
+                    $extension_price_arr = $this->getItemPrice($oneGoUser['company_id'],$oneGoUser['country_id'], $price_for, $parent_id, 'Extension');
+                    
+                    if ($extension_price_arr['Status'] == 'true') {
 
-                if ($tfninvoicenumber) {
+                        $invoice_amount_main = array_sum(array_column($request->items, 'item_price'));
+                        $invoice_amount = number_format($invoice_amount_main, 2, '.', '');
 
-                    InvoiceItems::create([
-                        'company_id' => $user->company->id,
-                        'invoice_id' => $createinvoice->id,
-                        'item_id' => $itemId,
-                        'item_number' => $itemNumber,
-                        'item_price' => $itemPrice,
-                    ]);
+                        $invoicetable_id = DB::table('invoices')->max('id');
+                        if (!$invoicetable_id) {
+                            $invoice_id = '#INV/' . date('Y') . '/00001';
+                        } else {
+                            $invoice_id = "#INV/" . date('Y') . "/000" . ($invoicetable_id + 1);
+                        }
 
-                } else {
-                    DB::rollback();
-                    return $this->output(false, 'This Cart Number does not belong to us', 409);
+                        $createinvoice = Invoice::create([
+                            'company_id' => $user->company->id,
+                            'country_id' => $user->company->country_id,
+                            'state_id' => $user->company->state_id,
+                            'invoice_id' => $invoice_id,
+                            'invoice_currency' => 'USD',
+                            'invoice_subtotal_amount' => $invoice_amount,
+                            'invoice_amount' => $invoice_amount,
+                            'payment_status' => 'Unpaid',
+                        ]);
+
+                        foreach ($request->items as $item) {
+                            $itemType = $item['item_type'];
+                            $itemId = $item['item_id'];
+                            $itemNumber = $item['item_number'];
+                            $itemPrice = $item['item_price'];
+
+                            if ($itemType == "TFN") {
+                                $tfninvoicenumberTfn = Tfn::select('tfn_number')->where('tfn_number', '=', $itemNumber)->first();
+                                $tfninvoicenumber = $tfninvoicenumberTfn->tfn_number;
+                            } else {
+                                $tfninvoicenumberExt = Extension::select('name')->where('name', '=', $itemNumber)->first();
+                                $tfninvoicenumber = $tfninvoicenumberExt->name;
+                            }
+
+                            if ($tfninvoicenumber) {
+
+                                InvoiceItems::create([
+                                    'company_id' => $user->company->id,
+                                    'invoice_id' => $createinvoice->id,
+                                    'item_id' => $itemId,
+                                    'item_number' => $itemNumber,
+                                    'item_price' => $itemPrice,
+                                ]);
+
+                            } else {
+                                DB::rollback();
+                                return $this->output(false, 'This Cart Number does not belong to us',[], 409);
+                            }
+                        }
+
+                        $response = $createinvoice->toArray();
+                        DB::commit();
+                        return $this->output(true, 'Invoice Created Successfully!!.', $response);
+                    }else{
+                        DB::commit();
+                        return $this->output(false, 'Extension price not available for this country. Please contact with support team.');
+                    }
+                }else{
+                    DB::commit();
+                    return $this->output(false, 'TFN price not available for this country. Please contact with support team.');
                 }
+            }else{
+                DB::commit();
+                return $this->output(false, 'Some error occurred in above steps. Please try again.', [], 409);
             }
-
-            $response = $createinvoice->toArray();
-            DB::commit();
-            return $this->output(true, 'Invoice Created Successfully!!.', $response);
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->output(false, $e->getMessage());
+            //return $this->output(false, $e->getMessage());
+            Log::error('Error in creating One-Go-User invoice : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
     /* 
