@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('item_type')->nullable();
             $table->bigInteger('item_number')->nullable();
             $table->decimal('item_price', total: 8, places: 2)->nullable()->default(0);
+            $table->enum('item_category', ['Purchase', 'Renew'])->nullable();
             $table->timestamps();
         });
     }
