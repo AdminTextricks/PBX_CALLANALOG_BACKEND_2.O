@@ -15,6 +15,7 @@ use Validator;
 use Mail;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
@@ -210,7 +211,17 @@ class UserController extends Controller
 			'state_id'		=> 'required',
 			'city'			=> 'required',
 			'zip'			=> 'required',
-            'password' 		=> 'required|confirmed',
+            'password' 		=> [
+                                'required',
+                                'string',
+                                'confirmed',
+                                Password::min(8)
+                                    ->mixedCase()
+                                    ->letters()
+                                    ->numbers()
+                                    ->symbols()
+                                    ->uncompromised(),
+                            ],
         ],[
             'plan_id'       => 'Plan type is required!',
             'parent_id'     => 'parent ID is required.',
@@ -328,7 +339,18 @@ class UserController extends Controller
 			'city'		=> 'required',
 			'zip'		=> 'required', 
 			'role_id'	=> 'required|numeric|in:2,3,5,6',
-            'password' 	=> 'required|confirmed',
+            'password' 	=> [
+                            'required',
+                            'string',
+                            'confirmed',
+                            Password::min(8)
+                                ->mixedCase()
+                                ->letters()
+                                ->numbers()
+                                ->symbols()
+                                ->uncompromised(),
+                        ],
+            //'password' 	=> 'required|confirmed',
             //'account_code'  => 'required|max:500|unique:users', 
         ],[
             'company_id' => 'The company field is required when you are creating company user',
@@ -531,8 +553,19 @@ class UserController extends Controller
 		try{
             DB::beginTransaction();
             $validator = Validator::make($request->all(), [
-                'current_password' => 'required',
-                'password' => 'required|confirmed',
+                'current_password'  => 'required',
+                'password' 		    => [
+                                        'required',
+                                        'string',
+                                        'confirmed',
+                                        Password::min(8)
+                                            ->mixedCase()
+                                            ->letters()
+                                            ->numbers()
+                                            ->symbols()
+                                            ->uncompromised(),
+                                    ],
+                //'password' => 'required|confirmed',
             ]);
             if ($validator->fails()){
                 return $this->output(false, $validator->errors()->first(), [], 409);
@@ -559,8 +592,19 @@ class UserController extends Controller
         try{
             DB::beginTransaction();
             $validator = Validator::make($request->all(), [
-                'user_id' => 'required',
-                'password' => 'required|confirmed',
+                'user_id'   => 'required',
+                'password' 	=> [
+                                'required',
+                                'string',
+                                'confirmed',
+                                Password::min(8)
+                                    ->mixedCase()
+                                    ->letters()
+                                    ->numbers()
+                                    ->symbols()
+                                    ->uncompromised(),
+                            ],
+            //'password' => 'required|confirmed',
             ]);
             if ($validator->fails()){
                 return $this->output(false, $validator->errors()->first(), [], 409);
