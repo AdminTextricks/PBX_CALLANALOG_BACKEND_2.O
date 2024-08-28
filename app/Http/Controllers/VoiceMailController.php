@@ -169,6 +169,63 @@ class VoiceMailController extends Controller
 	}
 
 
+    public function updateVoiceMail(Request $request, $id)
+	{
+		try { 
+			DB::beginTransaction(); 
+			$VoiceMail = VoiceMail::find($id);		
+			if(is_null($VoiceMail)){
+				DB::commit();
+				return $this->output(false, 'This VoiceMail not exist with us. Please try again!.', [], 409);
+			}
+			else
+			{
+				$validator = Validator::make($request->all(), [
+					'company_id'=> 'required|numeric|exists:companies,id',
+                    'mailbox'   => 'required|numeric|exists:extensions,name|unique:voice_mails,mailbox,'.$VoiceMail->id,
+                    'context'   => 'required|string|max:200',
+                    'password'  => 'required|string|max:200',
+                    'fullname'  => 'required|string|max:20',
+                    'email'     => 'required|email|max:255',
+                    'dialout'   => 'required|numeric',
+				]);
+				if ($validator->fails()){
+					return $this->output(false, $validator->errors()->first(), [], 409);
+				}				
+				/* $VoiceMailOld = VoiceMail::where('confno', $request->confno)
+							->where('company_id', $request->company_id)
+							->where('country_id', $request->country_id)
+							->where('id','!=', $id)
+							->first();
+				if(!$VoiceMailOld){ */
+					$VoiceMail->context     = $request->context;
+					$VoiceMail->password    = $request->password;
+					$VoiceMail->fullname    = $request->fullname;
+					$VoiceMail->email       = $request->email;
+					$VoiceMail->dialout     = $request->dialout;
+					$VoiceMailsRes          = $VoiceMail->save();
+					if($VoiceMailsRes){
+						$VoiceMail = VoiceMail::where('id', $id)->first();        
+						$response = $VoiceMail->toArray();
+						DB::commit();
+						return $this->output(true, 'VoiceMail updated successfully.', $response, 200);
+					}else{
+						DB::commit();
+						return $this->output(false, 'Error occurred in VoiceMail Updating. Please try again!.', [], 200);
+					}
+				/* }else{
+					DB::commit();
+					return $this->output(false, 'This VoiceMail already exist with us.',[], 409);
+				} */			
+			}
+		} catch (\Exception $e) {
+			DB::rollback();
+            Log::error('Error occurred in VoiceMail updating : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+		}	
+	}
+
+
     public function deleteVoiceMail(Request $request, $id)
     {
         try {  
