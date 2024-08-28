@@ -980,12 +980,12 @@ class PaymentController extends Controller
                     }
                     if ($itemType === "TFN") {
                         $tfn_list_type = Tfn::select('*')->where('tfn_number', $itemNumber)->first();
-                        if (isEmpty($tfn_list_type)) {
+                        if (is_null($tfn_list_type)) {
                             return $this->output(false, 'This Tfn Number ' . $itemNumber . ' dose not belongs to us or is currently in process.', 400);
                         }
                     } else {
                         $extnumber = Extension::select('*')->where('name', '=', $itemNumber)->first();
-                        if (isEmpty($extnumber)) {
+                        if (is_null($extnumber)) {
                             return $this->output(false, 'This Extension Number ' . $itemNumber . ' dose not belongs to us or is currently in process', 400);
                         }
                     }
@@ -1053,7 +1053,7 @@ class PaymentController extends Controller
                             }
 
                             $numbers_list_tfn->update([
-                                'company_id' => $numbers_list_tfn->company->id,
+                                'company_id' => $numbers_list_tfn->company_id,
                                 'assign_by' => $user->id,
                                 'activated' => '1',
                                 'expirationdate' => $newDate,
