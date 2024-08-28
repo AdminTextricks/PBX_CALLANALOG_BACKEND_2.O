@@ -38,6 +38,7 @@ class CdrController extends Controller
                         ->orWhere('disposition', 'LIKE', "%$params%")
                         ->orWhere('tfn', 'LIKE', "%$params%")
                         ->orWhere('destination', 'LIKE', "%$params%")
+                        ->orWhere('call_type', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('company_name', 'like', "%{$params}%");
                         })
@@ -69,6 +70,7 @@ class CdrController extends Controller
                             ->orWhere('disposition', 'LIKE', "%$params%")
                             ->orWhere('tfn', 'LIKE', "%$params%")
                             ->orWhere('destination', 'LIKE', "%$params%")
+                            ->orWhere('call_type', 'LIKE', "%$params%")
                             ->orWhereHas('country', function ($query) use ($params) {
                                 $query->where('country_name', 'like', "%{$params}%");
                             });
@@ -119,6 +121,7 @@ class CdrController extends Controller
                         ->orWhere('disposition', 'LIKE', "%$params%")
                         ->orWhere('tfn', 'LIKE', "%$params%")
                         ->orWhere('destination', 'LIKE', "%$params%")
+                        ->orWhere('call_type', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('company_name', 'like', "%{$params}%");
                         })
@@ -150,6 +153,7 @@ class CdrController extends Controller
                             ->orWhere('disposition', 'LIKE', "%$params%")
                             ->orWhere('tfn', 'LIKE', "%$params%")
                             ->orWhere('destination', 'LIKE', "%$params%")
+                            ->orWhere('call_type', 'LIKE', "%$params%")
                             ->orWhereHas('country', function ($query) use ($params) {
                                 $query->where('country_name', 'like', "%{$params}%");
                             });
