@@ -23,6 +23,7 @@ use Carbon\Carbon;
 use Stripe\Stripe;
 use Illuminate\Support\Str;
 use function PHPUnit\Framework\isEmpty;
+use Illuminate\Support\Facades\Log;
 // use Stripe\Exception\CardException;
 // use Stripe\Exception\ApiErrorException;
 
