@@ -332,57 +332,6 @@ class PaymentController extends Controller
         }
     }
 
-    protected function sipReload()
-    {
-        $server_ip = "85.195.76.161";
-        $socket = @fsockopen($server_ip, 5038);
-        $response = "";
-        if (!is_resource($socket)) {
-            echo "conn failed in Engconnect ";
-            exit;
-        }
-        fputs($socket, "Action: Login\r\n");
-        fputs($socket, "UserName: TxuserGClanlg\r\n");
-        fputs($socket, "Secret: l3o9zMP3&X[k2+\r\n\r\n");
-        fputs($socket, "Action: Command\r\n");
-        fputs($socket, "Command: sip reload\r\n\r\n");
-        fputs($socket, "Action: Logoff\r\n\r\n");
-        while (!feof($socket))
-            $response .= fread($socket, 5038);            
-        fclose($socket);
-        return true;
-    }
-    protected function addExtensionInConfFile($extensionName, $conf_file_path, $secret, $account_code, $template_contents)
-    {
-        // Add new user section
-        $register_string = "\n[$extensionName]\nusername=$extensionName\nsecret=$secret\naccountcode=$account_code\n$template_contents\n";
-        //$webrtc_conf_path = "/var/www/html/callanalog/admin/webrtc_template.conf";
-        file_put_contents($conf_file_path, $register_string, FILE_APPEND | LOCK_EX);
-        //echo "Registration successful. The SIP user $nname has been added to the webrtc_template.conf file.";        
-    }
-
-    protected function removeExtensionFromConfFile($extensionName, $conf_file_path)
-    {
-        // Remove user section
-        //$conf_file_path = "webrtc_template.conf";
-        $lines = file($conf_file_path);
-        $output = '';
-        $found = false;
-        foreach ($lines as $line) {
-            if (strpos($line, "[$extensionName]") !== false) {
-                $found = true;
-                continue;
-            }
-            if ($found && strpos($line, "[") === 0) {
-                $found = false;
-            }
-            if (!$found) {
-                $output .= $line;
-            }
-        }
-        file_put_contents($conf_file_path, $output, LOCK_EX);
-        //echo "Registration removed. The SIP user $nname has been removed from the webrtc_template.conf file.";
-    }
     public function PayNowOLD(Request $request)
     {
         $user = \Auth::user();
@@ -1170,6 +1119,8 @@ class PaymentController extends Controller
                                 DB::rollback();
                                 return $this->output(false, 'Mismatch in Extension values.', 400);
                             }
+                            $webrtc_template_url = config('app.webrtc_template_url');
+                            $softphone_template_url = config('app.softphone_template_url');
                             $value = "Renew";
                             $currentDate = Carbon::now();
                             $targetDate = Carbon::parse($numbers_list->expirationdate);
@@ -1180,7 +1131,30 @@ class PaymentController extends Controller
                                 $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
                             } else {
                                 $newDate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                                // In Expired case we need to Update web or softphone template to webrtc_template_url or softphone_template_url 
+                                if ($numbers_list->sip_temp == 'WEBRTC') {
+                                    $addExtensionFile = $webrtc_template_url;
+                                    $removeExtensionFile = $softphone_template_url;
+                                } else {
+                                    $addExtensionFile = $softphone_template_url;
+                                    $removeExtensionFile = $webrtc_template_url;
+                                }
+                                Log::error('addExtensionFile : ' . $addExtensionFile . '  / removeExtensionFile: ' . $removeExtensionFile);
+
+                                $ConfTemplate = ConfTemplate::select()->where('template_id', $numbers_list->sip_temp)->first();
+                                $this->addExtensionInConfFile($numbers_list->name, $addExtensionFile, $numbers_list->secret, $user->company->account_code, $ConfTemplate->template_contents);
+                                $this->removeExtensionFromConfFile($numbers_list->name, $removeExtensionFile);
+
+                                $server_flag = config('app.server_flag');
+                                if ($server_flag == 1) {
+                                    $shell_script = config('app.shell_script');
+                                    $result = shell_exec('sudo ' . $shell_script);
+                                    Log::error('Extension Update File Transfer Log : ' . $result);
+                                    $this->sipReload();
+                                }
+                                //// End Template transfer code
                             }
+
                             $numbers_list->update([
                                 'company_id'  => $numbers_list->company_id,
                                 'startingdate' => date('Y-m-d H:i:s'),
@@ -1190,6 +1164,20 @@ class PaymentController extends Controller
                                 'status' => 1,
                             ]);
                         } else {
+
+                            // In Creating or Purchase case we need to Write web or softphone template to webrtc_template_url or softphone_template_url 
+                            $webrtc_template_url = config('app.webrtc_template_url');
+                            $addExtensionFile = $webrtc_template_url;
+                            $ConfTemplate = ConfTemplate::select()->where('template_id', 'WEBRTC')->first();
+                            $this->addExtensionInConfFile($numbers_list->name, $addExtensionFile, $numbers_list->secret, $user->company->account_code, $ConfTemplate->template_contents);
+                            $server_flag = config('app.server_flag');
+                            if ($server_flag == 1) {
+                                $shell_script = config('app.shell_script');
+                                $result = shell_exec('sudo ' . $shell_script);
+                                Log::error('Extension Update File Transfer Log : ' . $result);
+                                $this->sipReload();
+                            }
+                            //// End Template transfer code
                             $value = "Purchase";
                             $numbers_list->update([
                                 'company_id' => $user->company->id,
