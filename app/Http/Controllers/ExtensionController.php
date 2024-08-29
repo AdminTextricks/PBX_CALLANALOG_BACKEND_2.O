@@ -1029,4 +1029,34 @@ class ExtensionController extends Controller
             }
         }        
     }
+
+
+    public function getExtensionsForBarging(Request $request)
+    {
+        $user = \Auth::user();
+        $company_id = $request->company_id ?? NULL;
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+           
+            $data = Extension::select('id', 'name', 'agent_name')
+                ->where('barge', '1')
+                ->where('status', 1)
+                ->orderBy('id', 'DESC')
+                ->get();
+        }else{
+            $data = Extension::select('id', 'name', 'agent_name')
+                ->where('company_id', $company_id)
+                ->where('barge', '1')
+                ->where('status', 1)
+                ->orderBy('id', 'DESC')
+                ->get();
+        }   
+        
+        if ($data->isNotEmpty()) {
+            $dd = $data->toArray();
+            unset($dd['links']);
+            return $this->output(true, 'Success', $dd, 200);
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
+    }
 }
