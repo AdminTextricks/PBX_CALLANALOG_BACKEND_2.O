@@ -208,8 +208,6 @@ class PaymentController extends Controller
                                     DB::rollback();
                                     return $this->output(false, 'Mismatch in Extension values.', 400);
                                 }
-                                $webrtc_template_url = config('app.webrtc_template_url');
-                                $softphone_template_url = config('app.softphone_template_url');
                                 $value = "Renew";
                                 $currentDate = Carbon::now();
                                 $targetDate = Carbon::parse($numbers_list->expirationdate);
@@ -220,25 +218,22 @@ class PaymentController extends Controller
                                     $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
                                 } else {
                                     $newDate = date('Y-m-d H:i:s', strtotime('+30 days'));
+
                                     // In Expired case we need to Update web or softphone template to webrtc_template_url or softphone_template_url 
+                                    $webrtc_template_url = config('app.webrtc_template_url');
+                                    $softphone_template_url = config('app.softphone_template_url');
                                     if ($numbers_list->sip_temp == 'WEBRTC') {
                                         $addExtensionFile = $webrtc_template_url;
-                                        $removeExtensionFile = $softphone_template_url;
                                     } else {
                                         $addExtensionFile = $softphone_template_url;
-                                        $removeExtensionFile = $webrtc_template_url;
                                     }
-                                    Log::error('addExtensionFile : ' . $addExtensionFile . '  / removeExtensionFile: ' . $removeExtensionFile);
-
                                     $ConfTemplate = ConfTemplate::select()->where('template_id', $numbers_list->sip_temp)->first();
                                     $this->addExtensionInConfFile($numbers_list->name, $addExtensionFile, $numbers_list->secret, $user->company->account_code, $ConfTemplate->template_contents);
-                                    $this->removeExtensionFromConfFile($numbers_list->name, $removeExtensionFile);
-
                                     $server_flag = config('app.server_flag');
                                     if ($server_flag == 1) {
                                         $shell_script = config('app.shell_script');
                                         $result = shell_exec('sudo ' . $shell_script);
-                                        Log::error('Extension Update File Transfer Log : ' . $result);
+                                        // Log::error('Extension Update File Transfer Log : ' . $result);
                                         $this->sipReload();
                                     }
                                     //// End Template transfer code
@@ -263,7 +258,7 @@ class PaymentController extends Controller
                                 if ($server_flag == 1) {
                                     $shell_script = config('app.shell_script');
                                     $result = shell_exec('sudo ' . $shell_script);
-                                    Log::error('Extension Update File Transfer Log : ' . $result);
+                                    // Log::error('Extension Update File Transfer Log : ' . $result);
                                     $this->sipReload();
                                 }
                                 //// End Template transfer code
@@ -1119,8 +1114,6 @@ class PaymentController extends Controller
                                 DB::rollback();
                                 return $this->output(false, 'Mismatch in Extension values.', 400);
                             }
-                            $webrtc_template_url = config('app.webrtc_template_url');
-                            $softphone_template_url = config('app.softphone_template_url');
                             $value = "Renew";
                             $currentDate = Carbon::now();
                             $targetDate = Carbon::parse($numbers_list->expirationdate);
@@ -1131,25 +1124,22 @@ class PaymentController extends Controller
                                 $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
                             } else {
                                 $newDate = date('Y-m-d H:i:s', strtotime('+30 days'));
+
                                 // In Expired case we need to Update web or softphone template to webrtc_template_url or softphone_template_url 
+                                $webrtc_template_url = config('app.webrtc_template_url');
+                                $softphone_template_url = config('app.softphone_template_url');
                                 if ($numbers_list->sip_temp == 'WEBRTC') {
                                     $addExtensionFile = $webrtc_template_url;
-                                    $removeExtensionFile = $softphone_template_url;
                                 } else {
                                     $addExtensionFile = $softphone_template_url;
-                                    $removeExtensionFile = $webrtc_template_url;
                                 }
-                                Log::error('addExtensionFile : ' . $addExtensionFile . '  / removeExtensionFile: ' . $removeExtensionFile);
-
                                 $ConfTemplate = ConfTemplate::select()->where('template_id', $numbers_list->sip_temp)->first();
                                 $this->addExtensionInConfFile($numbers_list->name, $addExtensionFile, $numbers_list->secret, $user->company->account_code, $ConfTemplate->template_contents);
-                                $this->removeExtensionFromConfFile($numbers_list->name, $removeExtensionFile);
-
                                 $server_flag = config('app.server_flag');
                                 if ($server_flag == 1) {
                                     $shell_script = config('app.shell_script');
                                     $result = shell_exec('sudo ' . $shell_script);
-                                    Log::error('Extension Update File Transfer Log : ' . $result);
+                                    // Log::error('Extension Update File Transfer Log : ' . $result);
                                     $this->sipReload();
                                 }
                                 //// End Template transfer code
@@ -1174,7 +1164,7 @@ class PaymentController extends Controller
                             if ($server_flag == 1) {
                                 $shell_script = config('app.shell_script');
                                 $result = shell_exec('sudo ' . $shell_script);
-                                Log::error('Extension Update File Transfer Log : ' . $result);
+                                // Log::error('Extension Update File Transfer Log : ' . $result);
                                 $this->sipReload();
                             }
                             //// End Template transfer code
