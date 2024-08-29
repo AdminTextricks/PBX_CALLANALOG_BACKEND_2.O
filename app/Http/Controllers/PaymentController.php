@@ -332,7 +332,26 @@ class PaymentController extends Controller
         }
     }
 
-
+    protected function sipReload()
+    {
+        $server_ip = "85.195.76.161";
+        $socket = @fsockopen($server_ip, 5038);
+        $response = "";
+        if (!is_resource($socket)) {
+            echo "conn failed in Engconnect ";
+            exit;
+        }
+        fputs($socket, "Action: Login\r\n");
+        fputs($socket, "UserName: TxuserGClanlg\r\n");
+        fputs($socket, "Secret: l3o9zMP3&X[k2+\r\n\r\n");
+        fputs($socket, "Action: Command\r\n");
+        fputs($socket, "Command: sip reload\r\n\r\n");
+        fputs($socket, "Action: Logoff\r\n\r\n");
+        while (!feof($socket))
+            $response .= fread($socket, 5038);            
+        fclose($socket);
+        return true;
+    }
     protected function addExtensionInConfFile($extensionName, $conf_file_path, $secret, $account_code, $template_contents)
     {
         // Add new user section
