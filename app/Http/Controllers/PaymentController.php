@@ -220,7 +220,7 @@ class PaymentController extends Controller
                                     $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
                                 } else {
                                     $newDate = date('Y-m-d H:i:s', strtotime('+30 days'));
-                                    // In Expired case we need to write web or softphone template to webrtc_template_url or softphone_template_url 
+                                    // In Expired case we need to Update web or softphone template to webrtc_template_url or softphone_template_url 
                                     if ($numbers_list->sip_temp == 'WEBRTC') {
                                         $addExtensionFile = $webrtc_template_url;
                                         $removeExtensionFile = $softphone_template_url;
@@ -241,8 +241,9 @@ class PaymentController extends Controller
                                         Log::error('Extension Update File Transfer Log : ' . $result);
                                         $this->sipReload();
                                     }
-                                    //// End Template transfer code                                   
+                                    //// End Template transfer code
                                 }
+
                                 $numbers_list->update([
                                     'company_id'  => $numbers_list->company_id,
                                     'startingdate' => date('Y-m-d H:i:s'),
@@ -252,6 +253,20 @@ class PaymentController extends Controller
                                     'status' => 1,
                                 ]);
                             } else {
+
+                                // In Creating or Purchase case we need to Write web or softphone template to webrtc_template_url or softphone_template_url 
+                                $webrtc_template_url = config('app.webrtc_template_url');
+                                $addExtensionFile = $webrtc_template_url;
+                                $ConfTemplate = ConfTemplate::select()->where('template_id', 'WEBRTC')->first();
+                                $this->addExtensionInConfFile($numbers_list->name, $addExtensionFile, $numbers_list->secret, $user->company->account_code, $ConfTemplate->template_contents);
+                                $server_flag = config('app.server_flag');
+                                if ($server_flag == 1) {
+                                    $shell_script = config('app.shell_script');
+                                    $result = shell_exec('sudo ' . $shell_script);
+                                    Log::error('Extension Update File Transfer Log : ' . $result);
+                                    $this->sipReload();
+                                }
+                                //// End Template transfer code
                                 $value = "Purchase";
                                 $numbers_list->update([
                                     'company_id' => $user->company->id,
