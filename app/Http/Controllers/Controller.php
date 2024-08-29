@@ -199,7 +199,7 @@ class Controller extends BaseController
         }
     }
 
-    protected function sipReload()
+    public function sipReload()
     {
         $server_ip = "85.195.76.161";
         $socket = @fsockopen($server_ip, 5038);
@@ -219,7 +219,7 @@ class Controller extends BaseController
         fclose($socket);
         return true;
     }
-    protected function addExtensionInConfFile($extensionName, $conf_file_path, $secret, $account_code, $template_contents)
+    public function addExtensionInConfFile($extensionName, $conf_file_path, $secret, $account_code, $template_contents)
     {
         // Add new user section
         $register_string = "\n[$extensionName]\nusername=$extensionName\nsecret=$secret\naccountcode=$account_code\n$template_contents\n";
@@ -228,7 +228,7 @@ class Controller extends BaseController
         //echo "Registration successful. The SIP user $nname has been added to the webrtc_template.conf file.";        
     }
 
-    protected function removeExtensionFromConfFile($extensionName, $conf_file_path)
+    public function removeExtensionFromConfFile($extensionName, $conf_file_path)
     {
         // Remove user section
         //$conf_file_path = "webrtc_template.conf";
