@@ -1035,6 +1035,7 @@ class ExtensionController extends Controller
     {
         $user = \Auth::user();
         $company_id = $request->company_id ?? NULL;
+        return $user->roles->first()->slug;
         if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
            
             $data = Extension::select('id', 'name', 'agent_name')
