@@ -209,8 +209,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	});
 
 	# Manage Extensions
-	Route::group(['prefix' => 'extensions'], function () {	
-		Route::get('/getForBarging/{company_id?}', [ExtensionController::class, 'getExtensionsForBarging']);	
+	Route::group(['prefix' => 'extensions'], function () {		
 		Route::post('/multiEdit', [ExtensionController::class, 'updateExtensionsDetails']);
 		Route::get('/getSipRegistrationList', [ExtensionController::class, 'getSipRegistrationList'])->name('getSipRegistrationList');
 		Route::get('/quickView/{company_id}', [ExtensionController::class, 'getExtensionsNumberPassword']);
@@ -225,7 +224,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::delete('/{id}', [ExtensionController::class, 'deleteExtension']);
 		Route::delete('/', [ExtensionController::class, 'multipleDeleteExtension']);
 		Route::get('/getByCompany/{company_id}', [ExtensionController::class, 'getExtensionsByCompany']);
-		
+		Route::get('/getForBarging/{company_id?}', [ExtensionController::class, 'getExtensionsForBarging']);
 	});
 
 	#Conf Template Manage
