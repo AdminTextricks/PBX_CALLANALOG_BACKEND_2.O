@@ -244,6 +244,21 @@ class QueueController extends Controller
 		}
 	}
 
+	public function getAllOrByCompany(Request $request)
+    {
+		$query = Queue::select('id','name');
+		if ($request->get('company_id')) {
+            $query->where('company_id', $request->get('company_id'));
+        } 
+		$data = $query->get();
+		
+		if($data->isNotEmpty()){
+			return $this->output(true, 'Success', $data->toArray());
+		}else{
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
+
 	public function updateQueue(Request $request, $id)
 	{
 		try { 
