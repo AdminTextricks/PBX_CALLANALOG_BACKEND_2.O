@@ -361,7 +361,9 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	#CDR 
 	Route::group(['prefix' => 'cdr-report'], function () {
+		Route::get('/getCdrFilterList', [CdrController::class, 'getCdrFilterList']);
 		Route::get('/{company_id?}', [CdrController::class, 'getAllCdrList']);
+		
 		//Route::get('/inboundCdr/{company_id?}', [CdrController::class, 'getAllCdrList']);
 		Route::get('/outboundCdr/{company_id?}', [CdrController::class, 'getAllCallList']);		
 	});
@@ -400,6 +402,24 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::put('/{id}', [VoiceMailController::class, 'updateVoiceMail']);
 		Route::delete('/{id}', [VoiceMailController::class, 'deleteVoiceMail']);
 	});
+});
+
+Route::get('/route-cache', function() {
+	$exitCode = Artisan::call('route:cache');
+	$exitCode = Artisan::call('route:clear');
+	return 'Routes cache cleared';
+});
+Route::get('/config-cache', function() {
+	$exitCode = Artisan::call('config:cache');
+	return 'Config cache cleared';
+});
+Route::get('/clear-cache', function() {
+	$exitCode = Artisan::call('cache:clear');
+	return 'Application cache cleared';
+});
+Route::get('/optimize', function() {
+	$exitCode = Artisan::call('optimize');
+	return 'Application optimize';
 });
 /*
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
