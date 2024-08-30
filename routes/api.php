@@ -169,7 +169,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	});
 
 	# Tfn Number 
-	Route::group(['prefix' => 'tfn'], function () {
+	Route::group(['prefix' => 'tfn'], function () {	
+		Route::get('/getAllTfnOrByCompany', [TfnController::class, 'getAllTfnOrByCompany']);	
 		Route::post('/call-screen-action', [TfnController::class, 'callScreenAction']);
 		Route::post('/renew-tfn-number', [TfnController::class, 'assignTfnMainRenew']);
 		Route::get('/destination-type', [TfnController::class, 'destinationType']);
@@ -185,6 +186,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::delete('/{id}', [TfnController::class, 'deleteTfn']);
 		Route::post('/{id}', [TfnController::class, 'removeTfnfromTable']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [TfnController::class, 'getAllActiveTFNByCompanyAndCountry']);
+		
 	});
 
 	#Block number
