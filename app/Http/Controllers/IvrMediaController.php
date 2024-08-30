@@ -217,7 +217,7 @@ class IvrMediaController extends Controller
     public function getAllIvrMedia(Request $request)
     {
         $user = \Auth::user();
-        $perPageNo = isset($request->perpage) ? $request->perpage : 10;
+        $perPageNo = isset($request->perpage) ? $request->perpage : 25;
         $params = $request->params ?? "";
         $IvrMedia_id = $request->id ?? NULL;
 
@@ -225,7 +225,7 @@ class IvrMediaController extends Controller
             $IvrMedia_id = $request->id ?? NULL;
             if ($IvrMedia_id) {
                 $data = IvrMedia::with('company:id,company_name,email,mobile')
-                    ->select()->where('id', $IvrMedia_id)->get();
+                    ->select()->where('id', $IvrMedia_id)->orderBy('id', 'DESC')->get();
             } else {
                 if ($params != "") {
                     $data = IvrMedia::with('company:id,company_name,email,mobile')
@@ -237,10 +237,11 @@ class IvrMediaController extends Controller
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('email', 'like', "%{$params}%");
                         })
+                        ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
                 } else {
                     $data = IvrMedia::with('company:id,company_name,email,mobile')
-                        ->select()->paginate(
+                        ->select()->orderBy('id', 'DESC')->paginate(
                             $perPage = $perPageNo,
                             $columns = ['*'],
                             $pageName = 'page'
@@ -252,7 +253,7 @@ class IvrMediaController extends Controller
             $IvrMedia_id = $request->id ?? NULL;
             if ($IvrMedia_id) {
                 $data = IvrMedia::with('company:id,company_name,email,mobile')
-                    ->select()->where('id', $IvrMedia_id)->get();
+                    ->select()->where('id', $IvrMedia_id)->orderBy('id', 'DESC')->get();
             } else {
                 if ($params != "") {
                     $data = IvrMedia::with('company:id,company_name,email,mobile')
@@ -261,11 +262,13 @@ class IvrMediaController extends Controller
 							$query->where('name', 'like', "%{$params}%")
                             ->orWhere('media_file', 'LIKE', "%$params%");							
 						})
+                        ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
                 } else {
                     $data = IvrMedia::with('company:id,company_name,email,mobile')
                         ->where('company_id', '=',  $user->company_id)
-                        ->select()->paginate(
+                        ->select()->orderBy('id', 'DESC')
+                        ->paginate(
                             $perPage = $perPageNo,
                             $columns = ['*'],
                             $pageName = 'page'
