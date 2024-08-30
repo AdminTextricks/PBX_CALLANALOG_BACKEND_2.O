@@ -99,6 +99,63 @@ class CdrController extends Controller
 		}
 	}
 
+
+    public function getCdrFilterList(Request $request)
+	{
+        $user = \Auth::user();
+		$perPageNo = isset($request->perpage) ? $request->perpage : 25;
+		$params = $request->params ?? "";
+       
+        if ($request->get('startDate')) {
+            $startDate = Carbon::createFromFormat('Y-m-d', $request->get('startDate'))->startOfDay();
+        }else{
+            $startDate = Carbon::now()->startOfDay(); 
+        }
+        if ($request->get('endDate')) {
+            $endDate = Carbon::createFromFormat('Y-m-d', $request->get('endDate'))->endOfDay();
+        }else{
+            $endDate = Carbon::now()->endOfDay();           
+        }
+       
+		$query  = Cdr::select('*')
+                        ->with('company:id,company_name,email,mobile')
+                        ->with('country:id,country_name');
+                        
+        if ($startDate) {
+            $query->where('call_date', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->where('call_date', '<=', $endDate);
+        }
+        if ($request->get('callerId')) {
+            $query->where('caller_num', 'like', "%{$request->get('callerId')}%");
+        }
+        if ($request->get('destination')) {
+            $query->where('destination', $request->get('destination'));
+        }
+        if ($request->get('tfn')) {
+            $query->where('tfn', $request->get('tfn'));
+        }
+        if ($request->get('disposition')) {
+            $query->where('disposition', $request->get('disposition'));
+        }
+        if ($request->get('call_type')) {
+            $query->where('call_type', $request->get('call_type'));
+        }
+        if (!in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc','reseller'))) {
+            $query->where('company_id', $user->company_id);
+        }
+        //return $query->ddRawSql();       
+        $data = $query->get();
+		if ($data->isNotEmpty()) {
+			$dd = $data->toArray();
+			unset($dd['links']);
+			return $this->output(true, 'Success', $dd, 200);
+		} else {
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
+
     public function getAllCallList(Request $request)
 	{
 		$perPageNo = isset($request->perpage) ? $request->perpage : 25;
