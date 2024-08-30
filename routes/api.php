@@ -301,6 +301,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'queue'], function () {
 		Route::post('/', [QueueController::class, 'addQueue']);
 		Route::get('/active', [QueueController::class, 'getAllActiveQueue']);
+		Route::get('/getAllOrByCompany', [QueueController::class, 'getAllOrByCompany']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [QueueController::class, 'getAllActiveByCompanyAndCountry']);
 		Route::get('/{id?}', [QueueController::class, 'getAllQueue']);
 		Route::put('/{id}', [QueueController::class, 'updateQueue']);
