@@ -320,6 +320,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'conference'], function () {
 		Route::post('/', [ConferenceController::class, 'addConference']);
 		Route::get('/active', [ConferenceController::class, 'getAllActiveConference']);
+		Route::get('/getAllOrByCompany', [ConferenceController::class, 'getAllOrByCompany']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ConferenceController::class, 'getAllActiveByCompanyAndCountry']);
 		Route::get('/{id?}', [ConferenceController::class, 'getAllConference']);
 		Route::put('/{id}', [ConferenceController::class, 'updateConference']);
