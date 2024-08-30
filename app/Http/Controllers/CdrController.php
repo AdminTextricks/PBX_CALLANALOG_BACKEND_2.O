@@ -146,7 +146,8 @@ class CdrController extends Controller
             $query->where('company_id', $user->company_id);
         }
         //return $query->ddRawSql();       
-        $data = $query->get();
+        //$data = $query->get();
+        $data = $query->orderBy('id', 'DESC')->paginate($perPageNo, ['*'], 'page');
 		if ($data->isNotEmpty()) {
 			$dd = $data->toArray();
 			unset($dd['links']);
