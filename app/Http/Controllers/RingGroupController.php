@@ -244,6 +244,21 @@ class RingGroupController extends Controller
 		}
 	}
 
+	public function getAllOrByCompany(Request $request)
+    {
+		$query = RingGroup::select('id','ringno');
+		if ($request->get('company_id')) {
+            $query->where('company_id', $request->get('company_id'));
+        } 
+		$data = $query->get();
+		
+		if($data->isNotEmpty()){
+			return $this->output(true, 'Success', $data->toArray());
+		}else{
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
+
     public function updateRingGroup(Request $request, $id)
 	{
 		try { 

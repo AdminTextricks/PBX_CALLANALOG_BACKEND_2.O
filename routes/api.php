@@ -261,6 +261,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'ring-group'], function () {
 		Route::post('/', [RingGroupController::class, 'addRingGroup']);
 		Route::get('/active', [RingGroupController::class, 'getAllActiveRingGroup']);
+		Route::get('/getAllOrByCompany', [RingGroupController::class, 'getAllOrByCompany']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [RingGroupController::class, 'getAllActiveByCompanyAndCountry']);
 		Route::get('/{id?}', [RingGroupController::class, 'getAllRingGroup']);
 		Route::put('/{id}', [RingGroupController::class, 'updateRingGroup']);
