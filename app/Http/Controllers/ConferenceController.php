@@ -240,7 +240,7 @@ class ConferenceController extends Controller
 		if ($request->get('company_id')) {
             $query->where('company_id', $request->get('company_id'));
         } 
-		$data = $query->get();
+		$data = $query->orderBy('id', 'DESC')->get();
 		
 		if($data->isNotEmpty()){
 			return $this->output(true, 'Success', $data->toArray());
