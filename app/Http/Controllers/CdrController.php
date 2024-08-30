@@ -142,6 +142,9 @@ class CdrController extends Controller
         if ($request->get('call_type')) {
             $query->where('call_type', $request->get('call_type'));
         }
+        if ($request->get('company_id')) {
+            $query->where('company_id', $request->get('company_id'));
+        }
         if (!in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc','reseller'))) {
             $query->where('company_id', $user->company_id);
         }
