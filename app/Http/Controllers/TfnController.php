@@ -216,7 +216,7 @@ class TfnController extends Controller
             // }
             if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
                 $companyID = 0;
-            }else{
+            } else {
                 $companyID = $user->company_id;
             }
             RemovedTfn::create([
@@ -255,7 +255,7 @@ class TfnController extends Controller
             'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
             'tfn_destinations.destinationType:id,destination_type'
         ])
-            
+
             ->orderBy('id', 'DESC');
 
         if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
@@ -306,7 +306,7 @@ class TfnController extends Controller
 
             if ($tfn_id) {
                 $query->where('id', $tfn_id);
-            } 
+            }
             if (!empty($params)) {
                 $query->where(function ($query) use ($params, $user) {
                     $query->where('tfn_number', 'LIKE', "%$params%")
@@ -329,7 +329,7 @@ class TfnController extends Controller
                                 ->orWhere('destination_id', 'like', "%{$params}%");
                         });
                 });
-            } 
+            }
             if (!empty($options)) {
                 if ($options == 5) {
                     $query->where('company_id', '>', 0)->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0)->where('expirationdate', '<', Carbon::now());
@@ -480,6 +480,9 @@ class TfnController extends Controller
         $file = $request->file('import_csv');
         $handle = fopen($file->getRealPath(), 'r');
 
+        $dataCSV = ['Status' => 'true', 'Message' => 'CSV data has been processed successfully.', 'data' => [], 'code' => 200];
+        $errors = [];
+
         if ($handle !== FALSE) {
             fgetcsv($handle); // Skip the first row (header)
             $chunksize = 25;
@@ -495,52 +498,55 @@ class TfnController extends Controller
                     $chunkdata[] = $data;
                 }
 
-                // Process chunk data
-                $this->getchunkdata($chunkdata);
+                $dataCSV = $this->getchunkdata($chunkdata);
             }
 
             fclose($handle);
         }
 
-        return $this->output(true, 'CSV data has been processed successfully.', [], 200);
+        if (!empty($errors)) {
+            return $this->output(false, 'Some errors occurred during processing: ' . implode(', ', $errors), 400);
+        }
+
+        return $this->output($dataCSV['Status'], $dataCSV['Message']);
     }
 
     public function getchunkdata($chunkdata)
     {
         foreach ($chunkdata as $column) {
-            if (count($column) < 12) {
+            if (count($column) < 11) {
                 continue;
             }
 
             $tfn_number = $column[0];
-            $tfn_provider = $column[1];
-            $tfn_group_id = $column[2];
-            $country_id = $column[3];
-            $tfn_type_id = $column[4];
-            $activated = $column[5];
-            $monthly_rate = $column[6];
-            $connection_charge = $column[7];
-            $selling_rate = $column[8];
-            $aleg_retail_min_duration = $column[9];
-            $aleg_billing_block = $column[10];
-            $status = $column[11];
+            $tfncsv = Tfn::where('tfn_number', $tfn_number)->first();
 
-            // Create new Tfn record
-            $tfncsv = new Tfn();
-            $tfncsv->tfn_number = $tfn_number;
-            $tfncsv->tfn_provider = $tfn_provider;
-            $tfncsv->tfn_group_id = $tfn_group_id;
-            $tfncsv->country_id = $country_id;
-            $tfncsv->tfn_type_id = $tfn_type_id;
-            $tfncsv->activated = $activated;
-            $tfncsv->monthly_rate = $monthly_rate;
-            $tfncsv->connection_charge = $connection_charge;
-            $tfncsv->selling_rate = $selling_rate;
-            $tfncsv->aleg_retail_min_duration = $aleg_retail_min_duration;
-            $tfncsv->aleg_billing_block = $aleg_billing_block;
-            $tfncsv->status = $status;
-            $tfncsv->save();
+            if ($tfncsv) {
+                return ['Status' => 'false', 'Message' => 'This TFN number ' . $tfn_number . ' already exists!', 'code' => 400];
+            } else {
+                $tfncsv = new Tfn();
+            }
+
+            $tfncsv->tfn_number = $column[0];
+            $tfncsv->tfn_provider = $column[1];
+            $tfncsv->tfn_group_id = $column[2];
+            $tfncsv->country_id = $column[3];
+            $tfncsv->activated = $column[4];
+            $tfncsv->monthly_rate = $column[5];
+            $tfncsv->connection_charge = $column[6];
+            $tfncsv->selling_rate = $column[7];
+            $tfncsv->aleg_retail_min_duration = $column[8];
+            $tfncsv->aleg_billing_block = $column[9];
+            $tfncsv->status = $column[10];
+
+            $response = $tfncsv->save();
+
+            if (!$response) {
+                return ['Status' => 'false', 'Message' => 'Error occurred while processing TFN ' . $tfn_number];
+            }
         }
+
+        return ['Status' => 'true', 'Message' => 'CSV Uploaded successfully'];
     }
     public function assignTfnMainOLD(Request $request)
     {
@@ -1248,14 +1254,14 @@ class TfnController extends Controller
     {
         //dd('dsfcdsfadf');
         $query = Tfn::select('id', 'tfn_number')
-        ->where('company_id', '<>', 0)
-        ->where('company_id', '<>', '')
-        ->where('company_id', '<>', null);
+            ->where('company_id', '<>', 0)
+            ->where('company_id', '<>', '')
+            ->where('company_id', '<>', null);
 
         if ($request->get('company_id')) {
             $query->where('company_id', $request->get('company_id'));
-        }        
-        $data = $query->orderBy('id', 'DESC')->get();            
+        }
+        $data = $query->orderBy('id', 'DESC')->get();
         //return $query->ddRawSql();   
         if ($data->isNotEmpty()) {
             return $this->output(true, 'Success', $data->toArray());
