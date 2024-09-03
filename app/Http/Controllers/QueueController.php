@@ -354,7 +354,8 @@ class QueueController extends Controller
 	{
 		try {
 			$validator = Validator::make($request->all(), [
-				'queue_id'	=> 'required|numeric|exists:queues,id',
+				'queue_id'		=> 'required|numeric|exists:queues,id',
+				'queue_name'	=> 'required|numeric|exists:queues,name',
 				'extension.*'	=> 'required|numeric|exists:extensions,name',				
 			]);
 			if ($validator->fails()){
@@ -367,7 +368,8 @@ class QueueController extends Controller
 				$ring_members = array();
 				foreach ($extension_name as $item) {
 					$QueueMember = QueueMember::firstOrCreate ([
-						'queue_id'		=> $request->queue_id,					
+						'queue_id'		=> $request->queue_id,	
+						'queue_name'	=> $request->queue_name,				
 						'membername' 	=> $item,
 						'interface'		=> 'SIP/'.$item,
 					]); 

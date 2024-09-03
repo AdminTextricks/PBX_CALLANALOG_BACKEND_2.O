@@ -1030,7 +1030,7 @@ class ExtensionController extends Controller
         }        
     }
 
-
+/***  get extension list for barging */
     public function getExtensionsForBarging(Request $request)
     {
         $user = \Auth::user();

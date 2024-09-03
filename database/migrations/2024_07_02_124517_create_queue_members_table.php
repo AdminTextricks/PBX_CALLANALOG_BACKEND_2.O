@@ -12,11 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('queue_members', function (Blueprint $table) {
-            //$table->bigIncrements('uniqueid');
-            $table->bigIncrements('id');
-			$table->integer('queue_id')->index();
-			$table->integer('membername')->index();
-            //$table->string('queue_name', 200)->nullable();
+            //$table->bigIncrements('id');
+            $table->id();
+            //$table->unsignedBigInteger('uniqueid');
+            $table->unsignedBigInteger('uniqueid')->nullable();
+			$table->integer('queue_id')->index();  
+            $table->string('queue_name', 200)->nullable();
+            $table->integer('membername')->index();            
             $table->string('interface', 100)->nullable();
             $table->integer('penalty')->default(0);
             $table->integer('paused')->default(0);
