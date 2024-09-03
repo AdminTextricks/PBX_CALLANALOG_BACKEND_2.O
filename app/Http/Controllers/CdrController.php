@@ -148,8 +148,8 @@ class CdrController extends Controller
         if (!in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc','reseller'))) {
             $query->where('company_id', $user->company_id);
         }
-        return $query->ddRawSql();       
-        return $data = $query->get();
+        //return $query->ddRawSql();       
+        //return $data = $query->get();
         $data = $query->orderBy('id', 'DESC')->paginate($perPageNo, ['*'], 'page');
 		if ($data->isNotEmpty()) {
 			$dd = $data->toArray();
