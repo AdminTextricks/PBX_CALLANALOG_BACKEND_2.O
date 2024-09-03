@@ -63,6 +63,7 @@ class UserController extends Controller
                 $dataQuery->where(function($query) use($params) {
                     $query->where('name', 'like', "%{$params}%")
                     ->orWhere('mobile', 'LIKE', "%$params%")
+                    ->orWhere('email', 'LIKE', "%$params%")
                     ->orWhereHas('country', function ($query) use ($params) {
                         $query->where('country_name', 'like', "%{$params}%");
                     });
