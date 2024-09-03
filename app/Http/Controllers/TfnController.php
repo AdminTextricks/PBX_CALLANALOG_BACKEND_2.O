@@ -1263,4 +1263,56 @@ class TfnController extends Controller
             return $this->output(true, 'No Record Found', []);
         }
     }
+
+    public function getALLRemovedTfn(Request $request)
+    {
+        $user = \Auth::user();
+        $perPageNo = $request->get('perpage', 10);
+        $params = $request->get('params', "");
+        $fromDate = $request->get('from_date');
+        $toDate = $request->get('to_date');
+
+        if ($fromDate) {
+            $fromDate = \Carbon\Carbon::createFromFormat('d-m-y', $fromDate)->startOfDay();
+        }
+        if ($toDate) {
+            $toDate = \Carbon\Carbon::createFromFormat('d-m-y', $toDate)->endOfDay();
+        }
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+            $query = RemovedTfn::select('*')
+                ->with('company:id,company_name,email')
+                ->with('countries:id,country_name,phone_code,currency_symbol')
+                ->with('users:id,name,email')
+                ->where('status', 1)->orderBy('id', 'DESC');
+            if ($fromDate) {
+                $query->where('updated_at', '>=', $fromDate);
+            }
+            if ($toDate) {
+                $query->where('updated_at', '<=', $toDate);
+            }
+            if (!empty($params)) {
+                $query->where(function ($q) use ($params) {
+                    $q->where('tfn_number', 'LIKE', "%$params%")
+                        ->orWhereHas('company', function ($subQuery) use ($params) {
+                            $subQuery->where('company_name', 'like', "%{$params}%")
+                                ->orWhere('email', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('countries', function ($subQuery) use ($params) {
+                            $subQuery->where('country_name', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('users', function ($subQuery) use ($params) {
+                            $subQuery->where('name', 'like', "%{$params}%");
+                        });
+                });
+            }
+        } else {
+            return $this->output(false, 'Sorry! You are not authorized to add TFN Number.', [], 209);
+        }
+        $data =  $query->paginate($perPageNo);
+        if ($data->isNotEmpty()) {
+            return $this->output(true, 'Success', $data->toArray());
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
+    }
 }
