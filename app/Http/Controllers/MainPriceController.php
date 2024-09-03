@@ -206,7 +206,8 @@ class MainPriceController extends Controller
 
     public function addResellerPrice(Request $request)
     {
-        $validator = Validator::make($request->all(), [            
+        $validator = Validator::make($request->all(), [ 
+            'reseller_id'   => 'required|numeric|exists:users,id',
             'country_id'    => 'required|numeric',
             'company_id'    => 'required|numeric|exists:companies,id',          
             'tfn_commission_type'       => 'required|max:500|in:Fixed Amount,Percentage',             
@@ -224,11 +225,12 @@ class MainPriceController extends Controller
         try { 
             DB::beginTransaction();
             $ResellerPrice = ResellerPrice::where('company_id', $request->company_id)
-                            //->where('product', $request->product)
+                            ->where('reseller_id', $request->reseller_id)
                             ->where('country_id', $request->country_id)
                             ->first();
             if(!$ResellerPrice){
                 $ResellerPrice = ResellerPrice::create([
+                    'reseller_id'       => $request->reseller_id,
                     'country_id'        => $request->country_id,
                     'company_id'	    => $request->company_id,
                     'tfn_commission_type'   => $request->tfn_commission_type,
@@ -260,28 +262,46 @@ class MainPriceController extends Controller
         $user = \Auth::user();
         $perPageNo = isset($request->perpage) ? $request->perpage : 10;
         $params = $request->params ?? "";
-
         $price_id = $request->id ?? NULL;
-        if($price_id){            
-            $ResellerPrice_data = ResellerPrice::select('*')
-                            ->with(['company:id,company_name,email,mobile'])
-                            ->with('country:id,country_name') 
-                            ->orWhereHas('company', function ($query) use ($user) {
-                                $query->where('parent_id', '=', $user->id);
-                            })
-                            ->where('id', $price_id)->get();
-        }else{
-            $ResellerPrice_data = ResellerPrice::select('*') 
-                                ->with(['company:id,company_name,email,mobile']) 
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+            if($price_id){
+                $ResellerPrice_data = ResellerPrice::select('*')
+                                ->with(['company:id,company_name,email,mobile'])
                                 ->with('country:id,country_name')
-                                ->orWhereHas('company', function ($query) use ($user) {
-                                    $query->where('parent_id', '=', $user->id);
-                                })
-                                ->paginate(
-                                $perPage = $perPageNo,
-                                $columns = ['*'],
-                                $pageName = 'page'
-                            );
+                                ->with('reseller:id,name,email')
+                                ->where('id', $price_id)
+                                ->get();
+            }else{
+                $ResellerPrice_data = ResellerPrice::select('*') 
+                                    ->with(['company:id,company_name,email,mobile']) 
+                                    ->with('country:id,country_name')
+                                    ->with('reseller:id,name,email')
+                                    ->paginate(
+                                    $perPage = $perPageNo,
+                                    $columns = ['*'],
+                                    $pageName = 'page'
+                                );
+            }
+        }else{
+            if($price_id){
+                $ResellerPrice_data = ResellerPrice::select('*')
+                                ->with(['company:id,company_name,email,mobile'])
+                                ->with('country:id,country_name') 
+                                ->with('reseller:id,name,email')
+                                ->where('reseller_id', $user->id)
+                                ->where('id', $price_id)->get();
+            }else{
+                $ResellerPrice_data = ResellerPrice::select('*') 
+                                    ->with(['company:id,company_name,email,mobile']) 
+                                    ->with('country:id,country_name')
+                                    ->with('reseller:id,name,email')
+                                    ->where('reseller_id', $user->id)
+                                    ->paginate(
+                                    $perPage = $perPageNo,
+                                    $columns = ['*'],
+                                    $pageName = 'page'
+                                );
+            }
         }
         if ($ResellerPrice_data->isNotEmpty()) {
             $ResellerPrice_dd = $ResellerPrice_data->toArray();

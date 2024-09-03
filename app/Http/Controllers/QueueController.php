@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\LOG;
 use App\Models\Queue;
 use App\Models\QueueMember;
 use App\Models\Extension;
+use App\Models\TfnDestination;
 use Validator;
 use Carbon\Carbon;
 
@@ -243,6 +244,21 @@ class QueueController extends Controller
 		}
 	}
 
+	public function getAllOrByCompany(Request $request)
+    {
+		$query = Queue::select('id','name');
+		if ($request->get('company_id')) {
+            $query->where('company_id', $request->get('company_id'));
+        } 
+		$data = $query->orderBy('id', 'DESC')->get();
+		
+		if($data->isNotEmpty()){
+			return $this->output(true, 'Success', $data->toArray());
+		}else{
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
+
 	public function updateQueue(Request $request, $id)
 	{
 		try { 
@@ -310,6 +326,7 @@ class QueueController extends Controller
             DB::beginTransaction();            
             $Queue = Queue::where('id', $id)->first();
             if($Queue){
+				TfnDestination::where('destination_type_id', 1)->where('destination_id',$id)->delete();
 				QueueMember::where('queue_id', $id)->delete();
                 $resdelete = $Queue->delete();
                 if ($resdelete) {

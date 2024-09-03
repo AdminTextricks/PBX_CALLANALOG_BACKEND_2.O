@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
 use Validator;
 use Mail;
+use Illuminate\Validation\Rules\Password;
 
 class PasswordResetTokensController extends Controller
 {
@@ -63,7 +64,18 @@ class PasswordResetTokensController extends Controller
         PasswordResetTokens::where('created_at', '<=', $formatted)->delete();
 		
 		$validator = Validator::make($request->all(), [
-            'password' => 'required|confirmed',
+            'password' 	=> [
+                            'required',
+                            'string',
+                            'confirmed',
+                            Password::min(8)
+                                ->mixedCase()
+                                ->letters()
+                                ->numbers()
+                                ->symbols()
+                                ->uncompromised(),
+                        ],
+            //'password' => 'required|confirmed',
         ]);
         if ($validator->fails()){
             return $this->output(false, $validator->errors()->first(), [], 409);

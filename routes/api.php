@@ -36,6 +36,7 @@ use App\Http\Controllers\CdrController;
 use App\Http\Controllers\ResellerCommissionController;
 use App\Http\Controllers\OneGoUserController;
 use App\Http\Controllers\ResellerCallCommissionController;
+use App\Http\Controllers\VoiceMailController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -168,7 +169,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	});
 
 	# Tfn Number 
-	Route::group(['prefix' => 'tfn'], function () {
+	Route::group(['prefix' => 'tfn'], function () {	
+		Route::get('/getAllTfnOrByCompany', [TfnController::class, 'getAllTfnOrByCompany']);	
 		Route::post('/call-screen-action', [TfnController::class, 'callScreenAction']);
 		Route::get('/removed-tfn', [TfnController::class, 'getALLRemovedTfn']);
 		Route::post('/renew-tfn-number', [TfnController::class, 'assignTfnMainRenew']);
@@ -185,6 +187,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::delete('/{id}', [TfnController::class, 'deleteTfn']);
 		Route::post('/{id}', [TfnController::class, 'removeTfnfromTable']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [TfnController::class, 'getAllActiveTFNByCompanyAndCountry']);
+		
 	});
 
 	#Block number
@@ -209,7 +212,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	});
 
 	# Manage Extensions
-	Route::group(['prefix' => 'extensions'], function () {
+	Route::group(['prefix' => 'extensions'], function () {		
 		Route::post('/multiEdit', [ExtensionController::class, 'updateExtensionsDetails']);
 		Route::get('/getSipRegistrationList', [ExtensionController::class, 'getSipRegistrationList'])->name('getSipRegistrationList');
 		Route::get('/quickView/{company_id}', [ExtensionController::class, 'getExtensionsNumberPassword']);
@@ -223,7 +226,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		//Route::post('/adToCart', [ExtensionController::class, 'extensionAddToCArt']);
 		Route::delete('/{id}', [ExtensionController::class, 'deleteExtension']);
 		Route::delete('/', [ExtensionController::class, 'multipleDeleteExtension']);
-		
+		Route::get('/getByCompany/{company_id}', [ExtensionController::class, 'getExtensionsByCompany']);
+		Route::get('/getForBarging/{company_id?}', [ExtensionController::class, 'getExtensionsForBarging']);
 	});
 
 	#Conf Template Manage
@@ -258,6 +262,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'ring-group'], function () {
 		Route::post('/', [RingGroupController::class, 'addRingGroup']);
 		Route::get('/active', [RingGroupController::class, 'getAllActiveRingGroup']);
+		Route::get('/getAllOrByCompany', [RingGroupController::class, 'getAllOrByCompany']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [RingGroupController::class, 'getAllActiveByCompanyAndCountry']);
 		Route::get('/{id?}', [RingGroupController::class, 'getAllRingGroup']);
 		Route::put('/{id}', [RingGroupController::class, 'updateRingGroup']);
@@ -297,6 +302,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'queue'], function () {
 		Route::post('/', [QueueController::class, 'addQueue']);
 		Route::get('/active', [QueueController::class, 'getAllActiveQueue']);
+		Route::get('/getAllOrByCompany', [QueueController::class, 'getAllOrByCompany']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [QueueController::class, 'getAllActiveByCompanyAndCountry']);
 		Route::get('/{id?}', [QueueController::class, 'getAllQueue']);
 		Route::put('/{id}', [QueueController::class, 'updateQueue']);
@@ -315,6 +321,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'conference'], function () {
 		Route::post('/', [ConferenceController::class, 'addConference']);
 		Route::get('/active', [ConferenceController::class, 'getAllActiveConference']);
+		Route::get('/getAllOrByCompany', [ConferenceController::class, 'getAllOrByCompany']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ConferenceController::class, 'getAllActiveByCompanyAndCountry']);
 		Route::get('/{id?}', [ConferenceController::class, 'getAllConference']);
 		Route::put('/{id}', [ConferenceController::class, 'updateConference']);
@@ -360,9 +367,11 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	#CDR 
 	Route::group(['prefix' => 'cdr-report'], function () {
-		Route::get('/inboundCdr/{company_id?}', [CdrController::class, 'getAllCdrList']);
-		Route::get('/outboundCdr/{company_id?}', [CdrController::class, 'getAllCallList']);
-		//Route::delete('/{id}', [IvrController::class,'deleteIvr']);
+		Route::get('/getCdrFilterList', [CdrController::class, 'getCdrFilterList']);
+		Route::get('/{company_id?}', [CdrController::class, 'getAllCdrList']);
+		
+		//Route::get('/inboundCdr/{company_id?}', [CdrController::class, 'getAllCdrList']);
+		Route::get('/outboundCdr/{company_id?}', [CdrController::class, 'getAllCallList']);		
 	});
 
 	#One Go User
@@ -372,6 +381,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/createExtensions', [OneGoUserController::class, 'createExtensions']);
 		Route::post('/addRingGroup', [OneGoUserController::class, 'addRingGroup']);
 		Route::get('/', [OneGoUserController::class,'getOneGoUser']);
+		Route::post('/createInvoice', [OneGoUserController::class,'createInvoice']);
 		//Route::delete('/{id}', [IvrController::class,'deleteIvr']);
 	});
 
@@ -389,6 +399,34 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::put('/{id}', [ResellerCallCommissionController::class, 'updateResellerCallCommission']);
 		Route::delete('/{id}', [ResellerCallCommissionController::class, 'deleteResellerCallCommission']);
 	});
+
+	# Voice Mail Manage 
+	Route::group(['prefix' => 'voice-mail'], function () {
+		Route::post('/', [VoiceMailController::class, 'addVoiceMail']);
+		Route::get('/getAllOrByCompany', [VoiceMailController::class, 'getAllOrByCompany']);
+		Route::get('/getByCompany/{company_id}', [VoiceMailController::class, 'getAllVoiceMailByCompany']);
+		Route::get('/{id?}', [VoiceMailController::class, 'getAllVoiceMail']);
+		Route::put('/{id}', [VoiceMailController::class, 'updateVoiceMail']);
+		Route::delete('/{id}', [VoiceMailController::class, 'deleteVoiceMail']);
+	});
+});
+
+Route::get('/route-cache', function() {
+	$exitCode = Artisan::call('route:cache');
+	$exitCode = Artisan::call('route:clear');
+	return 'Routes cache cleared';
+});
+Route::get('/config-cache', function() {
+	$exitCode = Artisan::call('config:cache');
+	return 'Config cache cleared';
+});
+Route::get('/clear-cache', function() {
+	$exitCode = Artisan::call('cache:clear');
+	return 'Application cache cleared';
+});
+Route::get('/optimize', function() {
+	$exitCode = Artisan::call('optimize');
+	return 'Application optimize';
 });
 /*
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

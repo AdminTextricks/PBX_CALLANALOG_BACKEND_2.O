@@ -34,4 +34,14 @@ class VoiceMail extends Model
         'hidefromdir',        
         'status'        
     ];
+
+    /**
+     * Get the user that owns the Number
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 }

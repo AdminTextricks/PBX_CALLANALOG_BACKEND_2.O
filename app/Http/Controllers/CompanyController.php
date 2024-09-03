@@ -15,6 +15,7 @@ use Validator;
 use Mail;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Validation\Rules\Password;
 
 class CompanyController extends Controller
 {
@@ -37,7 +38,18 @@ class CompanyController extends Controller
             'state_id'        => 'required',
             'city'            => 'required',
             'zip'            => 'required',
-            'password'         => 'required|confirmed',
+            'password' 		=> [
+                                'required',
+                                'string',
+                                'confirmed',
+                                Password::min(8)
+                                    ->mixedCase()
+                                    ->letters()
+                                    ->numbers()
+                                    ->symbols()
+                                    ->uncompromised(),
+                            ],
+            // 'password'       => 'required|confirmed',
             // 'inbound_permission' => 'required',
         ], [
             'plan_id'       => 'Plan type is required!',

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\LOG;
 use App\Models\RingGroup;
 use App\Models\RingMember;
 use App\Models\Extension;
+use App\Models\TfnDestination;
 use Validator;
 use Carbon\Carbon;
 class RingGroupController extends Controller
@@ -243,6 +244,21 @@ class RingGroupController extends Controller
 		}
 	}
 
+	public function getAllOrByCompany(Request $request)
+    {
+		$query = RingGroup::select('id','ringno');
+		if ($request->get('company_id')) {
+            $query->where('company_id', $request->get('company_id'));
+        } 
+		$data = $query->orderBy('id', 'DESC')->get();
+		
+		if($data->isNotEmpty()){
+			return $this->output(true, 'Success', $data->toArray());
+		}else{
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
+
     public function updateRingGroup(Request $request, $id)
 	{
 		try { 
@@ -308,6 +324,7 @@ class RingGroupController extends Controller
             DB::beginTransaction();            
             $RingGroup = RingGroup::where('id', $id)->first();
             if($RingGroup){
+				TfnDestination::where('destination_type_id', 6)->where('destination_id',$id)->delete();
 				RingMember::where('ring_id', $id)->delete();
                 $resdelete = $RingGroup->delete();
                 if ($resdelete) {

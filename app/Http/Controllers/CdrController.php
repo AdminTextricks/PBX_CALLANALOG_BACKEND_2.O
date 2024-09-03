@@ -38,6 +38,7 @@ class CdrController extends Controller
                         ->orWhere('disposition', 'LIKE', "%$params%")
                         ->orWhere('tfn', 'LIKE', "%$params%")
                         ->orWhere('destination', 'LIKE', "%$params%")
+                        ->orWhere('call_type', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('company_name', 'like', "%{$params}%");
                         })
@@ -63,19 +64,16 @@ class CdrController extends Controller
                     ->with('company:id,company_name,email')	
                     ->with('country:id,country_name')
                     ->where('company_id', '=',  $user->company_id)
-                    ->orWhere('agent_name', 'LIKE', "%$params%")
-                    ->orWhere('caller_num', 'LIKE', "%$params%")
-                    ->orWhere('disposition', 'LIKE', "%$params%")
-                    ->orWhere('tfn', 'LIKE', "%$params%")
-                    ->orWhere('destination', 'LIKE', "%$params%")
-                    ->orWhereHas('company', function ($query) use ($params) {
-                        $query->where('company_name', 'like', "%{$params}%");
-                    })
-                    ->orWhereHas('company', function ($query) use ($params) {
-                        $query->where('email', 'like', "%{$params}%");
-                    })
-                    ->orWhereHas('country', function ($query) use ($params) {
-                        $query->where('country_name', 'like', "%{$params}%");
+                    ->where(function($query) use($params) {
+                        $query->where('agent_name', 'like', "%{$params}%")
+                            ->orWhere('caller_num', 'LIKE', "%$params%")
+                            ->orWhere('disposition', 'LIKE', "%$params%")
+                            ->orWhere('tfn', 'LIKE', "%$params%")
+                            ->orWhere('destination', 'LIKE', "%$params%")
+                            ->orWhere('call_type', 'LIKE', "%$params%")
+                            ->orWhereHas('country', function ($query) use ($params) {
+                                $query->where('country_name', 'like', "%{$params}%");
+                            });
                     })
                     ->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
@@ -92,6 +90,67 @@ class CdrController extends Controller
                     );
             }			
 		}
+		if ($data->isNotEmpty()) {
+			$dd = $data->toArray();
+			unset($dd['links']);
+			return $this->output(true, 'Success', $dd, 200);
+		} else {
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
+
+
+    public function getCdrFilterList(Request $request)
+	{
+        $user = \Auth::user();
+		$perPageNo = isset($request->perpage) ? $request->perpage : 25;
+		$params = $request->params ?? "";
+       
+        if ($request->get('startDate')) {
+            $startDate = Carbon::createFromFormat('Y-m-d', $request->get('startDate'))->startOfDay();
+        }else{
+            $startDate = Carbon::now()->startOfDay(); 
+        }
+        if ($request->get('endDate')) {
+            $endDate = Carbon::createFromFormat('Y-m-d', $request->get('endDate'))->endOfDay();
+        }else{
+            $endDate = Carbon::now()->endOfDay();           
+        }
+       
+		$query  = Cdr::select('*')
+                        ->with('company:id,company_name,email,mobile')
+                        ->with('country:id,country_name');
+                        
+        if ($startDate) {
+            $query->where('call_date', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->where('call_date', '<=', $endDate);
+        }
+        if ($request->get('callerId')) {
+            $query->where('caller_num', 'like', "%{$request->get('callerId')}%");
+        }
+        if ($request->get('destination')) {
+            $query->where('destination', $request->get('destination'));
+        }
+        if ($request->get('tfn')) {
+            $query->where('tfn', $request->get('tfn'));
+        }
+        if ($request->get('disposition')) {
+            $query->where('disposition', $request->get('disposition'));
+        }
+        if ($request->get('call_type')) {
+            $query->where('call_type', $request->get('call_type'));
+        }
+        if ($request->get('company_id')) {
+            $query->where('company_id', $request->get('company_id'));
+        }
+        if (!in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc','reseller'))) {
+            $query->where('company_id', $user->company_id);
+        }
+        //return $query->ddRawSql();       
+        //$data = $query->get();
+        $data = $query->orderBy('id', 'DESC')->paginate($perPageNo, ['*'], 'page');
 		if ($data->isNotEmpty()) {
 			$dd = $data->toArray();
 			unset($dd['links']);
@@ -123,6 +182,7 @@ class CdrController extends Controller
                         ->orWhere('disposition', 'LIKE', "%$params%")
                         ->orWhere('tfn', 'LIKE', "%$params%")
                         ->orWhere('destination', 'LIKE', "%$params%")
+                        ->orWhere('call_type', 'LIKE', "%$params%")
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('company_name', 'like', "%{$params}%");
                         })
@@ -148,14 +208,18 @@ class CdrController extends Controller
                     ->with('company:id,company_name,email')	
                     ->with('country:id,country_name')
                     ->where('company_id', '=',  $user->company_id)
-                    ->orWhere('agent_name', 'LIKE', "%$params%")
-                    ->orWhere('caller_num', 'LIKE', "%$params%")
-                    ->orWhere('disposition', 'LIKE', "%$params%")
-                    ->orWhere('tfn', 'LIKE', "%$params%")
-                    ->orWhere('destination', 'LIKE', "%$params%")
-                    ->orWhereHas('company', function ($query) use ($params) {
-                        $query->where('company_name', 'like', "%{$params}%");
+                    ->where(function($query) use($params) {
+                        $query->where('agent_name', 'like', "%{$params}%")
+                            ->orWhere('caller_num', 'LIKE', "%$params%")
+                            ->orWhere('disposition', 'LIKE', "%$params%")
+                            ->orWhere('tfn', 'LIKE', "%$params%")
+                            ->orWhere('destination', 'LIKE', "%$params%")
+                            ->orWhere('call_type', 'LIKE', "%$params%")
+                            ->orWhereHas('country', function ($query) use ($params) {
+                                $query->where('country_name', 'like', "%{$params}%");
+                            });
                     })
+                    ->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             } else {
                 $data = Call::with('company:id,company_name,email')

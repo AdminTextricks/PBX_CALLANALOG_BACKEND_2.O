@@ -1243,4 +1243,24 @@ class TfnController extends Controller
             return $this->output(false, $e->getMessage(), [], 500);
         }
     }
+
+    public function getAllTfnOrByCompany(Request $request)
+    {
+        //dd('dsfcdsfadf');
+        $query = Tfn::select('id', 'tfn_number')
+        ->where('company_id', '<>', 0)
+        ->where('company_id', '<>', '')
+        ->where('company_id', '<>', null);
+
+        if ($request->get('company_id')) {
+            $query->where('company_id', $request->get('company_id'));
+        }        
+        $data = $query->orderBy('id', 'DESC')->get();            
+        //return $query->ddRawSql();   
+        if ($data->isNotEmpty()) {
+            return $this->output(true, 'Success', $data->toArray());
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
+    }
 }

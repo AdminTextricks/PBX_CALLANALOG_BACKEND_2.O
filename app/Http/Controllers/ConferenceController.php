@@ -234,6 +234,21 @@ class ConferenceController extends Controller
 		}
 	}
 
+	public function getAllOrByCompany(Request $request)
+    {
+		$query = Conference::select('id','confno');
+		if ($request->get('company_id')) {
+            $query->where('company_id', $request->get('company_id'));
+        } 
+		$data = $query->orderBy('id', 'DESC')->get();
+		
+		if($data->isNotEmpty()){
+			return $this->output(true, 'Success', $data->toArray());
+		}else{
+			return $this->output(true, 'No Record Found', []);
+		}
+	}
+
     public function updateConference(Request $request, $id)
 	{
 		try { 
