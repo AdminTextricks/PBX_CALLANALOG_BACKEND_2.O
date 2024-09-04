@@ -544,8 +544,17 @@ class TfnController extends Controller
             $tfn_group_id = trim($column[2]);
             $country_id = trim($column[3]);
             $countryData = Country::select('*')->where('country_name', $country_id)->first();
+            if (is_null($countryData)) {
+                return ['Status' => false, 'Message' => 'No Country' . $country_id . 'Record Found!', 'data' => [], 'code' => 404];
+            }
             $tfn_providerData = Trunk::select('*')->where('type', "Inbound")->where('name', $tfn_provider)->first();
+            if (is_null($tfn_providerData)) {
+                return ['Status' => false, 'Message' => 'No Inbound Trunk' . $tfn_provider . 'Record Found!', 'data' => [], 'code' => 404];
+            }
             $tfn_group_idData = TfnGroups::select('*')->where('tfngroup_name', $tfn_group_id)->first();
+            if (is_null($tfn_group_idData)) {
+                return ['Status' => false, 'Message' => 'No Tfn Group' . $tfn_group_idData . 'Record Found!', 'data' => [], 'code' => 404];
+            }
             $tfncsv = Tfn::where('tfn_number', $tfn_number)->first();
 
             if ($tfncsv) {
