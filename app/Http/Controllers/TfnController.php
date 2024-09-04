@@ -23,6 +23,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use function Laravel\Prompts\select;
 use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\Csv as CsvReader;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 
 class TfnController extends Controller
 {
@@ -470,7 +473,7 @@ class TfnController extends Controller
     public function uploadCSVfile(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'import_csv' => 'required|file|mimes:csv,xlsx,txt',
+            'import_csv' => 'required|file|mimes:csv,xlsx',
         ]);
 
         if ($validator->fails()) {
@@ -478,44 +481,59 @@ class TfnController extends Controller
         }
 
         $file = $request->file('import_csv');
-        $handle = fopen($file->getRealPath(), 'r');
+        $fileExtension = $file->getClientOriginalExtension();
 
-        $dataCSV = ['Status' => 'true', 'Message' => 'CSV data has been processed successfully.', 'data' => [], 'code' => 200];
+        $dataCSV = ['Status' => 'true', 'Message' => 'File data has been processed successfully.', 'data' => [], 'code' => 200];
         $errors = [];
-
-        if ($handle !== FALSE) {
-            fgetcsv($handle); // Skip the first row (header)
-            $chunksize = 25;
-
-            while (!feof($handle)) {
-                $chunkdata = [];
-
-                for ($i = 0; $i < $chunksize; $i++) {
-                    $data = fgetcsv($handle);
-                    if ($data === false) {
-                        break;
-                    }
-                    $chunkdata[] = $data;
-                }
-
-                $dataCSV = $this->getchunkdata($chunkdata);
-            }
-
-            fclose($handle);
+        $chunkdata = [];
+        $chunksize = 25;
+        if ($fileExtension === 'csv') {
+            $reader = new CsvReader();
+        } else {
+            $reader = new XlsxReader();
         }
 
+        $spreadsheet = $reader->load($file->getRealPath());
+        $sheet = $spreadsheet->getActiveSheet();
+        foreach ($sheet->getRowIterator() as $rowIndex => $row) {
+            if ($rowIndex === 1) {
+                continue;
+            }
+
+            $rowData = [];
+            foreach ($row->getCellIterator() as $cell) {
+                $rowData[] = mb_convert_encoding($cell->getValue(), 'UTF-8', 'auto');
+            }
+
+            $chunkdata[] = $rowData;
+
+            if (count($chunkdata) === $chunksize) {
+                $dataCSV = $this->getchunkdata($chunkdata);
+                $chunkdata = [];
+            }
+        }
+
+        if (!empty($chunkdata)) {
+            $dataCSV = $this->getchunkdata($chunkdata);
+        }
         if (!empty($errors)) {
             return $this->output(false, 'Some errors occurred during processing: ' . implode(', ', $errors), 400);
         }
 
         return $this->output($dataCSV['Status'], $dataCSV['Message']);
     }
-
     public function getchunkdata($chunkdata)
     {
         foreach ($chunkdata as $column) {
+            // return count($column);
             if (count($column) < 11) {
                 continue;
+            }
+
+            foreach ($column as &$value) {
+                if (!mb_check_encoding($value, 'UTF-8')) {
+                    $value = mb_convert_encoding($value, 'UTF-8', 'auto');
+                }
             }
 
             $tfn_number = $column[0];
@@ -538,16 +556,15 @@ class TfnController extends Controller
             $tfncsv->aleg_retail_min_duration = $column[8];
             $tfncsv->aleg_billing_block = $column[9];
             $tfncsv->status = $column[10];
-
             $response = $tfncsv->save();
 
             if (!$response) {
                 return ['Status' => 'false', 'Message' => 'Error occurred while processing TFN ' . $tfn_number];
             }
         }
-
         return ['Status' => 'true', 'Message' => 'CSV Uploaded successfully'];
     }
+
     public function assignTfnMainOLD(Request $request)
     {
         $user = \Auth::user();
