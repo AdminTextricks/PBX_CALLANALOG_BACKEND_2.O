@@ -362,6 +362,7 @@ class CompanyController extends Controller
         $company_id = $request->id ?? "";
         $perPageNo = isset($request->perpage) ? $request->perpage : 25;
         $params = $request->params ?? "";
+       // $type = $request->type ?? "";
         if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
             if ($company_id) {
                 $data = Company::select('*')
@@ -369,7 +370,14 @@ class CompanyController extends Controller
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
                     ->with('user:id,company_id,name,email')
-                    ->where('id', $company_id)->first();
+                    ->where('id', $company_id);                    
+                    if ($request->get('type') && $request->get('type') == 'rc') {
+                        $data->where('parent_id', '>', 1);
+                    }
+                    if ($request->get('type') && $request->get('type') == 'nc') {
+                        $data->where('parent_id', 1);
+                    }
+                    $data->first();
                 //->where('status', 1)         
             } elseif ($params !== "") {
                 $data = Company::select()
@@ -381,16 +389,28 @@ class CompanyController extends Controller
                     ->orWhere('email', 'LIKE', "%$params%")
                     ->orWhereHas('country', function ($query) use ($params) {
                         $query->where('country_name', 'LIKE', "%$params%");
-                    })
-                    ->orderBy('id', 'DESC')
+                    });
+                    if ($request->get('type') && $request->get('type') == 'rc') {
+                        $data->where('parent_id', '>', 1);
+                    }
+                    if ($request->get('type') && $request->get('type') == 'nc') {
+                        $data->where('parent_id', 1);
+                    }
+                    $data->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             } else {
                 $data = Company::select('*')
                     ->with('country:id,country_name')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
-                    ->with('user:id,company_id,name,email')
-                    ->orderBy('id', 'DESC')
+                    ->with('user:id,company_id,name,email');
+                    if ($request->get('type') && $request->get('type') == 'rc') {
+                        $data->where('parent_id', '>', 1);
+                    }
+                    if ($request->get('type') && $request->get('type') == 'nc') {
+                        $data->where('parent_id', 1);
+                    }
+                    $data->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
             }
         } elseif ($user->roles->first()->slug == 'reseller') {
@@ -411,10 +431,12 @@ class CompanyController extends Controller
                     ->with('user_plan:id,name')
                     ->with('user:id,company_id,name,email')
                     ->where('parent_id', $user->id)
-                    ->where('company_name', 'LIKE', "%$params%")
-                    ->orWhere('email', 'LIKE', "%$params%")
-                    ->orWhereHas('country', function ($query) use ($params) {
-                        $query->where('country_name', 'LIKE', "%$params%");
+                    ->where(function($query) use($params) {
+                        $query->where('company_name', 'LIKE', "%$params%")
+                        ->orWhere('email', 'LIKE', "%$params%")
+                        ->orWhereHas('country', function ($query) use ($params) {
+                            $query->where('country_name', 'like', "%{$params}%");
+                        });
                     })
                     ->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
