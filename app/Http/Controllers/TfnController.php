@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Company;
+use App\Models\Country;
 use App\Models\DestinationType;
 use App\Models\Invoice;
 use App\Models\InvoiceItems;
@@ -14,6 +15,8 @@ use App\Models\ResellerPrice;
 use App\Models\RingGroup;
 use App\Models\Tfn;
 use App\Models\TfnDestination;
+use App\Models\TfnGroups;
+use App\Models\Trunk;
 use App\Models\User;
 use Illuminate\Auth\Events\Validated;
 use Validator;
@@ -526,7 +529,7 @@ class TfnController extends Controller
     {
         foreach ($chunkdata as $column) {
             // return count($column);
-            if (count($column) < 11) {
+            if (count($column) < 9) {
                 continue;
             }
 
@@ -536,7 +539,13 @@ class TfnController extends Controller
                 }
             }
 
-            $tfn_number = $column[0];
+            $tfn_number = trim($column[0]);
+            $tfn_provider = trim($column[1]);
+            $tfn_group_id = trim($column[2]);
+            $country_id = trim($column[3]);
+            $countryData = Country::select('*')->where('iso3', $country_id)->first();
+            $tfn_providerData = Trunk::select('*')->where('type', "Inbound")->where('name', $tfn_provider)->first();
+            $tfn_group_idData = TfnGroups::select('*')->where('tfngroup_name', $tfn_group_id)->first();
             $tfncsv = Tfn::where('tfn_number', $tfn_number)->first();
 
             if ($tfncsv) {
@@ -545,17 +554,17 @@ class TfnController extends Controller
                 $tfncsv = new Tfn();
             }
 
-            $tfncsv->tfn_number = $column[0];
-            $tfncsv->tfn_provider = $column[1];
-            $tfncsv->tfn_group_id = $column[2];
-            $tfncsv->country_id = $column[3];
-            $tfncsv->activated = $column[4];
-            $tfncsv->monthly_rate = $column[5];
-            $tfncsv->connection_charge = $column[6];
-            $tfncsv->selling_rate = $column[7];
-            $tfncsv->aleg_retail_min_duration = $column[8];
-            $tfncsv->aleg_billing_block = $column[9];
-            $tfncsv->status = $column[10];
+            $tfncsv->tfn_number = trim($column[0]);
+            $tfncsv->tfn_provider = $tfn_providerData->id;
+            $tfncsv->tfn_group_id = $tfn_group_idData->id;
+            $tfncsv->country_id = $countryData->id;
+            $tfncsv->activated = '0';
+            $tfncsv->monthly_rate = trim($column[4]);
+            $tfncsv->connection_charge = trim($column[5]);
+            $tfncsv->selling_rate = trim($column[6]);
+            $tfncsv->aleg_retail_min_duration = trim($column[7]);
+            $tfncsv->aleg_billing_block = trim($column[8]);
+            $tfncsv->status = 1;
             $response = $tfncsv->save();
 
             if (!$response) {
@@ -564,6 +573,7 @@ class TfnController extends Controller
         }
         return ['Status' => 'true', 'Message' => 'CSV Uploaded successfully'];
     }
+
 
     public function assignTfnMainOLD(Request $request)
     {
