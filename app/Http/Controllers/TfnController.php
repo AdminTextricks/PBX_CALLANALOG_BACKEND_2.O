@@ -543,7 +543,7 @@ class TfnController extends Controller
             $tfn_provider = trim($column[1]);
             $tfn_group_id = trim($column[2]);
             $country_id = trim($column[3]);
-            $countryData = Country::select('*')->where('iso3', $country_id)->first();
+            $countryData = Country::select('*')->where('country_name', $country_id)->first();
             $tfn_providerData = Trunk::select('*')->where('type', "Inbound")->where('name', $tfn_provider)->first();
             $tfn_group_idData = TfnGroups::select('*')->where('tfngroup_name', $tfn_group_id)->first();
             $tfncsv = Tfn::where('tfn_number', $tfn_number)->first();
