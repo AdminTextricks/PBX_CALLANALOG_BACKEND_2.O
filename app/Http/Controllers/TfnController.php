@@ -520,10 +520,10 @@ class TfnController extends Controller
             $dataCSV = $this->getchunkdata($chunkdata);
         }
         if (!empty($errors)) {
-            return $this->output(false, 'Some errors occurred during processing: ' . implode(', ', $errors), 400);
+            return $this->output(false, 'Some errors occurred during processing: ' . implode(', ', $errors), 409);
         }
 
-        return $this->output($dataCSV['Status'], $dataCSV['Message']);
+        return $this->output($dataCSV['Status'], $dataCSV['Message'], $dataCSV['data'], $dataCSV['code']);
     }
     public function getchunkdata($chunkdata)
     {
@@ -549,7 +549,7 @@ class TfnController extends Controller
             $tfncsv = Tfn::where('tfn_number', $tfn_number)->first();
 
             if ($tfncsv) {
-                return ['Status' => 'false', 'Message' => 'This TFN number ' . $tfn_number . ' already exists!', 'code' => 400];
+                return ['Status' => false, 'Message' => 'This TFN number ' . $tfn_number . ' already exists!', 'data' => [], 'code' => 400];
             } else {
                 $tfncsv = new Tfn();
             }
@@ -568,10 +568,10 @@ class TfnController extends Controller
             $response = $tfncsv->save();
 
             if (!$response) {
-                return ['Status' => 'false', 'Message' => 'Error occurred while processing TFN ' . $tfn_number];
+                return ['Status' => false, 'Message' => 'Error occurred while processing TFN ' . $tfn_number, 'data' => [], 'code' => 409];
             }
         }
-        return ['Status' => 'true', 'Message' => 'CSV Uploaded successfully'];
+        return ['Status' => true, 'Message' => 'CSV Uploaded successfully', 'data' => [], 'code' => 200];
     }
 
 
