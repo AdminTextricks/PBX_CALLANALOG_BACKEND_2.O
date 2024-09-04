@@ -398,7 +398,7 @@ class CompanyController extends Controller
                     });
                     $data = $query->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
-                    return $query->ddRawSql();
+                    //return $query->ddRawSql();
             } else {
                 $query = Company::select('*')
                     ->with('country:id,country_name')
