@@ -370,48 +370,54 @@ class CompanyController extends Controller
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
                     ->with('user:id,company_id,name,email')
-                    ->where('id', $company_id);                    
-                    if ($request->get('type') && $request->get('type') == 'rc') {
-                        $data->where('parent_id', '>', 1);
-                    }
-                    if ($request->get('type') && $request->get('type') == 'nc') {
-                        $data->where('parent_id', 1);
-                    }
-                    $data->first();
+                    ->where('id', $company_id)->first();
                 //->where('status', 1)         
             } elseif ($params !== "") {
-                $data = Company::select()
+                $query = Company::select()
                     ->with('country:id,country_name,iso3')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
-                    ->with('user:id,company_id,name,email')
-                    ->where('company_name', 'LIKE', "%$params%")
-                    ->orWhere('email', 'LIKE', "%$params%")
-                    ->orWhereHas('country', function ($query) use ($params) {
-                        $query->where('country_name', 'LIKE', "%$params%");
-                    });
+                    ->with('user:id,company_id,name,email');
                     if ($request->get('type') && $request->get('type') == 'rc') {
-                        $data->where('parent_id', '>', 1);
+                        $query->where(function($query) use($params) {
+							$query->where('parent_id', '>', 1);
+						});                        
                     }
                     if ($request->get('type') && $request->get('type') == 'nc') {
-                        $data->where('parent_id', 1);
+                        $query->where(function($query) use($params) {
+							$query->where('parent_id', 1);
+						});                        
                     }
-                    $data->orderBy('id', 'DESC')
+                    $query->where(function($query) use($params) {
+                        $query->where('company_name', 'LIKE', "%$params%")
+                        ->orWhere('email', 'LIKE', "%$params%")
+                        ->orWhere('mobile', 'LIKE', "%$params%")
+                        ->orWhereHas('country', function ($query) use ($params) {
+                            $query->where('country_name', 'LIKE', "%$params%");
+                        });
+                    });
+                    $data = $query->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+                    return $query->ddRawSql();
             } else {
-                $data = Company::select('*')
+                $query = Company::select('*')
                     ->with('country:id,country_name')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
                     ->with('user:id,company_id,name,email');
                     if ($request->get('type') && $request->get('type') == 'rc') {
-                        $data->where('parent_id', '>', 1);
+                        $query->where(function($query) use($params) {
+							$query->where('parent_id', '>', 1);
+						});                        
                     }
                     if ($request->get('type') && $request->get('type') == 'nc') {
-                        $data->where('parent_id', 1);
+                        $query->where(function($query) use($params) {
+							$query->where('parent_id', 1);
+						});                        
                     }
-                    $data->orderBy('id', 'DESC')
+                    $data = $query->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+                   // return $data->ddRawSql();   
             }
         } elseif ($user->roles->first()->slug == 'reseller') {
 
@@ -434,6 +440,7 @@ class CompanyController extends Controller
                     ->where(function($query) use($params) {
                         $query->where('company_name', 'LIKE', "%$params%")
                         ->orWhere('email', 'LIKE', "%$params%")
+                        ->orWhere('mobile', 'LIKE', "%$params%")
                         ->orWhereHas('country', function ($query) use ($params) {
                             $query->where('country_name', 'like', "%{$params}%");
                         });
