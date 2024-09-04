@@ -437,14 +437,24 @@ class ExtensionController extends Controller
             $Extension_id = $request->id ?? NULL;
             if ($Extension_id) {
                 $data = Extension::select()
-                    ->with('company:id,company_name,email,mobile,balance')
+                    //->with('company:id,company_name,email,mobile,balance')
+                    ->with(['company' => function ($query) {
+                        $query->select('id', 'company_name', 'email','mobile','balance','plan_id'); // select specific fields from company
+                    }, 'company.user_plan' => function ($query) {
+                        $query->select('id', 'name'); // select specific fields from user_plan
+                    }])
                     ->with('country:id,country_name')
                     ->where('id', $Extension_id)
                     ->orderBy('id', 'DESC')->get();
             } else {
                 if ($params != "") {
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
-                        ->with('company:id,company_name,email,mobile,balance')
+                        //->with('company:id,company_name,email,mobile,balance')
+                        ->with(['company' => function ($query) {
+                            $query->select('id', 'company_name', 'email','mobile','balance','plan_id'); // select specific fields from company
+                        }, 'company.user_plan' => function ($query) {
+                            $query->select('id', 'name'); // select specific fields from user_plan
+                        }])
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')                        
                         ->orWhere('name', 'like', "%$params%")
@@ -463,7 +473,12 @@ class ExtensionController extends Controller
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
                 } else {
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
-                        ->with('company:id,company_name,email,mobile,balance')
+                        //->with('company:id,company_name,email,mobile,balance,plan_id')
+                        ->with(['company' => function ($query) {
+                            $query->select('id', 'company_name', 'email','mobile','balance','plan_id'); // select specific fields from company
+                        }, 'company.user_plan' => function ($query) {
+                            $query->select('id', 'name'); // select specific fields from user_plan
+                        }])
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
                         ->orderBy('extensions.id', 'DESC')
@@ -478,7 +493,12 @@ class ExtensionController extends Controller
             $Extension_id = $request->id ?? NULL;
             if ($Extension_id) {
                 $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
-                    ->with('company:id,company_name,email,mobile,balance')
+                    //->with('company:id,company_name,email,mobile,balance')
+                    ->with(['company' => function ($query) {
+                        $query->select('id', 'company_name', 'email','mobile','balance','plan_id'); // select specific fields from company
+                    }, 'company.user_plan' => function ($query) {
+                        $query->select('id', 'name'); // select specific fields from user_plan
+                    }])
                     ->with('country:id,country_name')
                     ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
                     ->where('id', $Extension_id)
@@ -489,7 +509,12 @@ class ExtensionController extends Controller
                 if ($params != "") {
                     //DB::enableQueryLog();
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
-						->with('company:id,company_name,email,mobile,balance')
+						//->with('company:id,company_name,email,mobile,balance')
+                        ->with(['company' => function ($query) {
+                            $query->select('id', 'company_name', 'email','mobile','balance','plan_id'); // select specific fields from company
+                        }, 'company.user_plan' => function ($query) {
+                            $query->select('id', 'name'); // select specific fields from user_plan
+                        }])
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
                         ->where('extensions.company_id', '=', $user->company_id) 
@@ -504,7 +529,12 @@ class ExtensionController extends Controller
                         //dd(DB::getQueryLog());
                 } else {
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
-                        ->with('company:id,company_name,email,mobile,balance')
+                        //->with('company:id,company_name,email,mobile,balance')
+                        ->with(['company' => function ($query) {
+                            $query->select('id', 'company_name', 'email','mobile','balance','plan_id'); // select specific fields from company
+                        }, 'company.user_plan' => function ($query) {
+                            $query->select('id', 'name'); // select specific fields from user_plan
+                        }])
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
                         ->where('extensions.company_id', '=', $user->company_id)
