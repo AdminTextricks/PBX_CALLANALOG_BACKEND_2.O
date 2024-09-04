@@ -470,7 +470,7 @@ class TfnController extends Controller
     public function uploadCSVfile(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'import_csv' => 'required|file|mimes:csv,txt',
+            'import_csv' => 'required|file|mimes:csv,xlsx,txt',
         ]);
 
         if ($validator->fails()) {
