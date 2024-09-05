@@ -168,7 +168,7 @@ class PurchaseTfnNumberController extends Controller
     }
 
 
-    public function addtocart(Request $request)
+    public function addtocartOLD(Request $request)
     {
         $user = \Auth::user();
         $validator = Validator::make($request->all(), [
@@ -278,29 +278,181 @@ class PurchaseTfnNumberController extends Controller
     }
 
 
+    public function addtocart(Request $request)
+    {
+        $user = \Auth::user();
+        $validator = Validator::make($request->all(), [
+            'country_id'    => 'required|numeric',
+            'item_id'       => 'required|numeric',
+            'item_number'   => 'required|numeric',
+            // 'item_price'    => 'required',
+            'item_type'     => 'required|string',
+            'company_id'    => 'required|numeric'
+        ]);
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        } else {
+            try {
+                DB::beginTransaction();
+                $user_company = Company::where('id', $request->company_id)->first();
+                if (is_null($user_company)) {
+                    DB::rollBack();
+                    return $this->output(false, 'No Record Found!!');
+                }
+                if (in_array($user->roles->first()->slug, array('admin', 'user'))) {
+                    $cart = Cart::where('item_number', $request->item_number)
+                        ->where('company_id', $user->company_id)
+                        ->where('country_id', $request->country_id)->get();
+                    if ($cart->count() > 0) {
+                        DB::rollBack();
+                        return $this->output(false,  $request->item_type . ' Number is already in the cart', 409);
+                    } else {
+                        if (strtoupper($request->item_type) == 'TFN') {
+                            $tfnNumber = Tfn::where('id', $request->item_id)->first();
+                            if (!empty($tfnNumber)) {
+                                if ($tfnNumber->expirationdate == NULL && $tfnNumber->reserved == '0') {
+                                    $companyID = $user_company->id;
+                                    $item_price = $request->item_price;
+                                } else {
+                                    // if ($tfnNumber->company_id != $user->company->id) {
+                                    //     DB::rollback();
+                                    //     return $this->output(false, 'Oops! Something went wrong. There seems to be a mismatch in values.', 400);
+                                    // }
+                                    $reseller_id = '';
+                                    if ($user->company->parent_id > 1) {
+                                        $price_for = 'Reseller';
+                                        $reseller_id = $user->company->parent_id;
+                                    } else {
+                                        $price_for = 'Company';
+                                    }
+                                    $item_price_arr = $this->getItemPrice($user->company_id, $request->country_id, $price_for, $reseller_id, 'TFN');
+                                    if ($item_price_arr['Status'] == 'true') {
+                                        $companyID = $tfnNumber->company_id;
+                                        $item_price = $item_price_arr['TFN_price'];
+                                    }
+                                }
+                                $tfnNumber->reserved = '1';
+                                $tfnNumber->reserveddate = date('Y-m-d H:i:s');
+                                $tfnNumber->reservedexpirationdate = date('Y-m-d H:i:s', strtotime('+1 day'));
+                                if ($tfnNumber->save()) {
+                                    $addCart = Cart::create([
+                                        'company_id'    => $companyID,
+                                        'country_id'    => $request->country_id,
+                                        'item_id'       => $request->item_id,
+                                        'item_number'   => $request->item_number,
+                                        'item_type'     => $request->item_type,
+                                        'item_price'    => $item_price,
+                                    ]);
+                                    if ($addCart) {
+                                        $response = $addCart->toArray();
+                                        DB::commit();
+                                        return $this->output(true, 'Item has been added into cart successfully.', $response);
+                                    } else {
+                                        DB::rollBack();
+                                        return $this->output(false, 'Error occurred in add to cart process.');
+                                    }
+                                } else {
+                                    return $this->output(false, 'Error occurred in reserving this TFN for you.');
+                                }
+                            } else {
+                                DB::rollBack();
+                                return $this->output(false, 'This Tfn number not exist with us OR in running process.', 409);
+                            }
+                        } else {
+                            $extNumber = Extension::where('id', $request->item_id)->where('company_id', '=', $user_company->id)->first();
+                            if (!empty($extNumber)) {
+                                $reseller_id = '';
+                                if ($user_company->parent_id > 1) {
+                                    $price_for = 'Reseller';
+                                    $reseller_id = $user_company->parent_id;
+                                } else {
+                                    $price_for = 'Company';
+                                }
+                                $item_price_arr = $this->getItemPrice($extNumber->company_id, $extNumber->country_id, $price_for, $reseller_id, 'Extension');
+                                if ($item_price_arr['Status'] == 'true') {
+
+                                    if ($extNumber->expirationdate == NULL) {
+                                        $companyID =  $user_company->id;
+                                        $item_price = $item_price_arr['Extension_price'];
+                                    } else {
+                                        // if ($extNumber->company_id != $user->company->id) {
+                                        //     DB::rollback();
+                                        //     return $this->output(false, 'Oops! Something went wrong. There seems to be a mismatch in values.', 400);
+                                        // }
+                                        $companyID =  $extNumber->company_id;
+                                        $item_price = $item_price_arr['Extension_price'];
+                                    }
+                                    $addCart = Cart::create([
+                                        'company_id'    => $companyID,
+                                        'country_id'    => $request->country_id,
+                                        'item_id'       => $request->item_id,
+                                        'item_number'   => $request->item_number,
+                                        'item_type'     => $request->item_type,
+                                        'item_price'    => $item_price,
+                                    ]);
+                                    if ($addCart) {
+                                        $response = $addCart->toArray();
+                                        DB::commit();
+                                        return $this->output(true, 'Item has been added into cart successfully.', $response);
+                                    } else {
+                                        DB::rollBack();
+                                        return $this->output(false, 'Error occurred in add to cart process.');
+                                    }
+                                } else {
+                                    DB::rollBack();
+                                    return $this->output(false, $item_price_arr['Message']);
+                                }
+                            } else {
+                                DB::rollBack();
+                                return $this->output(false, 'This Extension number not exist with us OR in running process.', 409);
+                            }
+                        }
+                    }
+                } else {
+                    DB::rollBack();
+                    return $this->output(false, 'You are not authorized user to use this functionality.', 409);
+                }
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Error in add to cart Inserting : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+                return $this->output(false, 'An error occurred while adding items to the cart. Please try again!', [], 500);
+            }
+        }
+    }
+
     public function removeFromCart(Request $request, $id)
     {
         $user = \Auth::user();
         try {
             DB::beginTransaction();
+
             $cart = Cart::find($id);
+
             if (is_null($cart)) {
                 return $this->output(false, 'This Cart Number does not exist with us. Please try again!', [], 404);
             }
 
             if ($cart->company_id != $user->company_id) {
-                return $this->output(false, 'You are not Unauthorized user.', [], 403);
+                return $this->output(false, 'Unauthorized User action.', [], 403);
             }
+
             if ($cart->item_type == "TFN") {
                 $tfnNumber = Tfn::find($cart->item_id);
-                if ($tfnNumber) {
-                    $tfnNumber->company_id = 0;
-                    $tfnNumber->reserved = '0';
-                    $tfnNumber->reserveddate = null;
-                    $tfnNumber->reservedexpirationdate = null;
-                    $tfnNumber->save();
-                } else {
+                if (is_null($tfnNumber)) {
+                    DB::rollBack();
                     return $this->output(false, 'TFN Number not found.', [], 404);
+                } else {
+                    if ($tfnNumber->company_id != 0) {
+                        $tfnNumber->reserved = '1';
+                        $tfnNumber->reserveddate = null;
+                        $tfnNumber->reservedexpirationdate = null;
+                        $tfnNumber->save();
+                    } else {
+                        $tfnNumber->reserved = '0';
+                        $tfnNumber->reserveddate = null;
+                        $tfnNumber->reservedexpirationdate = null;
+                        $tfnNumber->save();
+                    }
                 }
             } else {
                 $extNumber = Extension::find($cart->item_id);
@@ -308,6 +460,7 @@ class PurchaseTfnNumberController extends Controller
                     return $this->output(false, 'Extension Number not found.', [], 404);
                 }
             }
+
             $cartDeleted = Cart::where('id', $id)->where('company_id', $user->company_id)->delete();
             if ($cartDeleted) {
                 InvoiceItems::where('item_number', '=', $cart->item_number)->delete();
@@ -319,7 +472,6 @@ class PurchaseTfnNumberController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error in removing item from cart : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'An error occurred. Please try again!', [], 500);
         }
     }

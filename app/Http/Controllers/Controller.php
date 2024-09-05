@@ -12,14 +12,15 @@ use App\Models\ResellerPrice;
 
 class Controller extends BaseController
 {
-    
-	use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
-	
-	public function output($status = false, $message = '', $data = [], $httpcode = 200){
-        if($status){
-            $response = ["status" => $status,"message" => $message, 'code'=>$httpcode, 'data' => $data];
-        }else{
-            $response = ["status" => $status,"message" => $message, 'code'=>$httpcode];
+
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+
+    public function output($status = false, $message = '', $data = [], $httpcode = 200)
+    {
+        if ($status) {
+            $response = ["status" => $status, "message" => $message, 'code' => $httpcode, 'data' => $data];
+        } else {
+            $response = ["status" => $status, "message" => $message, 'code' => $httpcode];
         }
         return response()->json($response, $httpcode);
     }
@@ -51,7 +52,7 @@ class Controller extends BaseController
 
         $password = str_shuffle($password);
 
-        if (!$add_dashes){
+        if (!$add_dashes) {
             return $this->output(true, 'Password created successfully.', $password);
             //return $password;
         }
@@ -91,48 +92,48 @@ class Controller extends BaseController
     }
 
 
-    public function getItemPrice($company_id, $country_id, $price_for, $reseller_id, $product){
+    public function getItemPrice($company_id, $country_id, $price_for, $reseller_id, $product)
+    {
 
         $MainPrice = MainPrice::select()
-                    ->where('country_id',$country_id)
-                    ->where('price_for',$price_for);
-                    if($price_for == 'Reseller'){
-                        $MainPrice = $MainPrice->where('reseller_id',$reseller_id);
-                    }
-                    $MainPrice = $MainPrice->where('status','1')->first();
-                    
+            ->where('country_id', $country_id)
+            ->where('price_for', $price_for);
+        if ($price_for == 'Reseller') {
+            $MainPrice = $MainPrice->where('reseller_id', $reseller_id);
+        }
+        $MainPrice = $MainPrice->where('status', '1')->first();
+
         $MainPriceArr = $MainPrice ? $MainPrice->toArray() : [];
-        if(count($MainPriceArr) > 0 ){
+        if (count($MainPriceArr) > 0) {
             $itemPrice = ($product == 'Extension') ? $MainPriceArr['extension_price'] : $MainPriceArr['tfn_price'];
 
             $ResellerPrice = ResellerPrice::select()
-                            ->where('company_id',$company_id)
-                            ->where('country_id',$country_id)
-                            //->where('product',$product)
-                            ->where('status','1')->first();
+                ->where('company_id', $company_id)
+                ->where('country_id', $country_id)
+                //->where('product',$product)
+                ->where('status', '1')->first();
 
             $ResellerCommission = $ResellerPrice ? $ResellerPrice->toArray() : [];
 
-            if(count($ResellerCommission) > 0 ){
-                if($product == 'Extension'){
+            if (count($ResellerCommission) > 0) {
+                if ($product == 'Extension') {
                     $commission_type = trim($ResellerCommission['extension_commission_type']);
                     $commissionPrice = $ResellerCommission['extension_price'];
-                    
-                }else{
+                } else {
                     $commission_type = trim($ResellerCommission['tfn_commission_type']);
                     $commissionPrice = $ResellerCommission['tfn_price'];
                 }
-                if($commission_type == 'Fixed Amount'){
+                if ($commission_type == 'Fixed Amount') {
                     $itemPrice += $commissionPrice;
                 }
 
-                if(trim($commission_type) == 'Percentage'){
-                    $pricePercentage = $itemPrice * $commissionPrice/100;
+                if (trim($commission_type) == 'Percentage') {
+                    $pricePercentage = $itemPrice * $commissionPrice / 100;
                     $itemPrice += $pricePercentage;
                 }
             }
-            return array('Status' => 'true', $product.'_price' => $itemPrice);
-        }else{
+            return array('Status' => 'true', $product . '_price' => $itemPrice);
+        } else {
             return array('Status' => 'false', 'Message' => 'Price not available for this country. Please contact with support team.');
         }
     }
@@ -196,5 +197,57 @@ class Controller extends BaseController
         } else {
             return array('Status' => 'false', 'Message' => 'No Commission Found.');
         }
+    }
+
+    public function sipReload()
+    {
+        $server_ip = "85.195.76.161";
+        $socket = @fsockopen($server_ip, 5038);
+        $response = "";
+        if (!is_resource($socket)) {
+            echo "conn failed in Engconnect ";
+            exit;
+        }
+        fputs($socket, "Action: Login\r\n");
+        fputs($socket, "UserName: TxuserGClanlg\r\n");
+        fputs($socket, "Secret: l3o9zMP3&X[k2+\r\n\r\n");
+        fputs($socket, "Action: Command\r\n");
+        fputs($socket, "Command: sip reload\r\n\r\n");
+        fputs($socket, "Action: Logoff\r\n\r\n");
+        while (!feof($socket))
+            $response .= fread($socket, 5038);
+        fclose($socket);
+        return true;
+    }
+    public function addExtensionInConfFile($extensionName, $conf_file_path, $secret, $account_code, $template_contents)
+    {
+        // Add new user section
+        $register_string = "\n[$extensionName]\nusername=$extensionName\nsecret=$secret\naccountcode=$account_code\n$template_contents\n";
+        //$webrtc_conf_path = "/var/www/html/callanalog/admin/webrtc_template.conf";
+        file_put_contents($conf_file_path, $register_string, FILE_APPEND | LOCK_EX);
+        //echo "Registration successful. The SIP user $nname has been added to the webrtc_template.conf file.";        
+    }
+
+    public function removeExtensionFromConfFile($extensionName, $conf_file_path)
+    {
+        // Remove user section
+        //$conf_file_path = "webrtc_template.conf";
+        $lines = file($conf_file_path);
+        $output = '';
+        $found = false;
+        foreach ($lines as $line) {
+            if (strpos($line, "[$extensionName]") !== false) {
+                $found = true;
+                continue;
+            }
+            if ($found && strpos($line, "[") === 0) {
+                $found = false;
+            }
+            if (!$found) {
+                $output .= $line;
+            }
+        }
+        file_put_contents($conf_file_path, $output, LOCK_EX);
+        //echo "Registration removed. The SIP user $nname has been removed from the webrtc_template.conf file.";
     }
 }

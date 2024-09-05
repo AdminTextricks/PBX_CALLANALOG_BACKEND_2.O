@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Company;
+use App\Models\Country;
 use App\Models\DestinationType;
 use App\Models\Invoice;
 use App\Models\InvoiceItems;
@@ -14,6 +15,9 @@ use App\Models\ResellerPrice;
 use App\Models\RingGroup;
 use App\Models\Tfn;
 use App\Models\TfnDestination;
+use App\Models\TfnGroups;
+use App\Models\TfnImportCsvList;
+use App\Models\Trunk;
 use App\Models\User;
 use Illuminate\Auth\Events\Validated;
 use Validator;
@@ -23,6 +27,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use function Laravel\Prompts\select;
 use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\Csv as CsvReader;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 
 class TfnController extends Controller
 {
@@ -216,7 +223,7 @@ class TfnController extends Controller
             // }
             if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
                 $companyID = 0;
-            }else{
+            } else {
                 $companyID = $user->company_id;
             }
             RemovedTfn::create([
@@ -255,7 +262,7 @@ class TfnController extends Controller
             'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
             'tfn_destinations.destinationType:id,destination_type'
         ])
-            
+
             ->orderBy('id', 'DESC');
 
         if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
@@ -306,7 +313,7 @@ class TfnController extends Controller
 
             if ($tfn_id) {
                 $query->where('id', $tfn_id);
-            } 
+            }
             if (!empty($params)) {
                 $query->where(function ($query) use ($params, $user) {
                     $query->where('tfn_number', 'LIKE', "%$params%")
@@ -329,7 +336,7 @@ class TfnController extends Controller
                                 ->orWhere('destination_id', 'like', "%{$params}%");
                         });
                 });
-            } 
+            }
             if (!empty($options)) {
                 if ($options == 5) {
                     $query->where('company_id', '>', 0)->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 0)->where('expirationdate', '<', Carbon::now());
@@ -470,78 +477,160 @@ class TfnController extends Controller
     public function uploadCSVfile(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'import_csv' => 'required|file|mimes:csv,txt',
+            'import_csv' => 'required|file|mimes:csv,xlsx',
         ]);
 
         if ($validator->fails()) {
             return $this->output(false, $validator->errors()->first(), [], 409);
         }
 
-        $file = $request->file('import_csv');
-        $handle = fopen($file->getRealPath(), 'r');
+        try {
+            DB::beginTransaction();
 
-        if ($handle !== FALSE) {
-            fgetcsv($handle); // Skip the first row (header)
+            $file = $request->file('import_csv');
+            $fileExtension = $file->getClientOriginalExtension();
+            $originalFilename = $file->getClientOriginalName();
+            $filename = $file ? $originalFilename . date("Ymdhis") . '.' . $fileExtension : '';
+
+            $dataCSV = ['Status' => true, 'Message' => 'File data has been processed successfully.', 'data' => [], 'code' => 200];
+            $errors = [];
+            $chunkdata = [];
             $chunksize = 25;
 
-            while (!feof($handle)) {
-                $chunkdata = [];
-
-                for ($i = 0; $i < $chunksize; $i++) {
-                    $data = fgetcsv($handle);
-                    if ($data === false) {
-                        break;
-                    }
-                    $chunkdata[] = $data;
-                }
-
-                // Process chunk data
-                $this->getchunkdata($chunkdata);
+            if ($fileExtension === 'csv') {
+                $reader = new CsvReader();
+            } else {
+                $reader = new XlsxReader();
             }
 
-            fclose($handle);
-        }
+            $spreadsheet = $reader->load($file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
 
-        return $this->output(true, 'CSV data has been processed successfully.', [], 200);
+            foreach ($sheet->getRowIterator() as $rowIndex => $row) {
+                if ($rowIndex === 1) {
+                    continue; // Skip header row
+                }
+
+                $rowData = [];
+                foreach ($row->getCellIterator() as $cell) {
+                    $value = trim($cell->getValue());
+                    if ($value !== null && $value !== '') {
+                        $rowData[] = mb_convert_encoding($value, 'UTF-8', 'auto');
+                    }
+                }
+                if (empty($rowData)) {
+                    continue;
+                }
+                $chunkdata[] = $rowData;
+                // \Log::info("Chunk size: " . count($chunkdata) . " First row data: " . json_encode($chunkdata[0]));
+
+                if (count($chunkdata) === $chunksize) {
+                    $result = $this->getchunkdata($chunkdata, $file, $filename);
+                    if (!$result['Status']) {
+                        DB::rollback();
+                        return $this->output($result['Status'], $result['Message'], [], $result['code']);
+                    }
+                    $chunkdata = [];
+                }
+            }
+            if (!empty($chunkdata)) {
+                $result = $this->getchunkdata($chunkdata, $file, $filename);
+                if (!$result['Status']) {
+                    DB::rollback();
+                    return $this->output($result['Status'], $result['Message'], [], $result['code']);
+                }
+            }
+
+            DB::commit();
+            return $this->output(true, 'File data has been processed successfully.', [], 200);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->output(false, $e->getMessage());
+        }
     }
 
-    public function getchunkdata($chunkdata)
+    private function getchunkdata($chunkdata, $file, $filename)
     {
+        $user = \Auth::user();
+
         foreach ($chunkdata as $column) {
-            if (count($column) < 12) {
+            // return count($column);
+            // return $column;
+            if (count($column) < 9) {
                 continue;
             }
 
-            $tfn_number = $column[0];
-            $tfn_provider = $column[1];
-            $tfn_group_id = $column[2];
-            $country_id = $column[3];
-            $tfn_type_id = $column[4];
-            $activated = $column[5];
-            $monthly_rate = $column[6];
-            $connection_charge = $column[7];
-            $selling_rate = $column[8];
-            $aleg_retail_min_duration = $column[9];
-            $aleg_billing_block = $column[10];
-            $status = $column[11];
+            foreach ($column as &$value) {
+                if (!mb_check_encoding($value, 'UTF-8')) {
+                    $value = mb_convert_encoding($value, 'UTF-8', 'auto');
+                }
+            }
+            $tfn_number = trim($column[0]);
+            $tfn_provider = trim($column[1]);
+            $tfn_group_id = trim($column[2]);
+            $country_id = trim($column[3]);
+            // $countryData = Country::select('*')->where('iso3', $country_id)->first();
+            $countryData = Country::select('*')->where('country_name', $country_id)->first();
+            if (is_null($countryData)) {
+                return ['Status' => false, 'Message' => 'No Country ' . $country_id . ' Record Found!', 'data' => [], 'code' => 404];
+            }
+            $tfn_providerData = Trunk::select('*')->where('type', "Inbound")->where('name', $tfn_provider)->first();
+            if (is_null($tfn_providerData)) {
+                return ['Status' => false, 'Message' => 'No Inbound Trunk ' . $tfn_provider . ' Record Found!', 'data' => [], 'code' => 404];
+            }
+            $tfn_group_idData = TfnGroups::select('*')->where('tfngroup_name', $tfn_group_id)->first();
+            if (is_null($tfn_group_idData)) {
+                return ['Status' => false, 'Message' => 'No Tfn Group ' . $tfn_group_idData . ' Record Found!', 'data' => [], 'code' => 404];
+            }
+            $tfn_providerData = Trunk::select('*')->where('type', "Inbound")->where('name', $tfn_provider)->first();
+            $tfn_group_idData = TfnGroups::select('*')->where('tfngroup_name', $tfn_group_id)->first();
+            $tfncsv = Tfn::select('*')->where('tfn_number', $tfn_number)->first();
 
-            // Create new Tfn record
-            $tfncsv = new Tfn();
-            $tfncsv->tfn_number = $tfn_number;
-            $tfncsv->tfn_provider = $tfn_provider;
-            $tfncsv->tfn_group_id = $tfn_group_id;
-            $tfncsv->country_id = $country_id;
-            $tfncsv->tfn_type_id = $tfn_type_id;
-            $tfncsv->activated = $activated;
-            $tfncsv->monthly_rate = $monthly_rate;
-            $tfncsv->connection_charge = $connection_charge;
-            $tfncsv->selling_rate = $selling_rate;
-            $tfncsv->aleg_retail_min_duration = $aleg_retail_min_duration;
-            $tfncsv->aleg_billing_block = $aleg_billing_block;
-            $tfncsv->status = $status;
-            $tfncsv->save();
+            if (is_null($tfncsv)) {
+                $tfncsv = new Tfn();
+                $tfncsv->tfn_number = trim($column[0]);
+                $tfncsv->tfn_provider = $tfn_providerData->id;
+                $tfncsv->tfn_group_id = $tfn_group_idData->id;
+                $tfncsv->country_id = $countryData->id;
+                $tfncsv->activated = '0';
+                $tfncsv->monthly_rate = trim($column[4]);
+                $tfncsv->connection_charge = trim($column[5]);
+                $tfncsv->selling_rate = trim($column[6]);
+                $tfncsv->aleg_retail_min_duration = trim($column[7]);
+                $tfncsv->aleg_billing_block = trim($column[8]);
+                $tfncsv->status = 1;
+                $response = $tfncsv->save();
+
+                if (!$response) {
+                    return ['Status' => false, 'Message' => 'Error occurred while processing TFN ' . $tfn_number, 'data' => [], 'code' => 409];
+                }
+            } else {
+                return ['Status' => false, 'Message' => 'This TFN number ' . $tfn_number . ' already exists!', 'data' => [], 'code' => 400];
+            }
         }
+        $sanitizedFilename = str_replace(' ', '_', $filename);
+        $filePath = public_path('Tfn_uploadData/');
+        if (!file_exists($filePath)) {
+            mkdir($filePath, 0755, true);
+        }
+        $fileMoved = $file->move($filePath, $sanitizedFilename);
+        if (!$fileMoved) {
+            return ['Status' => false, 'Message' => 'File could not be moved to the specified directory.', 'data' => [], 'code' => 500];
+        }
+        $TfnCsvData = TfnImportCsvList::create([
+            'uploaded_by' => $user->id,
+            'tfn_import_csv' => $sanitizedFilename,
+            'status' => 1
+        ]);
+
+        if (!$TfnCsvData) {
+            return ['Status' => false, 'Message' => 'Failed to save file information to the database.', 'data' => [], 'code' => 500];
+        }
+        return ['Status' => true, 'Message' => 'CSV Uploaded successfully', 'data' => [], 'code' => 200];
     }
+
+
+
     public function assignTfnMainOLD(Request $request)
     {
         $user = \Auth::user();
@@ -1248,14 +1337,14 @@ class TfnController extends Controller
     {
         //dd('dsfcdsfadf');
         $query = Tfn::select('id', 'tfn_number')
-        ->where('company_id', '<>', 0)
-        ->where('company_id', '<>', '')
-        ->where('company_id', '<>', null);
+            ->where('company_id', '<>', 0)
+            ->where('company_id', '<>', '')
+            ->where('company_id', '<>', null);
 
         if ($request->get('company_id')) {
             $query->where('company_id', $request->get('company_id'));
-        }        
-        $data = $query->orderBy('id', 'DESC')->get();            
+        }
+        $data = $query->orderBy('id', 'DESC')->get();
         //return $query->ddRawSql();   
         if ($data->isNotEmpty()) {
             return $this->output(true, 'Success', $data->toArray());
@@ -1264,5 +1353,56 @@ class TfnController extends Controller
         }
     }
 
-    
+    public function getALLRemovedTfn(Request $request)
+    {
+        $user = \Auth::user();
+        $perPageNo = $request->get('perpage', 10);
+        $params = $request->get('params', "");
+        $fromDate = $request->get('from_date');
+        $toDate = $request->get('to_date');
+
+        if ($fromDate) {
+            $fromDate = \Carbon\Carbon::createFromFormat('d-m-y', $fromDate)->startOfDay();
+        }
+        if ($toDate) {
+            $toDate = \Carbon\Carbon::createFromFormat('d-m-y', $toDate)->endOfDay();
+        }
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+            $query = RemovedTfn::select('*')
+                ->with('company:id,company_name,email')
+                ->with('countries:id,country_name,phone_code,currency_symbol')
+                ->with('users:id,name,email')
+                ->where('status', 1)->orderBy('id', 'DESC');
+            if ($fromDate) {
+                $query->where('updated_at', '>=', $fromDate);
+            }
+            if ($toDate) {
+                $query->where('updated_at', '<=', $toDate);
+            }
+            if (!empty($params)) {
+                $query->where(function ($q) use ($params) {
+                    $q->where('tfn_number', 'LIKE', "%$params%")
+                        ->orWhereHas('company', function ($subQuery) use ($params) {
+                            $subQuery->where('company_name', 'like', "%{$params}%")
+                                ->orWhere('email', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('countries', function ($subQuery) use ($params) {
+                            $subQuery->where('country_name', 'like', "%{$params}%");
+                        })
+                        ->orWhereHas('users', function ($subQuery) use ($params) {
+                            $subQuery->where('name', 'like', "%{$params}%");
+                        });
+                });
+            }
+        } else {
+            return $this->output(false, 'Sorry! You are not authorized to add TFN Number.', [], 209);
+        }
+        $data =  $query->paginate($perPageNo);
+        if ($data->isNotEmpty()) {
+            return $this->output(true, 'Success', $data->toArray());
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
+    }
+
 }

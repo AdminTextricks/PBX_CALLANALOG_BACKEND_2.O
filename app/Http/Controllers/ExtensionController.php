@@ -693,37 +693,37 @@ class ExtensionController extends Controller
         }
     }
 
-    protected function addExtensionInConfFile($extensionName, $conf_file_path, $secret, $account_code, $template_contents)
-    {
-        // Add new user section
-        $register_string = "\n[$extensionName]\nusername=$extensionName\nsecret=$secret\naccountcode=$account_code\n$template_contents\n";
-        //$webrtc_conf_path = "/var/www/html/callanalog/admin/webrtc_template.conf";
-        file_put_contents($conf_file_path, $register_string, FILE_APPEND | LOCK_EX);
-        //echo "Registration successful. The SIP user $nname has been added to the webrtc_template.conf file.";        
-    }
+    // protected function addExtensionInConfFile($extensionName, $conf_file_path, $secret, $account_code, $template_contents)
+    // {
+    //     // Add new user section
+    //     $register_string = "\n[$extensionName]\nusername=$extensionName\nsecret=$secret\naccountcode=$account_code\n$template_contents\n";
+    //     //$webrtc_conf_path = "/var/www/html/callanalog/admin/webrtc_template.conf";
+    //     file_put_contents($conf_file_path, $register_string, FILE_APPEND | LOCK_EX);
+    //     //echo "Registration successful. The SIP user $nname has been added to the webrtc_template.conf file.";        
+    // }
 
-    protected function removeExtensionFromConfFile($extensionName, $conf_file_path)
-    {
-        // Remove user section
-        //$conf_file_path = "webrtc_template.conf";
-        $lines = file($conf_file_path);
-        $output = '';
-        $found = false;
-        foreach ($lines as $line) {
-            if (strpos($line, "[$extensionName]") !== false) {
-                $found = true;
-                continue;
-            }
-            if ($found && strpos($line, "[") === 0) {
-                $found = false;
-            }
-            if (!$found) {
-                $output .= $line;
-            }
-        }
-        file_put_contents($conf_file_path, $output, LOCK_EX);
-        //echo "Registration removed. The SIP user $nname has been removed from the webrtc_template.conf file.";
-    }
+    // protected function removeExtensionFromConfFile($extensionName, $conf_file_path)
+    // {
+    //     // Remove user section
+    //     //$conf_file_path = "webrtc_template.conf";
+    //     $lines = file($conf_file_path);
+    //     $output = '';
+    //     $found = false;
+    //     foreach ($lines as $line) {
+    //         if (strpos($line, "[$extensionName]") !== false) {
+    //             $found = true;
+    //             continue;
+    //         }
+    //         if ($found && strpos($line, "[") === 0) {
+    //             $found = false;
+    //         }
+    //         if (!$found) {
+    //             $output .= $line;
+    //         }
+    //     }
+    //     file_put_contents($conf_file_path, $output, LOCK_EX);
+    //     //echo "Registration removed. The SIP user $nname has been removed from the webrtc_template.conf file.";
+    // }
 
     public function getExtensionsByCountryIdAndCompanyId(Request $request, $country_id, $company_id)
     {
@@ -746,26 +746,26 @@ class ExtensionController extends Controller
     }
 
 
-    protected function sipReload()
-    {
-        $server_ip = "85.195.76.161";
-        $socket = @fsockopen($server_ip, 5038);
-        $response = "";
-        if (!is_resource($socket)) {
-            echo "conn failed in Engconnect ";
-            exit;
-        }
-        fputs($socket, "Action: Login\r\n");
-        fputs($socket, "UserName: TxuserGClanlg\r\n");
-        fputs($socket, "Secret: l3o9zMP3&X[k2+\r\n\r\n");
-        fputs($socket, "Action: Command\r\n");
-        fputs($socket, "Command: sip reload\r\n\r\n");
-        fputs($socket, "Action: Logoff\r\n\r\n");
-        while (!feof($socket))
-            $response .= fread($socket, 5038);            
-        fclose($socket);
-        return true;
-    }
+    // protected function sipReload()
+    // {
+    //     $server_ip = "85.195.76.161";
+    //     $socket = @fsockopen($server_ip, 5038);
+    //     $response = "";
+    //     if (!is_resource($socket)) {
+    //         echo "conn failed in Engconnect ";
+    //         exit;
+    //     }
+    //     fputs($socket, "Action: Login\r\n");
+    //     fputs($socket, "UserName: TxuserGClanlg\r\n");
+    //     fputs($socket, "Secret: l3o9zMP3&X[k2+\r\n\r\n");
+    //     fputs($socket, "Action: Command\r\n");
+    //     fputs($socket, "Command: sip reload\r\n\r\n");
+    //     fputs($socket, "Action: Logoff\r\n\r\n");
+    //     while (!feof($socket))
+    //         $response .= fread($socket, 5038);            
+    //     fclose($socket);
+    //     return true;
+    // }
 
     public function getSipRegistrationList(Request $request)
     {
@@ -1065,6 +1065,7 @@ class ExtensionController extends Controller
     {
         $user = \Auth::user();
         $company_id = $request->company_id ?? NULL;
+       // return $user->roles->first()->slug;
         if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
            
             $data = Extension::select('id', 'name', 'agent_name')

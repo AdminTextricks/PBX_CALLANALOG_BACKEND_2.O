@@ -5,15 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RemovedTfn extends Model
+class TfnImportCsvList extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'tfn_number',
-        'country_id',
-        'deleted_by',
-        'company_id',
+        'uploaded_by',
+        'tfn_import_csv',
         'status',
     ];
 
@@ -28,6 +26,6 @@ class RemovedTfn extends Model
     }
     public function Company()
     {
-        return $this->belongsTo(Company::class, 'company_id', 'id');
+        return $this->belongsTo(Company::class);
     }
 }

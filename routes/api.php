@@ -172,6 +172,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	Route::group(['prefix' => 'tfn'], function () {	
 		Route::get('/getAllTfnOrByCompany', [TfnController::class, 'getAllTfnOrByCompany']);	
 		Route::post('/call-screen-action', [TfnController::class, 'callScreenAction']);
+		Route::get('/removed-tfn', [TfnController::class, 'getALLRemovedTfn']);
 		Route::post('/renew-tfn-number', [TfnController::class, 'assignTfnMainRenew']);
 		Route::get('/destination-type', [TfnController::class, 'destinationType']);
 		Route::post('/assign-tfn-number', [TfnController::class, 'assignTfnMain']);

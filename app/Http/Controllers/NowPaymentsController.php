@@ -13,6 +13,7 @@ use App\Models\RechargeHistory;
 use App\Models\State;
 use App\Models\Tfn;
 use App\Services\NowPaymentsService;
+use Carbon\Carbon;
 use Validator;
 use Mail;
 use Illuminate\Support\Str;
@@ -50,13 +51,13 @@ class NowPaymentsController extends Controller
                 }
                 if ($itemType === "TFN") {
                     $tfn_list_type = Tfn::select('*')->where('tfn_number', $itemNumber)->first();
-                    if ($tfn_list_type && $tfn_list_type->company_id != 0) {
-                        return $this->output(false, 'Tfn Number ' . $itemNumber . ' is already Purchased.', 400);
+                    if (is_null($tfn_list_type)) {
+                        return $this->output(false, 'This Tfn Number ' . $itemNumber . ' dose not belongs to us or is currently in process.', 400);
                     }
                 } else {
                     $extnumber = Extension::select('*')->where('name', '=', $itemNumber)->first();
-                    if ($extnumber && $extnumber->status == 1) {
-                        return $this->output(false, 'Extension Number ' . $itemNumber . ' is already Purchased.', 400);
+                    if (is_null($extnumber)) {
+                        return $this->output(false, 'This Extension Number ' . $itemNumber . ' dose not belongs to us or is currently in process', 400);
                     }
                 }
             }
@@ -158,36 +159,92 @@ class NowPaymentsController extends Controller
                         $itemType = $item['item_type'];
                         $itemNumber = $item['item_number'];
                         if ($itemType === "TFN") {
-                            $numbers_list = Tfn::where('tfn_number', $itemNumber)->first();
-                            if ($numbers_list) {
-                                $numbers_list->company_id = $user->company->id;
-                                $numbers_list->assign_by = $user->id;
-                                $numbers_list->activated = '1';
-                                $numbers_list->startingdate = date('Y-m-d H:i:s');
-                                $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
-                                $numbers_list->save();
+                            $numbers_list_tfn = Tfn::where('tfn_number', $itemNumber)->first();
+                            if ($numbers_list_tfn && $numbers_list_tfn->expirationdate != "") {
+                                if ($numbers_list_tfn->company_id != $user->company->id && $numbers_list_tfn->reserved != '1') {
+                                    DB::rollback();
+                                    return $this->output(false, 'Mismatch in TFN values.', 400);
+                                }
+                                $value = "Renew";
+                                $currentDate = Carbon::now();
+                                $targetDate = Carbon::parse($numbers_list_tfn->expirationdate);
+                                $daysDifference = $currentDate->diffInDays($targetDate, false);
+                                if ($daysDifference <= 3 && $daysDifference >= 1) {
+                                    $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                                } elseif ($daysDifference > 3) {
+                                    $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                                } else {
+                                    $newDate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                                }
+
+                                $numbers_list_tfn->update([
+                                    'company_id' => $numbers_list_tfn->company_id,
+                                    'assign_by' => $user->id,
+                                    'activated' => '1',
+                                    'expirationdate' => $newDate,
+                                    'status' => 1,
+                                ]);
                             } else {
-                                DB::rollback();
-                                return $this->output(false, 'Tfn Number ' . $itemNumber . ' not found.', 400);
+                                $value = "Purchase";
+                                $numbers_list_tfn->update([
+                                    'company_id' => $user->company->id,
+                                    'assign_by' => $user->id,
+                                    'activated' => '1',
+                                    'startingdate' => date('Y-m-d H:i:s'),
+                                    'expirationdate' => date('Y-m-d H:i:s', strtotime('+29 days')),
+                                    'status' => 1,
+                                ]);
                             }
                         } else {
                             $numbers_list = Extension::where('name', $itemNumber)->first();
-                            if ($numbers_list) {
-                                $numbers_list->startingdate = date('Y-m-d H:i:s');
-                                $numbers_list->expirationdate = date('Y-m-d H:i:s', strtotime('+29 days'));
-                                $numbers_list->host = 'dynamic';
-                                $numbers_list->sip_temp = 'WEBRTC';
-                                $numbers_list->status = 1;
-                                $numbers_list->save();
+                            if ($numbers_list && $numbers_list->expirationdate != NULL) {
+
+                                if ($numbers_list->company_id != $user->company->id) {
+                                    DB::rollback();
+                                    return $this->output(false, 'Mismatch in Extension values.', 400);
+                                }
+                                $value = "Renew";
+                                $currentDate = Carbon::now();
+                                $targetDate = Carbon::parse($numbers_list->expirationdate);
+                                $daysDifference = $currentDate->diffInDays($targetDate, false);
+                                if ($daysDifference <= 3 && $daysDifference >= 1) {
+                                    $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                                } elseif ($daysDifference > 3) {
+                                    $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                                } else {
+                                    $newDate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                                }
+                                $numbers_list->update([
+                                    'company_id'  => $numbers_list->company_id,
+                                    'startingdate' => date('Y-m-d H:i:s'),
+                                    'expirationdate' => $newDate,
+                                    'host' => 'dynamic',
+                                    'sip_temp' => $numbers_list->sip_temp,
+                                    'status' => 1,
+                                ]);
                             } else {
-                                DB::rollback();
-                                return $this->output(false, 'Extension Number ' . $itemNumber . ' not found.', 400);
+                                $value = "Purchase";
+                                $numbers_list->update([
+                                    'company_id' => $user->company->id,
+                                    'startingdate' => date('Y-m-d H:i:s'),
+                                    'expirationdate' => date('Y-m-d H:i:s', strtotime('+29 days')),
+                                    'host' => 'dynamic',
+                                    'sip_temp' => 'WEBRTC',
+                                    'status' => 1,
+                                ]);
                             }
                         }
 
                         Cart::where('item_number', $itemNumber)->delete();
                     }
-
+                    $invoiceItem = InvoiceItems::where('item_number', $itemNumber)->where('invoice_id', $request->invoice_id)->first();
+                    if ($invoiceItem) {
+                        $invoiceItem->item_category = $value;
+                        $invoiceItem->save();
+                    } else {
+                        DB::rollback();
+                        return $this->output(false, 'Invoice item not found.', 400);
+                    }
                     $invoice_update = Invoice::select('*')->where('id', $payment->invoice_id)->first();
                     if (!$invoice_update) {
                         DB::rollback();
