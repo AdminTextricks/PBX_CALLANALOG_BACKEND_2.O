@@ -544,7 +544,7 @@ class TfnController extends Controller
             return $this->output($dataCSV['Status'], $dataCSV['Message'], $dataCSV['data'], $dataCSV['code']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->output(false, 'Transaction failed: ' . $e->getMessage(), [], 500);
+            return $this->output(false, $e->getMessage(), [], 500);
         }
     }
 
