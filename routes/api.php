@@ -409,6 +409,12 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::put('/{id}', [VoiceMailController::class, 'updateVoiceMail']);
 		Route::delete('/{id}', [VoiceMailController::class, 'deleteVoiceMail']);
 	});
+
+	# TFN authentication Manage 
+	Route::group(['prefix' => 'tfn-auth'], function () {
+		Route::post('/', [TfnController::class, 'setTfnAuthenticstion']);		
+		//Route::delete('/{id}', [TfnController::class, 'deleteTfnAuthenticstion']);
+	});
 });
 
 Route::get('/route-cache', function() {

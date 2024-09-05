@@ -19,8 +19,8 @@ class IvrController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'company_id'    => 'required|numeric',
-                'country_id'    => 'required|numeric',
+                'country_id'    => 'required|numeric|exists:countries,id',
+				'company_id'	=> 'required|numeric|exists:companies,id',
                 'input_auth_type'=> 'required|numeric',
                 'name'          => 'required|string|max:255|unique:ivrs',
                 'description'   => 'nullable|string',
