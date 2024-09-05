@@ -15,6 +15,7 @@ use App\Models\ResellerPrice;
 use App\Models\RingGroup;
 use App\Models\Tfn;
 use App\Models\TfnDestination;
+use App\Models\TfnAuthentication;
 use App\Models\TfnGroups;
 use App\Models\TfnImportCsvList;
 use App\Models\Trunk;
@@ -1402,6 +1403,60 @@ class TfnController extends Controller
             return $this->output(true, 'Success', $data->toArray());
         } else {
             return $this->output(true, 'No Record Found', []);
+        }
+    }
+
+    
+    public function setTfnAuthenticstion(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'tfn_auth'          => 'required',
+            'tfn_id'            => 'required|numeric|exists:tfns,id',
+            'authentication_type'=> 'required_if:tfn_auth,1',
+            'auth_digit'        => 'required_if:authentication_type,1,2',
+        ]);
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+        try {
+            DB::beginTransaction();
+            $tfn_auth = $request->get('tfn_auth');
+            if ($tfn_auth) {
+                $TfnAuthentication = TfnAuthentication::select('*')
+                                    ->where('tfn_id', $request->tfn_id)
+                                    ->first();
+                if (!$TfnAuthentication) {
+                    $TfnAuthentication = TfnAuthentication::create([
+                        'tfn_id'                => $request->tfn_id,
+                        'authentication_type'   => $request->authentication_type,
+                        'auth_digit'            => $request->auth_digit,                       
+                    ]);
+                    Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth ]);
+                    $response = $TfnAuthentication->toArray();
+                    DB::commit();
+                    return $this->output(true, 'Tfn Authentication set successfully.', $response);
+                }else{
+                    $TfnAuthentication->tfn_id      = $request->tfn_id;
+                    $TfnAuthentication->authentication_type = $request->authentication_type;
+                    $TfnAuthentication->auth_digit  = $request->auth_digit;
+                    if ($TfnAuthentication->save()) {
+                        Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth ]);
+                        DB::commit();
+                        $response = $TfnAuthentication->toArray();
+                        return $this->output(true, "TFN Authentication Updated Successfully!", $response, 200);
+                    } else {
+                        DB::rollBack();
+                        return $this->output(false, "Failed to update TFN Authentication.", [], 409);
+                    }
+                }
+            }else{
+                $TfnAuthentication = TfnAuthentication::where('tfn_id', $request->tfn_id)->delete();
+                Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth ]);               
+                return $this->output(true, "TFN Authentication Updated Successfully!", [], 200);
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->output(false, $e->getMessage(), [], 500);
         }
     }
 
