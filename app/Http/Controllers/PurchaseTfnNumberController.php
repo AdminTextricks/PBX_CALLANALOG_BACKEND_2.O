@@ -425,24 +425,34 @@ class PurchaseTfnNumberController extends Controller
         $user = \Auth::user();
         try {
             DB::beginTransaction();
+
             $cart = Cart::find($id);
+
             if (is_null($cart)) {
                 return $this->output(false, 'This Cart Number does not exist with us. Please try again!', [], 404);
             }
 
             if ($cart->company_id != $user->company_id) {
-                return $this->output(false, 'You are not Unauthorized user.', [], 403);
+                return $this->output(false, 'Unauthorized User action.', [], 403);
             }
+
             if ($cart->item_type == "TFN") {
                 $tfnNumber = Tfn::find($cart->item_id);
-                if ($tfnNumber) {
-                    $tfnNumber->company_id = 0;
-                    $tfnNumber->reserved = '0';
-                    $tfnNumber->reserveddate = null;
-                    $tfnNumber->reservedexpirationdate = null;
-                    $tfnNumber->save();
-                } else {
+                if (is_null($tfnNumber)) {
+                    DB::rollBack();
                     return $this->output(false, 'TFN Number not found.', [], 404);
+                } else {
+                    if ($tfnNumber->company_id != 0) {
+                        $tfnNumber->reserved = '1';
+                        $tfnNumber->reserveddate = null;
+                        $tfnNumber->reservedexpirationdate = null;
+                        $tfnNumber->save();
+                    } else {
+                        $tfnNumber->reserved = '0';
+                        $tfnNumber->reserveddate = null;
+                        $tfnNumber->reservedexpirationdate = null;
+                        $tfnNumber->save();
+                    }
                 }
             } else {
                 $extNumber = Extension::find($cart->item_id);
@@ -450,6 +460,7 @@ class PurchaseTfnNumberController extends Controller
                     return $this->output(false, 'Extension Number not found.', [], 404);
                 }
             }
+
             $cartDeleted = Cart::where('id', $id)->where('company_id', $user->company_id)->delete();
             if ($cartDeleted) {
                 InvoiceItems::where('item_number', '=', $cart->item_number)->delete();
@@ -461,7 +472,6 @@ class PurchaseTfnNumberController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error in removing item from cart : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'An error occurred. Please try again!', [], 500);
         }
     }
