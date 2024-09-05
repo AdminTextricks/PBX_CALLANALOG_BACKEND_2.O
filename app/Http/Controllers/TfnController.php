@@ -16,6 +16,7 @@ use App\Models\RingGroup;
 use App\Models\Tfn;
 use App\Models\TfnDestination;
 use App\Models\TfnGroups;
+use App\Models\TfnImportCsvList;
 use App\Models\Trunk;
 use App\Models\User;
 use Illuminate\Auth\Events\Validated;
@@ -485,53 +486,73 @@ class TfnController extends Controller
 
         $file = $request->file('import_csv');
         $fileExtension = $file->getClientOriginalExtension();
+        $originalFilename = $file->getClientOriginalName();
+        $filename = $originalFilename . date("Ymdhis") . '.' . $fileExtension;
 
         $dataCSV = ['Status' => 'true', 'Message' => 'File data has been processed successfully.', 'data' => [], 'code' => 200];
         $errors = [];
         $chunkdata = [];
         $chunksize = 25;
+
         if ($fileExtension === 'csv') {
             $reader = new CsvReader();
         } else {
             $reader = new XlsxReader();
         }
 
-        $spreadsheet = $reader->load($file->getRealPath());
-        $sheet = $spreadsheet->getActiveSheet();
-        foreach ($sheet->getRowIterator() as $rowIndex => $row) {
-            if ($rowIndex === 1) {
-                continue;
-            }
+        try {
+            DB::beginTransaction();
 
-            $rowData = [];
-            foreach ($row->getCellIterator() as $cell) {
-                $value = trim($cell->getValue());
-                if ($value !== null && $value !== '') {
-                    $rowData[] = mb_convert_encoding($value, 'UTF-8', 'auto');
+            $spreadsheet = $reader->load($file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
+
+            foreach ($sheet->getRowIterator() as $rowIndex => $row) {
+                if ($rowIndex === 1) {
+                    continue;
+                }
+
+                $rowData = [];
+                foreach ($row->getCellIterator() as $cell) {
+                    $value = trim($cell->getValue());
+                    if ($value !== null && $value !== '') {
+                        $rowData[] = mb_convert_encoding($value, 'UTF-8', 'auto');
+                    }
+                }
+
+                $chunkdata[] = $rowData;
+                if (count($chunkdata) === $chunksize) {
+                    $dataCSV = $this->getchunkdata($chunkdata, $file, $filename);
+                    if (!$dataCSV['Status']) {
+                        throw new \Exception($dataCSV['Message']);
+                    }
+                    $chunkdata = [];
                 }
             }
 
-            $chunkdata[] = $rowData;
-
-            if (count($chunkdata) === $chunksize) {
-                $dataCSV = $this->getchunkdata($chunkdata);
-                $chunkdata = [];
+            if (!empty($chunkdata)) {
+                $dataCSV = $this->getchunkdata($chunkdata, $file, $filename);
+                if (!$dataCSV['Status']) {
+                    throw new \Exception($dataCSV['Message']);
+                }
             }
-        }
 
-        if (!empty($chunkdata)) {
-            $dataCSV = $this->getchunkdata($chunkdata);
-        }
-        if (!empty($errors)) {
-            return $this->output(false, 'Some errors occurred during processing: ' . implode(', ', $errors), 409);
-        }
+            if (!empty($errors)) {
+                throw new \Exception('Some errors occurred during processing: ' . implode(', ', $errors));
+            }
 
-        return $this->output($dataCSV['Status'], $dataCSV['Message'], $dataCSV['data'], $dataCSV['code']);
+            DB::commit();
+            return $this->output($dataCSV['Status'], $dataCSV['Message'], $dataCSV['data'], $dataCSV['code']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->output(false, 'Transaction failed: ' . $e->getMessage(), [], 500);
+        }
     }
-    public function getchunkdata($chunkdata)
+
+    public function getchunkdata($chunkdata, $file, $filename)
     {
+        $user = \Auth::user();
+
         foreach ($chunkdata as $column) {
-            // return count($column);
             if (count($column) < 9) {
                 continue;
             }
@@ -546,27 +567,30 @@ class TfnController extends Controller
             $tfn_provider = trim($column[1]);
             $tfn_group_id = trim($column[2]);
             $country_id = trim($column[3]);
+
             $countryData = Country::select('*')->where('country_name', $country_id)->first();
             if (is_null($countryData)) {
                 return ['Status' => false, 'Message' => 'No Country ' . $country_id . ' Record Found!', 'data' => [], 'code' => 404];
             }
+
             $tfn_providerData = Trunk::select('*')->where('type', "Inbound")->where('name', $tfn_provider)->first();
             if (is_null($tfn_providerData)) {
                 return ['Status' => false, 'Message' => 'No Inbound Trunk ' . $tfn_provider . ' Record Found!', 'data' => [], 'code' => 404];
             }
+
             $tfn_group_idData = TfnGroups::select('*')->where('tfngroup_name', $tfn_group_id)->first();
             if (is_null($tfn_group_idData)) {
-                return ['Status' => false, 'Message' => 'No Tfn Group ' . $tfn_group_idData . ' Record Found!', 'data' => [], 'code' => 404];
+                return ['Status' => false, 'Message' => 'No Tfn Group ' . $tfn_group_id . ' Record Found!', 'data' => [], 'code' => 404];
             }
-            $tfncsv = Tfn::where('tfn_number', $tfn_number)->first();
 
+            $tfncsv = Tfn::select('*')->where('tfn_number', $tfn_number)->first();
             if ($tfncsv) {
                 return ['Status' => false, 'Message' => 'This TFN number ' . $tfn_number . ' already exists!', 'data' => [], 'code' => 400];
             } else {
                 $tfncsv = new Tfn();
             }
 
-            $tfncsv->tfn_number = trim($column[0]);
+            $tfncsv->tfn_number = $tfn_number;
             $tfncsv->tfn_provider = $tfn_providerData->id;
             $tfncsv->tfn_group_id = $tfn_group_idData->id;
             $tfncsv->country_id = $countryData->id;
@@ -577,14 +601,36 @@ class TfnController extends Controller
             $tfncsv->aleg_retail_min_duration = trim($column[7]);
             $tfncsv->aleg_billing_block = trim($column[8]);
             $tfncsv->status = 1;
+
             $response = $tfncsv->save();
 
             if (!$response) {
                 return ['Status' => false, 'Message' => 'Error occurred while processing TFN ' . $tfn_number, 'data' => [], 'code' => 409];
             }
         }
+
+        $sanitizedFilename = str_replace(' ', '_', $filename);
+        $filePath = public_path('Tfn_uploadData/');
+        if (!file_exists($filePath)) {
+            mkdir($filePath, 0755, true);
+        }
+        $fileMoved = $file->move($filePath, $sanitizedFilename);
+        if (!$fileMoved) {
+            return ['Status' => false, 'Message' => 'File could not be moved to the specified directory.', 'data' => [], 'code' => 500];
+        }
+        $TfnCsvData = TfnImportCsvList::create([
+            'uploaded_by' => $user->id,
+            'tfn_import_csv' => $sanitizedFilename,
+            'status' => 1
+        ]);
+
+        if (!$TfnCsvData) {
+            return ['Status' => false, 'Message' => 'Failed to save file information to the database.', 'data' => [], 'code' => 500];
+        }
+
         return ['Status' => true, 'Message' => 'CSV Uploaded successfully', 'data' => [], 'code' => 200];
     }
+
 
 
     public function assignTfnMainOLD(Request $request)
