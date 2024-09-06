@@ -39,7 +39,7 @@ class TfnController extends Controller
     {
         $user = \Auth::user();
         //if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
-        if (in_array($user->roles->first()->slug, array('super-admin','support','noc'))) {
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
             $validator = Validator::make($request->all(), [
                 'tfn_number'                => 'required|numeric|unique:tfns',
                 'tfn_provider'              => 'required|numeric',
@@ -81,6 +81,7 @@ class TfnController extends Controller
                     }
                 } catch (\Exception $e) {
                     DB::rollBack();
+                    Log::error('Error occurred in Add Tfn Number   : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
                     return $this->output(false, 'An error occurred while adding the TFN number. Please try again.', [], 500);
                 }
             }
@@ -140,6 +141,7 @@ class TfnController extends Controller
                 }
             } catch (\Exception $e) {
                 DB::rollBack();
+                Log::error('Error occurred in Updating Tfn Number   : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
                 return $this->output(false, 'An error occurred while updating the TFN number. Please try again!', [], 500);
             }
         } else {
@@ -243,6 +245,7 @@ class TfnController extends Controller
             return $this->output(true, 'This TFN Number was removed successfully!', [], 200);
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error occurred in Delete or Remove Tfn  : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'An error occurred: ' . $e->getMessage(), [], 500);
         }
     }
@@ -547,6 +550,7 @@ class TfnController extends Controller
             return $this->output(true, 'File data has been processed successfully.', [], 200);
         } catch (\Exception $e) {
             DB::rollback();
+            Log::error('Error occurred in While Uploading CSV or Xlsx   : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, $e->getMessage());
         }
     }
@@ -920,6 +924,7 @@ class TfnController extends Controller
             return $this->output(true, 'TFN numbers assigned successfully.', null, 200);
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error occurred in Assign Tfn Number   : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'An error occurred. Please try again.', null, 500);
         }
     }
@@ -1111,6 +1116,7 @@ class TfnController extends Controller
             return $this->output(true, 'TFN numbers have been successfully renewed..', null, 200);
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error occurred in Renew TFN number   : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'An error occurred. Please try again.', null, 500);
         }
     }
@@ -1179,7 +1185,7 @@ class TfnController extends Controller
                 }
                 return $this->output(true, 'Email sent successfully!');
             } catch (\Exception $e) {
-                \Log::error('Error sending email: ' . $e->getMessage());
+                Log::error('Error sending email: ' . $e->getMessage());
                 return $this->output(false, 'Error occurred while sending the email.');
             }
         } else {
@@ -1259,6 +1265,7 @@ class TfnController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error occurred in Assign Destination  : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'An error occurred while assigning the destination. Please try again!', [], 500);
         }
     }
@@ -1331,6 +1338,7 @@ class TfnController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollback();
+            Log::error('Error occurred in Update Dail Tfn Status  : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, $e->getMessage(), [], 500);
         }
     }
@@ -1407,13 +1415,13 @@ class TfnController extends Controller
         }
     }
 
-    
+
     public function setTfnAuthenticstion(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'tfn_auth'          => 'required',
             'tfn_id'            => 'required|numeric|exists:tfns,id',
-            'authentication_type'=> 'required_if:tfn_auth,1',
+            'authentication_type' => 'required_if:tfn_auth,1',
             'auth_digit'        => 'required_if:authentication_type,1,2',
         ]);
         if ($validator->fails()) {
@@ -1424,24 +1432,24 @@ class TfnController extends Controller
             $tfn_auth = $request->get('tfn_auth');
             if ($tfn_auth) {
                 $TfnAuthentication = TfnAuthentication::select('*')
-                                    ->where('tfn_id', $request->tfn_id)
-                                    ->first();
+                    ->where('tfn_id', $request->tfn_id)
+                    ->first();
                 if (!$TfnAuthentication) {
                     $TfnAuthentication = TfnAuthentication::create([
                         'tfn_id'                => $request->tfn_id,
                         'authentication_type'   => $request->authentication_type,
-                        'auth_digit'            => $request->auth_digit,                       
+                        'auth_digit'            => $request->auth_digit,
                     ]);
-                    Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth ]);
+                    Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth]);
                     $response = $TfnAuthentication->toArray();
                     DB::commit();
                     return $this->output(true, 'Tfn Authentication set successfully.', $response);
-                }else{
+                } else {
                     $TfnAuthentication->tfn_id      = $request->tfn_id;
                     $TfnAuthentication->authentication_type = $request->authentication_type;
                     $TfnAuthentication->auth_digit  = $request->auth_digit;
                     if ($TfnAuthentication->save()) {
-                        Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth ]);
+                        Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth]);
                         DB::commit();
                         $response = $TfnAuthentication->toArray();
                         return $this->output(true, "TFN Authentication Updated Successfully!", $response, 200);
@@ -1450,9 +1458,9 @@ class TfnController extends Controller
                         return $this->output(false, "Failed to update TFN Authentication.", [], 409);
                     }
                 }
-            }else{
+            } else {
                 $TfnAuthentication = TfnAuthentication::where('tfn_id', $request->tfn_id)->delete();
-                Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth ]);               
+                Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth]);
                 return $this->output(true, "TFN Authentication Updated Successfully!", [], 200);
             }
         } catch (\Exception $e) {
@@ -1463,18 +1471,17 @@ class TfnController extends Controller
 
     public function getTfnAuthenticstion(Request $request, $tfn_id)
     {
-        try {                  
+        try {
             $TfnAuthentication = TfnAuthentication::where('tfn_id', $tfn_id)->first();
-            if($TfnAuthentication){				
-                $response = $TfnAuthentication->toArray();              
-                return $this->output(true,'Success',$response,200);                
-            }else{              
+            if ($TfnAuthentication) {
+                $response = $TfnAuthentication->toArray();
+                return $this->output(true, 'Success', $response, 200);
+            } else {
                 return $this->output(true, 'No Record Found', []);
             }
-        } catch (\Exception $e) {           
-            Log::error('Error occurred in geting TFN Authentication : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());           
+        } catch (\Exception $e) {
+            Log::error('Error occurred in geting TFN Authentication : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
-
 }

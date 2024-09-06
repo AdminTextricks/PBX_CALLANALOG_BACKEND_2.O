@@ -33,7 +33,8 @@ return new class extends Migration
             $table->smallInteger('aleg_billing_block')->nullable()->default(0);
             $table->timestamp('startingdate')->nullable();
             $table->timestamp('expirationdate')->nullable();
-            $table->enum('call_screen_action', ['0', '1'])->nullable()->default(1);            
+            $table->enum('call_screen_action', ['0', '1'])->nullable()->default(1); 
+            $table->enum('tfn_auth', ['0', '1'])->nullable()->default(0);           
             $table->tinyInteger('status')->default(0);
             $table->timestamps();
             $table->softDeletes();

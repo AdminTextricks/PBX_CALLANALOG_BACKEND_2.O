@@ -33,6 +33,7 @@ class Tfn extends Model
         'startingdate',
         'expirationdate',
         'call_screen_action',
+        'tfn_auth',
         'status',
     ];
 
