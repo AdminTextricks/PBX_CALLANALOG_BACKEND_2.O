@@ -500,7 +500,7 @@ class TfnController extends Controller
             $dataCSV = ['Status' => true, 'Message' => 'File data has been processed successfully.', 'data' => [], 'code' => 200];
             $errors = [];
             $chunkdata = [];
-            $chunksize = 25;
+            $chunksize = 200;
 
             if ($fileExtension === 'csv') {
                 $reader = new CsvReader();
@@ -1460,8 +1460,8 @@ class TfnController extends Controller
                 }
             } else {
                 $TfnAuthentication = TfnAuthentication::where('tfn_id', $request->tfn_id)->delete();
-                Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth ]);  
-                
+                Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth]);
+
                 DB::rollBack();
                 return $this->output(true, "TFN Authentication Updated Successfully!", [], 200);
             }
@@ -1483,6 +1483,111 @@ class TfnController extends Controller
             }
         } catch (\Exception $e) {
             Log::error('Error occurred in geting TFN Authentication : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
+
+    public function ReplaceTfnNumber(Request $request)
+    {
+        $user = \Auth::user();
+        $validator = Validator::make($request->all(), [
+            'tfn_number' => 'required|numeric',
+            'replace_tfn_number' => 'required|numeric',
+            'country_id' => 'required|numeric',
+            'company_id' => 'required|numeric',
+        ]);
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+        try {
+            DB::beginTransaction();
+            if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                $tfn = Tfn::where('tfn_number', $request->tfn_number)->first();
+                $Replacetfn = Tfn::where('tfn_number', $request->replace_tfn_number)->first();
+                $companyData = Company::where('id', $request->company_id)->first();
+                if (is_null($tfn)) {
+                    DB::rollback();
+                    return $this->output(true, 'This Tfn Number ' . $request->tfn_number . ' dose not belongs to us or is currently in process.');
+                }
+                if (is_null($Replacetfn)) {
+                    DB::rollback();
+                    return $this->output(true, 'This Tfn Number ' . $request->replace_tfn_number . ' dose not belongs to us or is currently in process.');
+                } else {
+                    $inbound_trunk = explode(',', $companyData->inbound_permission);
+                    if ($Replacetfn->company_id != 0) {
+                        DB::rollback();
+                        return $this->output(false, "This TFN Number ($request->replace_tfn_number) is already Purchased!!", 400);
+                    }
+                    if (!in_array($Replacetfn->tfn_provider, $inbound_trunk)) {
+                        DB::rollback();
+                        return $this->output(false, "Inbound Trunk Permission not found for this TFN Number ($request->replace_tfn_number)", 400);
+                    }
+                    $replaceTfnData = $Replacetfn->update([
+                        'company_id' => $companyData->id,
+                        'assign_by' => $user->id,
+                        'reserved' => '1',
+                        'reserveddate' => $tfn->reserveddate,
+                        'reservedexpirationdate' => $tfn->reservedexpirationdate,
+                        'startingdate' => $tfn->startingdate,
+                        'expirationdate' => $tfn->expirationdate,
+                    ]);
+
+                    if ($replaceTfnData) {
+                        RemovedTfn::create([
+                            'tfn_number' => $tfn->tfn_number,
+                            'country_id' => $tfn->country_id,
+                            'deleted_by' => $user->id,
+                            'company_id' => 0,
+                            'status'     => 1,
+                        ]);
+                        $tfn->forcedelete();
+                    }
+                    DB::commit();
+                    return $this->output(true, "TFN number ($request->replace_tfn_number) Replaced successfully.", 200);
+                }
+            } else {
+                DB::rollback();
+                return $this->output(false, 'Sorry! You are not authorized.', [], 209);
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error occurred in Tfn Replacement  : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, $e->getMessage());
+        }
+    }
+    public function getALLCsvUploadedList(Request $request)
+    {
+        $user = \Auth::user();
+        $params = $request->get('params', "");
+        $perPageNo = $request->get('perpage', 10);
+        try {
+            if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc', 'admin'))) {
+
+                if (!empty($params)) {
+                    $query = TfnImportCsvList::with('users:id,name,email')->orderBy('id', 'DESC')
+                        ->where(function ($subquery) use ($params) {
+                            $subquery->where('tfn_import_csv', 'LIKE', "%{$params}%")
+                                ->orWhereHas('users', function ($subQueryMain) use ($params) {
+                                    $subQueryMain->where('name', 'LIKE', "%{$params}%")
+                                        ->orWhere('email', 'LIKE', "%{$params}%");
+                                });
+                        });
+                } else {
+                    $query = TfnImportCsvList::with('users:id,name,email')->orderBy('id', 'DESC');
+                }
+                $getAllCsvList = $query->paginate($perPageNo);
+                if ($getAllCsvList->isNotEmpty()) {
+                    $tfngetAllCSV_data = $getAllCsvList->toArray();
+                    unset($tfngetAllCSV_data['links']);
+                    return $this->output(true, 'Success', $tfngetAllCSV_data, 200);
+                } else {
+                    return $this->output(true, 'No Record Found', [], 200);
+                }
+            } else {
+                return $this->output(false, 'Sorry! You are not authorized.', [], 403);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error occurred in getting Uploaded Tfn CSV List : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
