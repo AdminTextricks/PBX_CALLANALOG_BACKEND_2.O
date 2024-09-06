@@ -21,7 +21,7 @@ class IvrController extends Controller
             $validator = Validator::make($request->all(), [
                 'country_id'    => 'required|numeric|exists:countries,id',
 				'company_id'	=> 'required|numeric|exists:companies,id',
-                'input_auth_type'=> 'required|numeric',
+                //'input_auth_type'=> 'required|numeric',
                 'name'          => 'required|string|max:255|unique:ivrs',
                 'description'   => 'nullable|string',
                 'ivr_media_id'  => 'required|numeric',
@@ -38,7 +38,7 @@ class IvrController extends Controller
                     'company_id'    => $request->company_id,
                     'country_id'    => $request->country_id,
                     'name'          => $request->name,
-                    'input_auth_type'=> $request->input_auth_type,
+                    //'input_auth_type'=> $request->input_auth_type,
                     'description'   => $request->description,
                     'ivr_media_id'  => $request->ivr_media_id,
                     'timeout'       => $request->timeout,                
@@ -91,7 +91,7 @@ class IvrController extends Controller
 		} else {
             $validator = Validator::make($request->all(), [
                 'name'          => 'required|string|max:255|unique:ivrs,name,' . $Ivr->id, 
-                'input_auth_type'=> 'required|numeric',
+                //input_auth_type'=> 'required|numeric',
                 'country_id'    => 'required|numeric',
                 'description'   => 'nullable|string',
                 'ivr_media_id'  => 'required|numeric',
@@ -103,7 +103,7 @@ class IvrController extends Controller
 
                 $Ivr->name  = $request->name;
                 $Ivr->country_id  = $request->country_id;
-                $Ivr->input_auth_type = $request->input_auth_type;
+                //$Ivr->input_auth_type = $request->input_auth_type;
                 $Ivr->description = $request->description;
                 $Ivr->ivr_media_id = $request->ivr_media_id;
                 $Ivr->timeout = $request->timeout;

@@ -1060,7 +1060,7 @@ class ExtensionController extends Controller
         }        
     }
 
-/***  get extension list for barging */
+    /***  get extension list for barging */
     public function getExtensionsForBarging(Request $request)
     {
         $user = \Auth::user();
@@ -1108,239 +1108,245 @@ class ExtensionController extends Controller
         try {
             DB::beginTransaction();
             $user = \Auth::user();
-            $Company = Company::where('id', $request->company_id)->first();
-            $input = $request->all();
-            $extension_name = $input['name'];
-            if ($Company) {
-                $reseller_id = '';
-                if ($Company->parent_id > 1) {
-                    $price_for = 'Reseller';
-                    $reseller_id = $Company->parent_id;
-                } else {
-                    $price_for = 'Company';
-                }
-                $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'Extension');
-                if ($item_price_arr['Status'] == 'true') {
-                    $item_price = $item_price_arr['Extension_price'];
-                    if (is_array($extension_name)) {
-                        $TotalItemPrice = $item_price * count($extension_name);
-                        if ($Company->plan_id == 1 && in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc')) && $request->payment_type == 'Paid' && $Company->balance < $TotalItemPrice) {
-                            DB::commit();
-                            return $this->output(false, 'Company account has insufficient balance!');
-                        } else {
-                            $VoiceMail = $item_ids = $Cart = [];
-                            $status = '0';
-                            $startingdate = $expirationdate = $host = $sip_temp = NULL;
-                            if ($Company->plan_id == 2 || in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
-                                $status = '1';
-                                $startingdate = Carbon::now();
-                                $expirationdate = ($Company->plan_id == 2) ? $startingdate->addDays(179) : $startingdate->addDays(29);
-                                $host = 'dynamic';
-                                $sip_temp = 'WEBRTC';
-                                $payment_status = 'Free';
-                            }
+            if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                $Company = Company::where('id', $request->company_id)->first();
+                $input = $request->all();
+                $extension_name = $input['name'];
+                if ($Company) {
+                    $reseller_id = '';
+                    if ($Company->parent_id > 1) {
+                        $price_for = 'Reseller';
+                        $reseller_id = $Company->parent_id;
+                    } else {
+                        $price_for = 'Company';
+                    }
+                    $item_price_arr = $this->getItemPrice($request->company_id, $request->country_id, $price_for, $reseller_id, 'Extension');
+                    if ($item_price_arr['Status'] == 'true') {
+                        $item_price = $item_price_arr['Extension_price'];
+                        if (is_array($extension_name)) {
+                            $TotalItemPrice = $item_price * count($extension_name);
 
-                            foreach ($extension_name as $item) {
-                                $callbackextension = str_pad(rand(1, 9999), 4, "0", STR_PAD_LEFT);
-                                $data = [];
-                                $data = [
-                                    'country_id' => $request->country_id,
-                                    'company_id' => $request->company_id,
-                                    'name' => $item,
-                                    'callbackextension' => $callbackextension,
-                                    'account_code' => $Company->account_code,
-                                    'agent_name' => $request->agent_name,
-                                    'callgroup' => $request->callgroup,
-                                    'callerid' => $request->callerid,
-                                    'secret' => $request->secret,
-                                    'barge' => $request->barge,
-                                    'recording' => $request->recording,
-                                    'mailbox' => $request->mailbox,
-                                    'regexten' => $item,
-                                    'startingdate' => Carbon::now(),
-                                    'expirationdate' => $expirationdate,
-                                    'fromdomain' => NULL,
-                                    'amaflags' => 'billing',
-                                    'canreinvite' => 'no',
-                                    'context' => 'callanalog',
-                                    'dtmfmode' => 'RFC2833',
-                                    'host' => $host,
-                                    'sip_temp' => $sip_temp,
-                                    'insecure' => 'port,invite',
-                                    'language' => 'en',
-                                    'nat' => 'force_rport,comedia',
-                                    'qualify' => 'yes',
-                                    'rtptimeout' => '60',
-                                    'rtpholdtimeout' => '300',
-                                    'type' => 'friend',
-                                    'username' => $item,
-                                    'disallow' => 'ALL',
-                                    'allow' => 'g729,g723,ulaw,gsm',
-                                    'created_at' => Carbon::now(),
-                                    'updated_at' => Carbon::now(),
-                                    'status' => $status,
-                                ];
+                            if ($Company->plan_id == 1 && $request->payment_type == 'Paid' && $Company->balance < $TotalItemPrice) {
+                                DB::commit();
+                                return $this->output(false, 'Company account has insufficient balance!');
+                            } else {
+                                $VoiceMail = $item_ids = $Cart = [];
+                                $status = '0';
+                                $startingdate = $expirationdate = $host = $sip_temp = NULL;
+                                if ($Company->plan_id == 2 || in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                                    $status = '1';
+                                    $startingdate = Carbon::now();
+                                    $expirationdate = ($Company->plan_id == 2) ? $startingdate->addDays(179) : $startingdate->addDays(29);
+                                    $host = 'dynamic';
+                                    $sip_temp = 'WEBRTC';
+                                    $payment_status = 'Free';
+                                }
 
-                                $id = DB::table('extensions')->insertGetId($data);
-                                $item_ids[$id] = $item;
-                                if ($request->mailbox == '1') {
-                                    array_push($VoiceMail, [
+                                foreach ($extension_name as $item) {
+                                    $callbackextension = str_pad(rand(1, 9999), 4, "0", STR_PAD_LEFT);
+                                    $data = [];
+                                    $data = [
+                                        'country_id' => $request->country_id,
                                         'company_id' => $request->company_id,
-                                        'context' => 'default',
-                                        'mailbox' => $item,
-                                        'fullname' => $request->agent_name,
-                                        'email' => $request->voice_email,
-                                        'password' => '1234',
-                                        'timezone' => 'central',
-                                        'dialout'   => '60',
-                                        'attach' => 'yes',
-                                        'review' => 'no',
-                                        'operator' => 'no',
-                                        'envelope' => 'no',
-                                        'sayduration' => 'no',
-                                        'saydurationm' => '1',
-                                        'sendvoicemail' => 'no',
-                                        'nextaftercmd' => 'yes',
-                                        'forcename' => 'no',
-                                        'forcegreetings' => 'no',
-                                        'hidefromdir' => 'yes',
+                                        'name' => $item,
+                                        'callbackextension' => $callbackextension,
+                                        'account_code' => $Company->account_code,
+                                        'agent_name' => $request->agent_name,
+                                        'callgroup' => $request->callgroup,
+                                        'callerid' => $request->callerid,
+                                        'secret' => $request->secret,
+                                        'barge' => $request->barge,
+                                        'recording' => $request->recording,
+                                        'mailbox' => $request->mailbox,
+                                        'regexten' => $item,
+                                        'startingdate' => Carbon::now(),
+                                        'expirationdate' => $expirationdate,
+                                        'fromdomain' => NULL,
+                                        'amaflags' => 'billing',
+                                        'canreinvite' => 'no',
+                                        'context' => 'callanalog',
+                                        'dtmfmode' => 'RFC2833',
+                                        'host' => $host,
+                                        'sip_temp' => $sip_temp,
+                                        'insecure' => 'port,invite',
+                                        'language' => 'en',
+                                        'nat' => 'force_rport,comedia',
+                                        'qualify' => 'yes',
+                                        'rtptimeout' => '60',
+                                        'rtpholdtimeout' => '300',
+                                        'type' => 'friend',
+                                        'username' => $item,
+                                        'disallow' => 'ALL',
+                                        'allow' => 'g729,g723,ulaw,gsm',
+                                        'created_at' => Carbon::now(),
+                                        'updated_at' => Carbon::now(),
+                                        'status' => $status,
+                                    ];
+
+                                    $id = DB::table('extensions')->insertGetId($data);
+                                    $item_ids[$id] = $item;
+                                    if ($request->mailbox == '1') {
+                                        array_push($VoiceMail, [
+                                            'company_id' => $request->company_id,
+                                            'context' => 'default',
+                                            'mailbox' => $item,
+                                            'fullname' => $request->agent_name,
+                                            'email' => $request->voice_email,
+                                            'password' => '1234',
+                                            'timezone' => 'central',
+                                            'dialout'   => '60',
+                                            'attach' => 'yes',
+                                            'review' => 'no',
+                                            'operator' => 'no',
+                                            'envelope' => 'no',
+                                            'sayduration' => 'no',
+                                            'saydurationm' => '1',
+                                            'sendvoicemail' => 'no',
+                                            'nextaftercmd' => 'yes',
+                                            'forcename' => 'no',
+                                            'forcegreetings' => 'no',
+                                            'hidefromdir' => 'yes',
+                                            'created_at' => Carbon::now(),
+                                            'updated_at' => Carbon::now(),
+                                        ]);
+                                    }
+                                    array_push($Cart, [
+                                        'company_id' => $request->company_id,
+                                        'country_id' => $request->country_id,
+                                        'item_id' => $id,
+                                        'item_number' => $item,
+                                        'item_type' => 'Extension',
+                                        'item_price' => $item_price,
                                         'created_at' => Carbon::now(),
                                         'updated_at' => Carbon::now(),
                                     ]);
+                                    //$cartIds = DB::table('carts')->insertGetId($Cart);  
                                 }
-                                array_push($Cart, [
-                                    'company_id' => $request->company_id,
-                                    'country_id' => $request->country_id,
-                                    'item_id' => $id,
-                                    'item_number' => $item,
-                                    'item_type' => 'Extension',
-                                    'item_price' => $item_price,
-                                    'created_at' => Carbon::now(),
-                                    'updated_at' => Carbon::now(),
-                                ]);
-                                //$cartIds = DB::table('carts')->insertGetId($Cart);  
-                            }
-                            // $Extensions = Extension::insert($data);
-                            if ($request->mailbox == '1') {
-                                $VoiceMail = VoiceMail::insert($VoiceMail);
-                            }
+                                // $Extensions = Extension::insert($data);
+                                if ($request->mailbox == '1') {
+                                    $VoiceMail = VoiceMail::insert($VoiceMail);
+                                }
 
-                            if ($Company->plan_id == 1 && !in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
-                                $cartIds = Cart::insert($Cart);
-                                $response['total_extension'] = count($item_ids);//$Extensions;//->toArray();
-                                $response['Show_Cart'] = 'Yes';
-                                DB::commit();
-                                return $this->output(true, 'Extension added successfully in cart.', $response);
-                            } else {
-                                if ($Company->plan_id == 1 && in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc')) && $request->payment_type == 'Paid') {
-                                    $Company = Company::where('id', $request->company_id)->first();
-                                    if ($Company->balance > $TotalItemPrice) {
-                                        $Company_balance = $Company->balance;
-                                        $Company->balance = $Company_balance - $TotalItemPrice;
-                                        if ($Company->save()) {
-                                            $response['total_extension'] = count($item_ids);
-                                            //$Extensions;//->toArray();
-                                            $response['Show_Cart'] = 'No';
+                                if ($Company->plan_id == 1 && !in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                                    $cartIds = Cart::insert($Cart);
+                                    $response['total_extension'] = count($item_ids);//$Extensions;//->toArray();
+                                    $response['Show_Cart'] = 'Yes';
+                                    DB::commit();
+                                    return $this->output(true, 'Extension added successfully in cart.', $response);
+                                } else {
+                                    if ($Company->plan_id == 1 && in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc')) && $request->payment_type == 'Paid') {
+                                        $Company = Company::where('id', $request->company_id)->first();
+                                        if ($Company->balance > $TotalItemPrice) {
+                                            $Company_balance = $Company->balance;
+                                            $Company->balance = $Company_balance - $TotalItemPrice;
+                                            if ($Company->save()) {
+                                                $response['total_extension'] = count($item_ids);
+                                                //$Extensions;//->toArray();
+                                                $response['Show_Cart'] = 'No';
+                                            } else {
+                                                DB::rollback();
+                                                return $this->output(false, 'Error occurred in deducting company balance.', [], 209);
+                                            }
                                         } else {
                                             DB::rollback();
-                                            return $this->output(false, 'Error occurred in deducting company balance.', [], 209);
+                                            return $this->output(false, 'Company account has insufficient balance.');
                                         }
-                                    } else {
-                                        DB::rollback();
-                                        return $this->output(false, 'Company account has insufficient balance.');
+                                        $payment_status = $request->payment_type;
                                     }
-                                    $payment_status = $request->payment_type;
-                                }
-                                
-                                $invoicetable_id = DB::table('invoices')->max('id');
-                                if (!$invoicetable_id) {
-                                    $invoice_id = 'INV/' . date('Y') . '/00001';
-                                } else {
-                                    $invoice_id = "INV/" . date('Y') . "/000" . ($invoicetable_id + 1);
-                                }
-                                $Invoice = Invoice::create([
-                                    'company_id'        => $request->company_id,
-                                    'country_id'        => $Company->country_id,
-                                    'state_id'          => $Company->state_id,
-                                    'invoice_id'        => $invoice_id,
-                                    'invoice_currency'  => 'USD',
-                                    'invoice_subtotal_amount'   => $TotalItemPrice,
-                                    'invoice_amount'    => $TotalItemPrice,
-                                    'payment_status'    => $payment_status,
-                                    'email_status'      => 0,
-                                ]);
-                                $purchase_item = array();
-                                foreach ($item_ids as $item_id => $item) {
-                                    $purchase_item[] = $item;
-                                    $InvoiceItems = InvoiceItems::create([                                    
-                                        'invoice_id'    => $Invoice->id,
-                                        'country_id'    => $request->country_id,
-                                        'item_type'     => 'Extension',
-                                        'item_number'   => $item,
-                                        'item_price'    => $item_price,
+                                    
+                                    $invoicetable_id = DB::table('invoices')->max('id');
+                                    if (!$invoicetable_id) {
+                                        $invoice_id = 'INV/' . date('Y') . '/00001';
+                                    } else {
+                                        $invoice_id = "INV/" . date('Y') . "/000" . ($invoicetable_id + 1);
+                                    }
+                                    $Invoice = Invoice::create([
+                                        'company_id'        => $request->company_id,
+                                        'country_id'        => $Company->country_id,
+                                        'state_id'          => $Company->state_id,
+                                        'invoice_id'        => $invoice_id,
+                                        'invoice_currency'  => 'USD',
+                                        'invoice_subtotal_amount'   => $TotalItemPrice,
+                                        'invoice_amount'    => $TotalItemPrice,
+                                        'payment_status'    => $payment_status,
+                                        'email_status'      => 0,
+                                    ]);
+                                    $purchase_item = array();
+                                    foreach ($item_ids as $item_id => $item) {
+                                        $purchase_item[] = $item;
+                                        $InvoiceItems = InvoiceItems::create([                                    
+                                            'invoice_id'    => $Invoice->id,
+                                            'country_id'    => $request->country_id,
+                                            'item_type'     => 'Extension',
+                                            'item_number'   => $item,
+                                            'item_price'    => $item_price,
+                                        ]);
+                                        
+                                        $webrtc_template_url = config('app.webrtc_template_url');
+                                        $addExtensionFile = $webrtc_template_url;
+                                        $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
+                                        $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
+                                    }
+                                    
+                                    $payment = Payments::create([
+                                        'company_id'        => $request->company_id,
+                                        'invoice_id'        => $Invoice->id,
+                                        'ip_address'        => $request->ip(),
+                                        'invoice_number'    => $invoice_id,
+                                        'order_id'          =>  $invoice_id. '-UID-' .$request->company_id,
+                                        'item_numbers'      => implode(',', $purchase_item),
+                                        'payment_type'      => $payment_status,
+                                        'payment_currency'  => 'USD',
+                                        'payment_price'     => $TotalItemPrice,
+                                        'stripe_charge_id'  => '',
+                                        'transaction_id'    => $TotalItemPrice.'-'.time(),
+                                        'status'            => 1,
                                     ]);
                                     
-                                    $webrtc_template_url = config('app.webrtc_template_url');
-                                    $addExtensionFile = $webrtc_template_url;
-                                    $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
-                                    $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
+                                    $emailData['title']         = 'Invoice From Callanalog';
+                                    $emailData['item_numbers']  = $item_ids;
+                                    $emailData['item_types']    = 'Extension';
+                                    $emailData['price']         = $TotalItemPrice;
+                                    $emailData['invoice_number']= $invoice_id;
+                                    $emailData['email']         = $Company->email;
+                                    $emailData['email_template']= 'invoice';
+                                    dispatch(new \App\Jobs\SendEmailJob($emailData));
+                                    
+                                    $response['total_extension'] = count($item_ids);
+                                    //$Extensions;//->toArray();
+                                    $response['Show_Cart'] = 'No';
+                                    
+                                    $server_flag = config('app.server_flag');
+                                    if ($server_flag == 1) {
+                                        $shell_script = config('app.shell_script');
+                                        $result = shell_exec('sudo ' . $shell_script);
+                                        Log::error('Extension File Transfer Log : ' . $result);
+                                        $this->sipReload();
+                                    }
+                                    DB::commit();
+                                    return $this->output(true, 'Extension added successfully.', $response);
                                 }
-                                
-                                $payment = Payments::create([
-                                    'company_id'        => $request->company_id,
-                                    'invoice_id'        => $Invoice->id,
-                                    'ip_address'        => $request->ip(),
-                                    'invoice_number'    => $invoice_id,
-                                    'order_id'          =>  $invoice_id. '-UID-' .$request->company_id,
-                                    'item_numbers'      => implode(',', $purchase_item),
-                                    'payment_type'      => $payment_status,
-                                    'payment_currency'  => 'USD',
-                                    'payment_price'     => $TotalItemPrice,
-                                    'stripe_charge_id'  => '',
-                                    'transaction_id'    => $TotalItemPrice.'-'.time(),
-                                    'status'            => 1,
-                                ]);
-                                
-                                $emailData['title']         = 'Invoice From Callanalog';
-                                $emailData['item_numbers']  = $item_ids;
-                                $emailData['item_types']    = 'Extension';
-                                $emailData['price']         = $TotalItemPrice;
-                                $emailData['invoice_number']= $invoice_id;
-                                $emailData['email']         = $Company->email;
-                                $emailData['email_template']= 'invoice';
-                                dispatch(new \App\Jobs\SendEmailJob($emailData));
-                                
-                                $response['total_extension'] = count($item_ids);
-                                //$Extensions;//->toArray();
-                                $response['Show_Cart'] = 'No';
-                                
-                                $server_flag = config('app.server_flag');
-                                if ($server_flag == 1) {
-                                    $shell_script = config('app.shell_script');
-                                    $result = shell_exec('sudo ' . $shell_script);
-                                    Log::error('Extension File Transfer Log : ' . $result);
-                                    $this->sipReload();
-                                }
-                                DB::commit();
-                                return $this->output(true, 'Extension added successfully.', $response);
                             }
+                        } else {
+                            DB::commit();
+                            return $this->output(false, 'Wrong extension value format.', [], 429);
                         }
                     } else {
                         DB::commit();
-                        return $this->output(false, 'Wrong extension value format.', [], 429);
+                        return $this->output(false, $item_price_arr['Message']);
                     }
                 } else {
                     DB::commit();
-                    return $this->output(false, $item_price_arr['Message']);
+                    return $this->output(false, 'Company not exist with us.', [], 409);
                 }
-            } else {
+            }else{
                 DB::commit();
-                return $this->output(false, 'Company not exist with us.', [], 409);
+                return $this->output(false, 'You are not authorized user.', [], 409);
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error in Extensions Inserting : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
-            return $this->output(false, 'Error Occurred in adding extensions. Please try again after some time.', [], 406);
+            Log::error('Error in Extensions renewing : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Error Occurred in renewing extensions. Please try again after some time.', [], 406);
         }
     }
 
