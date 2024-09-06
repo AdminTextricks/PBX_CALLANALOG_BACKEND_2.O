@@ -494,13 +494,12 @@ class TfnController extends Controller
 
             $file = $request->file('import_csv');
             $fileExtension = $file->getClientOriginalExtension();
-            $originalFilename = $file->getClientOriginalName();
+            $originalFilename = pathinfo($fileExtension, PATHINFO_FILENAME);
             $filename = $file ? $originalFilename . date("Ymdhis") . '.' . $fileExtension : '';
-
-            $dataCSV = ['Status' => true, 'Message' => 'File data has been processed successfully.', 'data' => [], 'code' => 200];
-            $errors = [];
             $chunkdata = [];
             $chunksize = 200;
+            $hasData = false;
+            $result = ['Status' => true, 'Message' => 'File data has been processed successfully.', 'data' => [], 'code' => 200];
 
             if ($fileExtension === 'csv') {
                 $reader = new CsvReader();
@@ -513,7 +512,7 @@ class TfnController extends Controller
 
             foreach ($sheet->getRowIterator() as $rowIndex => $row) {
                 if ($rowIndex === 1) {
-                    continue; // Skip header row
+                    continue;
                 }
 
                 $rowData = [];
@@ -526,8 +525,8 @@ class TfnController extends Controller
                 if (empty($rowData)) {
                     continue;
                 }
+                $hasData = true;
                 $chunkdata[] = $rowData;
-                // \Log::info("Chunk size: " . count($chunkdata) . " First row data: " . json_encode($chunkdata[0]));
 
                 if (count($chunkdata) === $chunksize) {
                     $result = $this->getchunkdata($chunkdata, $file, $filename);
@@ -538,6 +537,11 @@ class TfnController extends Controller
                     $chunkdata = [];
                 }
             }
+
+            if (!$hasData) {
+                return $this->output(false, 'Uploaded file is empty or contains no data.', [], 400);
+            }
+
             if (!empty($chunkdata)) {
                 $result = $this->getchunkdata($chunkdata, $file, $filename);
                 if (!$result['Status']) {
@@ -547,13 +551,14 @@ class TfnController extends Controller
             }
 
             DB::commit();
-            return $this->output(true, 'File data has been processed successfully.', [], 200);
+            return $this->output($result['Status'], $result['Message'], [], $result['code']);
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error occurred in While Uploading CSV or Xlsx   : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            Log::error('Error occurred in While Uploading CSV or Xlsx: ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, $e->getMessage());
         }
     }
+
 
     private function getchunkdata($chunkdata, $file, $filename)
     {
@@ -570,6 +575,9 @@ class TfnController extends Controller
                 if (!mb_check_encoding($value, 'UTF-8')) {
                     $value = mb_convert_encoding($value, 'UTF-8', 'auto');
                 }
+            }
+            if (is_null($column)) {
+                return ['Status' => false, 'Message' => 'No Record Found!', 'data' => [], 'code' => 404];
             }
             $tfn_number = trim($column[0]);
             $tfn_provider = trim($column[1]);
@@ -1185,7 +1193,7 @@ class TfnController extends Controller
                 }
                 return $this->output(true, 'Email sent successfully!');
             } catch (\Exception $e) {
-                Log::error('Error sending email: ' . $e->getMessage());
+                \Log::error('Error sending email: ' . $e->getMessage());
                 return $this->output(false, 'Error occurred while sending the email.');
             }
         } else {
@@ -1414,7 +1422,6 @@ class TfnController extends Controller
             return $this->output(true, 'No Record Found', []);
         }
     }
-
 
     public function setTfnAuthenticstion(Request $request)
     {

@@ -17,7 +17,7 @@ class TfnImportCsvList extends Model
 
     public function users()
     {
-        return $this->belongsTo(User::class, 'deleted_by', 'id');
+        return $this->belongsTo(User::class, 'uploaded_by', 'id');
     }
 
     public function countries()
