@@ -9,6 +9,7 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use App\Models\MainPrice;
 use App\Models\ResellerPrice;
+use Request;
 
 class Controller extends BaseController
 {
@@ -250,4 +251,5 @@ class Controller extends BaseController
         file_put_contents($conf_file_path, $output, LOCK_EX);
         //echo "Registration removed. The SIP user $nname has been removed from the webrtc_template.conf file.";
     }
+
 }

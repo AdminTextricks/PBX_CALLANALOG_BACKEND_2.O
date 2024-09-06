@@ -681,4 +681,28 @@ class UserController extends Controller
 			}
 		}
 	}
+
+    public function liveCallHangUp(Request $request)
+    {
+        $channel = $request->channel ?? NULL;
+
+        $host = '85.195.76.161';
+        $port = '5038';
+        $username = 'TxuserGClanlg';
+        $password = 'l3o9zMP3&X[k2+';
+        $command = "Action: Logoff\r\n\r\n";
+        $socket = fsockopen($host, $port, $errno, $errstr, 10);
+        if (!$socket) {
+            echo "Error connecting to Asterisk Manager Interface: $errstr ($errno)\n";
+            exit(1);
+        }
+        fwrite($socket, "Action: Login\r\n");
+        fwrite($socket, "Username: $username\r\n");
+        fwrite($socket, "Secret: $password\r\n\r\n");
+        fwrite($socket, "Action: Hangup\r\n");
+        fwrite($socket, "Channel: $channel\r\n\r\n");
+        fwrite($socket, $command);
+        fclose($socket);
+        return true;
+    }
 }
