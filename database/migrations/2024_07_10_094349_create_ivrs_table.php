@@ -15,7 +15,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->unsignedBigInteger('company_id');
             $table->integer('country_id')->default(0);;
-            $table->tinyInteger('input_auth_type')->nullable();
+            //$table->tinyInteger('input_auth_type')->nullable();
             $table->string('name', 256)->nullable()->index();
             $table->string('description', 256)->nullable();            
             $table->integer('ivr_media_id')->default(0);
