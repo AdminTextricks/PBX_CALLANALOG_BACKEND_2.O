@@ -37,6 +37,7 @@ use App\Http\Controllers\ResellerCommissionController;
 use App\Http\Controllers\OneGoUserController;
 use App\Http\Controllers\ResellerCallCommissionController;
 use App\Http\Controllers\VoiceMailController;
+use App\Http\Controllers\Controller;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -92,6 +93,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/{id?}', [UserController::class, 'getUser']);
 		Route::patch('/changeStatus/{id}', [UserController::class, 'changeStatus']);
 		Route::put('/{id}', [UserController::class, 'updateUser']);
+
+		Route::post('/liveCallHangUp', [UserController::class, 'liveCallHangUp']);
 	});
 
 	Route::group(['prefix' => 'user-documents'], function () {
@@ -416,6 +419,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/', [TfnController::class, 'setTfnAuthenticstion']);		
 		Route::get('/{tfn_id}', [TfnController::class, 'getTfnAuthenticstion']);
 	});
+
 });
 
 Route::get('/route-cache', function() {
