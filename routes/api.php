@@ -414,7 +414,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	# TFN authentication Manage 
 	Route::group(['prefix' => 'tfn-auth'], function () {
 		Route::post('/', [TfnController::class, 'setTfnAuthenticstion']);		
-		//Route::delete('/{id}', [TfnController::class, 'deleteTfnAuthenticstion']);
+		Route::get('/{tfn_id}', [TfnController::class, 'getTfnAuthenticstion']);
 	});
 });
 

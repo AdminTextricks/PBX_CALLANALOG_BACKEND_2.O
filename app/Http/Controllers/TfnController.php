@@ -25,6 +25,7 @@ use Validator;
 use Mail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\LOG;
 use Illuminate\Support\Str;
 use function Laravel\Prompts\select;
 use Carbon\Carbon;
@@ -38,7 +39,7 @@ class TfnController extends Controller
     {
         $user = \Auth::user();
         //if ($request->user()->hasRole('super-admin') || $user->company_id == 0) {
-        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+        if (in_array($user->roles->first()->slug, array('super-admin','support','noc'))) {
             $validator = Validator::make($request->all(), [
                 'tfn_number'                => 'required|numeric|unique:tfns',
                 'tfn_provider'              => 'required|numeric',
@@ -1457,6 +1458,22 @@ class TfnController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             return $this->output(false, $e->getMessage(), [], 500);
+        }
+    }
+
+    public function getTfnAuthenticstion(Request $request, $tfn_id)
+    {
+        try {                  
+            $TfnAuthentication = TfnAuthentication::where('tfn_id', $tfn_id)->first();
+            if($TfnAuthentication){				
+                $response = $TfnAuthentication->toArray();              
+                return $this->output(true,'Success',$response,200);                
+            }else{              
+                return $this->output(true, 'No Record Found', []);
+            }
+        } catch (\Exception $e) {           
+            Log::error('Error occurred in geting TFN Authentication : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());           
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
 
