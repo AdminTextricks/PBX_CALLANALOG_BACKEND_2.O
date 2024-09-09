@@ -176,8 +176,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/getAllTfnOrByCompany', [TfnController::class, 'getAllTfnOrByCompany']);	
 		Route::get('/csv-list', [TfnController::class, 'getALLCsvUploadedList']);
 		Route::post('/replace-tfn', [TfnController::class, 'ReplaceTfnNumber']);
-		Route::get('/get-tfn-by-company', [TfnController::class, 'getALLTfnNumberofCompany']);
-		Route::get('/get-tfn-by-country', [TfnController::class, 'getAllTfnNumberFreebyCountry']);
+		Route::get('/get-tfn-by-company/{company_id?}', [TfnController::class, 'getALLTfnNumberofCompany']);
+		Route::get('/get-tfn-by-country/{country_id?}', [TfnController::class, 'getAllTfnNumberFreebyCountry']);
 		Route::post('/call-screen-action', [TfnController::class, 'callScreenAction']);
 		Route::get('/removed-tfn', [TfnController::class, 'getALLRemovedTfn']);
 		Route::post('/renew-tfn-number', [TfnController::class, 'assignTfnMainRenew']);

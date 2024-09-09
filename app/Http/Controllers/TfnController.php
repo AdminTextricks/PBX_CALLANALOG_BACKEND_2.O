@@ -1603,18 +1603,9 @@ class TfnController extends Controller
         }
     }
 
-    public function getALLTfnNumberofCompany(Request $request)
+    public function getALLTfnNumberofCompany(Request $request, $company_id)
     {
         $user = \Auth::user();
-        $validator = Validator::make($request->all(), [
-            'company_id' => 'required|numeric',
-        ], [
-            'company_id.required' => 'Company is Required',
-        ]);
-        if ($validator->fails()) {
-            return $this->output(false, $validator->errors()->first(), [], 400);
-        }
-
         try {
             $tfnNumber = Tfn::where('company_id', $request->company_id)->where('activated', '0')->where('status', 0)->get();
             if ($tfnNumber) {
@@ -1629,18 +1620,9 @@ class TfnController extends Controller
         }
     }
 
-    public function getAllTfnNumberFreebyCountry(Request $request)
+    public function getAllTfnNumberFreebyCountry(Request $request, $country_id)
     {
         $user = \Auth::user();
-        $validator = Validator::make($request->all(), [
-            'country_id' => 'required|numeric',
-        ], [
-            'company_id.required' => 'Country is Required',
-        ]);
-        if ($validator->fails()) {
-            return $this->output(false, $validator->errors()->first(), [], 400);
-        }
-
         try {
             $tfnNumber = Tfn::where('country_id', $request->country_id)->where('company_id', '=', '0')->where('activated', '=', '0')->where('status', '=', 1)->get();
             if ($tfnNumber) {
