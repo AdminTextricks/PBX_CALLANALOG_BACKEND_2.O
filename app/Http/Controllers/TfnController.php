@@ -1500,18 +1500,16 @@ class TfnController extends Controller
         $validator = Validator::make($request->all(), [
             'tfn_number' => 'required|numeric',
             'replace_tfn_number' => 'required|numeric',
-            'country_id' => 'required|numeric',
-            'company_id' => 'required|numeric',
         ]);
         if ($validator->fails()) {
             return $this->output(false, $validator->errors()->first(), [], 409);
         }
         try {
             DB::beginTransaction();
-            if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+            if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc', 'admin'))) {
                 $tfn = Tfn::where('tfn_number', $request->tfn_number)->first();
                 $Replacetfn = Tfn::where('tfn_number', $request->replace_tfn_number)->first();
-                $companyData = Company::where('id', $request->company_id)->first();
+                $companyData = Company::where('id', $tfn->company_id)->first();
                 if (is_null($tfn)) {
                     DB::rollback();
                     return $this->output(true, 'This Tfn Number ' . $request->tfn_number . ' dose not belongs to us or is currently in process.');
@@ -1532,6 +1530,7 @@ class TfnController extends Controller
                     $replaceTfnData = $Replacetfn->update([
                         'company_id' => $companyData->id,
                         'assign_by' => $user->id,
+                        'activated' => '1',
                         'reserved' => '1',
                         'reserveddate' => $tfn->reserveddate,
                         'reservedexpirationdate' => $tfn->reservedexpirationdate,
@@ -1540,6 +1539,11 @@ class TfnController extends Controller
                     ]);
 
                     if ($replaceTfnData) {
+                        $tfn_destinationData = TfnDestination::where('tfn_id', $tfn->id)->first();
+                        if ($tfn_destinationData) {
+                            $tfn_destinationData->tfn_id =  $Replacetfn->id;
+                            $tfn_destinationData->save();
+                        }
                         RemovedTfn::create([
                             'tfn_number' => $tfn->tfn_number,
                             'country_id' => $tfn->country_id,
@@ -1550,7 +1554,7 @@ class TfnController extends Controller
                         $tfn->forcedelete();
                     }
                     DB::commit();
-                    return $this->output(true, "TFN number ($request->replace_tfn_number) Replaced successfully.", 200);
+                    return $this->output(true, "TFN number ($request->replace_tfn_number) Replaced successfully.", [], 200);
                 }
             } else {
                 DB::rollback();
@@ -1595,6 +1599,58 @@ class TfnController extends Controller
             }
         } catch (\Exception $e) {
             Log::error('Error occurred in getting Uploaded Tfn CSV List : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
+
+    public function getALLTfnNumberofCompany(Request $request)
+    {
+        $user = \Auth::user();
+        $validator = Validator::make($request->all(), [
+            'company_id' => 'required|numeric',
+        ], [
+            'company_id.required' => 'Company is Required',
+        ]);
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 400);
+        }
+
+        try {
+            $tfnNumber = Tfn::where('company_id', $request->company_id)->where('activated', '0')->where('status', 0)->get();
+            if ($tfnNumber) {
+                $response = $tfnNumber->toArray();
+                return $this->output(true, 'Success', $response, 200);
+            } else {
+                return $this->output(true, 'No Record Found', []);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error occurred in getting TFN Authentication : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
+
+    public function getAllTfnNumberFreebyCountry(Request $request)
+    {
+        $user = \Auth::user();
+        $validator = Validator::make($request->all(), [
+            'country_id' => 'required|numeric',
+        ], [
+            'company_id.required' => 'Country is Required',
+        ]);
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 400);
+        }
+
+        try {
+            $tfnNumber = Tfn::where('country_id', $request->country_id)->where('company_id', '=', '0')->where('activated', '=', '0')->where('status', '=', 1)->get();
+            if ($tfnNumber) {
+                $response = $tfnNumber->toArray();
+                return $this->output(true, 'Success', $response, 200);
+            } else {
+                return $this->output(true, 'No Record Found', []);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error occurred in getting TFN Authentication : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
