@@ -1425,6 +1425,7 @@ class TfnController extends Controller
 
     public function setTfnAuthenticstion(Request $request)
     {
+       
         $validator = Validator::make($request->all(), [
             'tfn_auth'          => 'required',
             'tfn_id'            => 'required|numeric|exists:tfns,id',
@@ -1467,9 +1468,8 @@ class TfnController extends Controller
                 }
             } else {
                 $TfnAuthentication = TfnAuthentication::where('tfn_id', $request->tfn_id)->delete();
-                Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth]);
-
-                DB::rollBack();
+                Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth ]);                 
+                DB::commit();
                 return $this->output(true, "TFN Authentication Updated Successfully!", [], 200);
             }
         } catch (\Exception $e) {
