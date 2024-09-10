@@ -1260,7 +1260,7 @@ class ExtensionController extends Controller
                                     $this->sipReload();
                                 }
                                 DB::commit();
-                                return $this->output(true, 'Extension added successfully.', $response);
+                                return $this->output(true, 'Extension renew successfully.', $response);
                                 
                             }
                         } else {
