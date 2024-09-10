@@ -308,36 +308,54 @@ class NowPaymentsController extends Controller
             } else {
                 $invoice_id = "#INV/" . date('Y') . "/W00" . ($invoicetable_id + 1);
             }
-            $createinvoice = Invoice::create([
-                'company_id'              => $user->company->id,
-                'country_id'              => $user->company->country_id,
-                'state_id'                => $user->company->state_id,
-                'invoice_id'              => $invoice_id,
-                'invoice_currency'        => 'USD',
-                'invoice_subtotal_amount' => $request->amount,
-                'invoice_amount'          => $request->amount,
-                'payment_status'          => 'Unpaid',
-            ]);
-
-
             $price_currency = 'usd';
             $price_amount = $request->amount;
-            $orderId = $createinvoice->invoice_id . '-UID-' . $user->id;
+            $orderId = $invoice_id . '-UID-' . $user->id;
             $pay_currency = 'usddtrc20';
-            $payment = $this->nowPaymentsService->createPayment($price_currency, $price_amount, $orderId, $pay_currency, $user->company->email);
-            $paymentId = $payment['payment_id'];
-            $paymentUrl = $payment['pay_address'];
-            $qrCode = new QrCode($paymentUrl);
-            $writer = new PngWriter();
-            $result = $writer->write($qrCode);
-            $qrCodePath = public_path('qr_codes/' . $paymentId . '.png');
-            $result->saveToFile($qrCodePath);
-            return response()->json([
-                'payment' =>  $payment,
-                'qr_code_url' => asset('qr_codes/' . $paymentId . '.png'),
-                'invoice_id' => $createinvoice->id,
-                'invoice_number' => $createinvoice->invoice_number
-            ]);
+            $paymentAPIW = $this->nowPaymentsService->createPayment($price_currency, $price_amount, $orderId, $pay_currency, $user->company->email);
+            if (is_null($paymentAPIW)) {
+                DB::rollback();
+                return response()->json(['error' => 'Payment creation failed.'], 500);
+            } else {
+                $paymentId = $paymentAPIW['payment_id'];
+                $paymentUrl = $paymentAPIW['pay_address'];
+
+                $createinvoice = Invoice::create([
+                    'company_id'              => $user->company->id,
+                    'country_id'              => $user->company->country_id,
+                    'state_id'                => $user->company->state_id,
+                    'invoice_id'              => $invoice_id,
+                    'invoice_currency'        => 'USD',
+                    'invoice_subtotal_amount' => $price_amount,
+                    'invoice_amount'          => $price_amount,
+                    'payment_status'          => 'Unpaid',
+                ]);
+                $payment_data = Payments::create([
+                    'company_id' => $user->company_id,
+                    'invoice_id'  => $createinvoice->id,
+                    'ip_address' => $request->ip(),
+                    'invoice_number'  => $createinvoice->invoice_id,
+                    'order_id'        => $createinvoice->invoice_id . '-UID-' . $user->id,
+                    'item_numbers'    => 0,
+                    'payment_type'    => 'Crypto Payment',
+                    'payment_currency' => $request->currency ?? 'USD',
+                    'payment_price' =>   $price_amount,
+                    'transaction_id'  => $paymentId,
+                    'stripe_charge_id' => '',
+                    'status' => 0,
+                ]);
+                $qrCode = new QrCode($paymentUrl);
+                $writer = new PngWriter();
+                $result = $writer->write($qrCode);
+                $qrCodePath = public_path('qr_codes/' . $paymentId . '.png');
+                $result->saveToFile($qrCodePath);
+                return response()->json([
+                    'payment' =>  $paymentAPIW,
+                    'qr_code_url' => asset('qr_codes/' . $paymentId . '.png'),
+                    'invoice_id' => $createinvoice->id,
+                    'invoice_number' => $createinvoice->invoice_id
+                ]);
+            }
         } catch (\Exception $e) {
             DB::rollback();
             \Log::error('Wallet Payment creation failed: ' . $e->getMessage());
@@ -349,85 +367,90 @@ class NowPaymentsController extends Controller
     {
         $user = \Auth::user();
         $NowPaymentData = $this->nowPaymentsService->getPaymentStatus($paymentId);
+        try {
+            // if ($NowPaymentData && $NowPaymentData['payment_status'] == "partially_paid" || $NowPaymentData['payment_status'] == "finished") {
+                if ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
+                if (isset($NowPaymentData['actually_paid']) && $NowPaymentData['actually_paid'] !== $NowPaymentData['pay_amount']) {
+                    $paid_amount = $NowPaymentData['pay_amount'];
+                }
+                $nowPayment_charge_id = Str::random(30);
+                DB::beginTransaction();
 
-        // if ($NowPaymentData && $NowPaymentData['payment_status'] == "partially_paid" || $NowPaymentData['payment_status'] == "finished") {
-            if ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
-            if (isset($NowPaymentData['actually_paid']) && $NowPaymentData['actually_paid'] !== $NowPaymentData['pay_amount']) {
-                $paid_amount = $NowPaymentData['pay_amount'];
-            }
-            $nowPayment_charge_id = Str::random(30);
-            DB::beginTransaction();
-            $payment = Payments::create([
-                'company_id' => $user->company_id,
-                'invoice_id'  => $request->invoice_id,
-                'ip_address' => $request->ip(),
-                'invoice_number'  => $request->invoice_number,
-                'order_id'        => $request->invoice_number . '-UID-' . $user->id,
-                'item_numbers'    => 0,
-                'payment_type'    => 'Crypto Payment',
-                'payment_currency' => $request->currency ?? 'USD',
-                'payment_price' =>   $NowPaymentData['pay_amount'],
-                'transaction_id'  => $paymentId,
-                'stripe_charge_id' => $nowPayment_charge_id,
-                'status' => 1,
-            ]);
-            $companydata = Company::where('id', '=', $user->company_id)->first();
-            if (is_null($companydata)) {
-                DB::rollback();
-                return $this->output(false, 'Company not found.', 400);
-            } else {
-                //Recharge History Update::
-                $balance_total_data = $companydata->balance + $paid_amount + $paid_amount * 0.05;
-                $added_balance_data = $paid_amount + $paid_amount * 0.05;
-                $added_balance = number_format($added_balance_data, 2, '.', '');
-                $balance_total = number_format($balance_total_data, 2, '.', '');
-                $rechargeHistory_data = RechargeHistory::create([
-
-                    'company_id' => $companydata->id,
-                    'user_id' => $user->id,
-                    'invoice_id' => $payment->invoice_id,
-                    'invoice_number' => $payment->invoice_number,
-                    'current_balance' => $companydata->balance,
-                    'added_balance'   => $added_balance,
-                    'total_balance'   => $balance_total,
-                    'currency'        => 'USDT',
-                    'recharged_by'    => 'Self'
-                ]);
-                if (!$rechargeHistory_data) {
+                $payment = Payments::where('transaction_id', '=', $paymentId)->first();
+                if (is_null($payment)) {
                     DB::rollback();
-                    return $this->output(false, 'Failed to Create Recharge History!!.', 400);
+                    return $this->output(false, 'Something Went Wrong. please try again', 400);
                 } else {
+                    // Payments Table Update
+                    // $payment->payment_price = $NowPaymentData['pay_amount'];
+                    $payment->status = 1;
+                    $payment->save();
+                    $companydata = Company::where('id', '=', $user->company_id)->first();
+                    if (is_null($companydata)) {
+                        DB::rollback();
+                        return $this->output(false, 'Company not found.', 400);
+                    } else {
+                        //Recharge History Update::
+                        $balance_total_data = $companydata->balance + $paid_amount + $paid_amount * 0.05;
+                        $added_balance_data = $paid_amount + $paid_amount * 0.05;
+                        $added_balance = number_format($added_balance_data, 2, '.', '');
+                        $balance_total = number_format($balance_total_data, 2, '.', '');
+                        $rechargeHistory_data = RechargeHistory::create([
 
-                    $companydata->balance = $balance_total;
-                    $companydata->save();
-                }
-            }
-            $invoice_update = Invoice::select('*')->where('id', $request->invoice_id)->first();
-            if (!$invoice_update) {
-                DB::rollback();
-                return $this->output(false, 'Invoice not found.', 400);
-            } else {
-                // $invoice_update->payment_type =  'Cryto Payment';
-                $invoice_update->payment_status = "Paid";
-                $invoice_update->save();
+                            'company_id' => $companydata->id,
+                            'user_id' => $user->id,
+                            'invoice_id' => $payment->invoice_id,
+                            'invoice_number' => $payment->invoice_number,
+                            'current_balance' => $companydata->balance,
+                            'added_balance'   => $added_balance,
+                            'total_balance'   => $balance_total,
+                            'currency'        => 'USDT',
+                            'recharged_by'    => 'Self'
+                        ]);
+                        if (!$rechargeHistory_data) {
+                            DB::rollback();
+                            return $this->output(false, 'Failed to Create Recharge History!!.', 400);
+                        } else {
 
-                $total_aamount = $NowPaymentData['price_amount'] + $paid_amount * 0.05 . ' Added to Wallet';
-                $item_number = $NowPaymentData['price_amount'];
-                $item_numbers[] = $item_number;
-                $itemTpyes[] = 'Wallet Payment';
-                $mailsend = $this->pdfmailSend($user, $item_numbers, $total_aamount, $invoice_update->id, $invoice_update->invoice_id, $itemTpyes);
-                if ($mailsend) {
+                            $companydata->balance = $balance_total;
+                            $companydata->save();
+                            DB::commit();
+                        }
+                    }
+                    $invoice_update = Invoice::select('*')->where('id', $payment->invoice_id)->first();
+                    if (!$invoice_update) {
+                        DB::rollback();
+                        return $this->output(false, 'Invoice not found.', 400);
+                    } else {
+                        // $invoice_update->payment_type =  'Cryto Payment';
+                        $invoice_update->payment_status = "Paid";
+                        $invoice_update->save();
+                        DB::commit();
+                        $total_aamount = $NowPaymentData['price_amount'] + $paid_amount * 0.05 . ' Added to Wallet';
+                        $item_number = $NowPaymentData['price_amount'];
+                        $item_numbers[] = $item_number;
+                        $itemTpyes[] = 'Wallet Payment';
+                        $mailsend = $this->pdfmailSend($user, $item_numbers, $total_aamount, $invoice_update->id, $invoice_update->invoice_id, $itemTpyes);
+                        if ($mailsend) {
+                            DB::commit();
+                        } else {
+                            DB::rollBack();
+                        }
+                    }
                     DB::commit();
-                } else {
-                    DB::rollBack();
+                    $response['payment'] = $payment->toArray();
+                    $response['crypto_payment_status'] = $NowPaymentData['payment_status'];
+                    return $this->output(true, 'Amount Credit in Wallet.', $response, 200);
                 }
+            } else {
+
+                $pstatus['crypto_payment_status'] = $NowPaymentData['payment_status'];
+                return $this->output(true, 'Payment Status ' .  $NowPaymentData['payment_status'], $pstatus, 200);
             }
-            DB::commit();
-            $response['payment'] = $payment->toArray();
-            return $this->output(true, 'Amount Credit in Wallet.', $response, 200);
-        } else {
-            $pstatus = $NowPaymentData['payment_status'];
-            return $this->output(true, 'Payment Status ' . $pstatus, $pstatus, 200);
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Payment failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Payment failed.'], 500);
         }
     }
     public function pdfmailSend($user, $item_numbers, $price_mail, $invoice_id, $invoice_number, $itemTpyes)
