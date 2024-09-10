@@ -899,6 +899,7 @@ class TfnController extends Controller
                     'item_type'  => 'TFN',
                     'item_number' => $tfn_number,
                     'item_price' => $prices[$key],
+                    'item_category' => 'Purchase',
                 ]);
                 if ($ind_data) {
                     $itemsData[] = $ind_data->toArray();
@@ -1091,6 +1092,7 @@ class TfnController extends Controller
                     'item_type'  => 'TFN',
                     'item_number' => $tfn_number,
                     'item_price' => $prices[$key],
+                    'item_category' => 'Renew',
                 ]);
                 if ($ind_data) {
                     $itemsData[] = $ind_data->toArray();
@@ -1145,18 +1147,21 @@ class TfnController extends Controller
 
         if ($tfn) {
             if ($daysDifference <= 3 && $daysDifference >= 1) {
-                $newDate = date('Y-m-d H:i:s', strtotime('+' . (29 + $daysDifference) . ' days'));
+                $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                $startDate = date('Y-m-d H:i:s', strtotime('+' . $daysDifference . ' days'));
             } elseif ($daysDifference > 3) {
-                $newDate = date('Y-m-d H:i:s', strtotime('+' . (29 + $daysDifference) . ' days'));
+                $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                $startDate = date('Y-m-d H:i:s', strtotime('+' . $daysDifference . ' days'));
             } else {
-                $newDate = date('Y-m-d H:i:s', strtotime('+29 days'));
+                $newDate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                $startDate = date('Y-m-d H:i:s');
             }
             if (in_array($tfn->tfn_provider, $inbound_trunk)) {
                 $tfn = $tfn->update([
                     'company_id'     => $company->id,
                     'assign_by'      => $user->id,
                     'activated'      => '1',
-                    'startingdate'   => date('Y-m-d H:i:s'),
+                    'startingdate'   => $startDate,
                     'expirationdate' => $newDate,
                     'status'         => 1,
                 ]);

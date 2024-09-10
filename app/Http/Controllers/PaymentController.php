@@ -176,16 +176,20 @@ class PaymentController extends Controller
                                 $daysDifference = $currentDate->diffInDays($targetDate, false);
                                 if ($daysDifference <= 3 && $daysDifference >= 1) {
                                     $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                                    $startDate = date('Y-m-d H:i:s', strtotime('+' . $daysDifference . ' days'));
                                 } elseif ($daysDifference > 3) {
                                     $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                                    $startDate = date('Y-m-d H:i:s', strtotime('+' . $daysDifference . ' days'));
                                 } else {
                                     $newDate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                                    $startDate = date('Y-m-d H:i:s');
                                 }
 
                                 $numbers_list_tfn->update([
                                     'company_id' => $numbers_list_tfn->company_id,
                                     'assign_by' => $user->id,
                                     'activated' => '1',
+                                    'startingdate' => $startDate,
                                     'expirationdate' => $newDate,
                                     'status' => 1,
                                 ]);
@@ -214,10 +218,13 @@ class PaymentController extends Controller
                                 $daysDifference = $currentDate->diffInDays($targetDate, false);
                                 if ($daysDifference <= 3 && $daysDifference >= 1) {
                                     $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                                    $startDate = date('Y-m-d H:i:s', strtotime('+' . $daysDifference . ' days'));
                                 } elseif ($daysDifference > 3) {
                                     $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                                    $startDate = date('Y-m-d H:i:s', strtotime('+' . $daysDifference . ' days'));
                                 } else {
                                     $newDate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                                    $startDate = date('Y-m-d H:i:s');
 
                                     // In Expired case we need to Update web or softphone template to webrtc_template_url or softphone_template_url 
                                     $webrtc_template_url = config('app.webrtc_template_url');
@@ -241,7 +248,7 @@ class PaymentController extends Controller
 
                                 $numbers_list->update([
                                     'company_id'  => $numbers_list->company_id,
-                                    'startingdate' => date('Y-m-d H:i:s'),
+                                    'startingdate' => $startDate,
                                     'expirationdate' => $newDate,
                                     'host' => 'dynamic',
                                     'sip_temp' => $numbers_list->sip_temp,
@@ -1082,16 +1089,19 @@ class PaymentController extends Controller
                             $daysDifference = $currentDate->diffInDays($targetDate, false);
                             if ($daysDifference <= 3 && $daysDifference >= 1) {
                                 $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                                $startDate = date('Y-m-d H:i:s', strtotime('+' . $daysDifference . ' days'));
                             } elseif ($daysDifference > 3) {
                                 $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                                $startDate = date('Y-m-d H:i:s', strtotime('+' . $daysDifference . ' days'));
                             } else {
                                 $newDate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                                $startDate = date('Y-m-d H:i:s');
                             }
-
                             $numbers_list_tfn->update([
                                 'company_id' => $numbers_list_tfn->company_id,
                                 'assign_by' => $user->id,
                                 'activated' => '1',
+                                'startingdate' => $startDate,
                                 'expirationdate' => $newDate,
                                 'status' => 1,
                             ]);
@@ -1120,10 +1130,13 @@ class PaymentController extends Controller
                             $daysDifference = $currentDate->diffInDays($targetDate, false);
                             if ($daysDifference <= 3 && $daysDifference >= 1) {
                                 $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                                $startDate = date('Y-m-d H:i:s', strtotime('+' . $daysDifference . ' days'));
                             } elseif ($daysDifference > 3) {
                                 $newDate = date('Y-m-d H:i:s', strtotime('+' . (30 + $daysDifference) . ' days'));
+                                $startDate = date('Y-m-d H:i:s', strtotime('+' . $daysDifference . ' days'));
                             } else {
                                 $newDate = date('Y-m-d H:i:s', strtotime('+30 days'));
+                                $startDate = date('Y-m-d H:i:s');
 
                                 // In Expired case we need to Update web or softphone template to webrtc_template_url or softphone_template_url 
                                 $webrtc_template_url = config('app.webrtc_template_url');
@@ -1147,7 +1160,7 @@ class PaymentController extends Controller
 
                             $numbers_list->update([
                                 'company_id'  => $numbers_list->company_id,
-                                'startingdate' => date('Y-m-d H:i:s'),
+                                'startingdate' => $startDate,
                                 'expirationdate' => $newDate,
                                 'host' => 'dynamic',
                                 'sip_temp' => $numbers_list->sip_temp,
