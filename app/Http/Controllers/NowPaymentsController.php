@@ -368,8 +368,8 @@ class NowPaymentsController extends Controller
         $user = \Auth::user();
         $NowPaymentData = $this->nowPaymentsService->getPaymentStatus($paymentId);
         try {
-            // if ($NowPaymentData && $NowPaymentData['payment_status'] == "partially_paid" || $NowPaymentData['payment_status'] == "finished") {
-                if ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
+            if ($NowPaymentData && $NowPaymentData['payment_status'] == "partially_paid" || $NowPaymentData['payment_status'] == "finished") {
+                // if ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
                 if (isset($NowPaymentData['actually_paid']) && $NowPaymentData['actually_paid'] !== $NowPaymentData['pay_amount']) {
                     $paid_amount = $NowPaymentData['pay_amount'];
                 }
