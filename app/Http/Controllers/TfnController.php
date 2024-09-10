@@ -1506,7 +1506,7 @@ class TfnController extends Controller
         }
         try {
             DB::beginTransaction();
-            if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc', 'admin'))) {
+            if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
                 $tfn = Tfn::where('tfn_number', $request->tfn_number)->first();
                 $Replacetfn = Tfn::where('tfn_number', $request->replace_tfn_number)->first();
                 $companyData = Company::where('id', $tfn->company_id)->first();
@@ -1633,6 +1633,44 @@ class TfnController extends Controller
             }
         } catch (\Exception $e) {
             Log::error('Error occurred in getting TFN Authentication : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
+
+    public function tfnexpDateUpdate(Request $request)
+    {
+        $user = \Auth::user();
+        $validator = Validator::make($request->all(), [
+            'tfn_number' => 'required|numeric',
+            'expirationdate' => 'required',
+        ], [
+            'tfn_number.required' => 'Tfn Number is Required',
+            'expirationdate.required' => 'Expiration Date is Required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 400);
+        }
+        try {
+            if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                $dataChangeTfns = Tfn::where('tfn_number', $request->tfn_number)->first();
+                if (is_null($dataChangeTfns)) {
+                    return $this->output(false, 'This Number does not exist with us. Please try again!', [], 404);
+                }
+                // $dataChangeTfns->startingdate = Carbon::now();
+                $dataChangeTfns->expirationdate = $request->expirationdate;
+                $dateData = $dataChangeTfns->save();
+                if ($dateData) {
+                    $response = $dataChangeTfns->toArray();
+                    return $this->output(true, "Tfn Date update Successfully!.", $response, 200);
+                } else {
+                    return $this->output(false, "Somthing went wrong. While Tfn Date update", [], 400);
+                }
+            } else {
+                return $this->output(false, 'Sorry! You are not authorized.', [], 400);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error occurred in Tfn Number Date change : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
