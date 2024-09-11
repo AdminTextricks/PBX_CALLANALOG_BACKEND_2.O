@@ -37,7 +37,7 @@ use App\Http\Controllers\ResellerCommissionController;
 use App\Http\Controllers\OneGoUserController;
 use App\Http\Controllers\ResellerCallCommissionController;
 use App\Http\Controllers\VoiceMailController;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\TimeGroupController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -420,6 +420,14 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/{tfn_id}', [TfnController::class, 'getTfnAuthenticstion']);
 	});
 
+	# Time Group Manage 
+	Route::group(['prefix' => 'time-group'], function () {
+		Route::post('/', [TimeGroupController::class, 'addTimeGroup']);		
+		Route::get('/getByCompany/{company_id}', [TimeGroupController::class, 'getTimeGroupByCompany']);
+		Route::get('/{id?}', [TimeGroupController::class, 'getAllTimeGroup']);
+		Route::put('/{id}', [TimeGroupController::class, 'updateTimeGroup']);
+		Route::delete('/{id}', [TimeGroupController::class, 'deleteTimeGroup']);
+	});
 });
 
 Route::get('/route-cache', function() {

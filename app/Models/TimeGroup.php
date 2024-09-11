@@ -10,6 +10,7 @@ class TimeGroup extends Model
     use HasFactory;
     protected $fillable = [
         'id',       
+        'company_id',
         'name',
         'time_to_start',
         'time_to_finish',
@@ -20,4 +21,9 @@ class TimeGroup extends Model
         'month_start',
         'month_finish',      
     ];
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 }
