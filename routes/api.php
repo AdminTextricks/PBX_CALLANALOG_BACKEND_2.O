@@ -56,7 +56,7 @@ Route::post('/verifyEmail', [UserController::class, 'verifyEmailIdByOTP'])->name
 Route::post('/resend-otp', [UserController::class, 'resendOtp'])->name('resendOtp');
 Route::get('/countries', [CountryController::class, 'getCountries']);
 Route::get('/states/{country_id?}', [StateController::class, 'getStates']);
-
+Route::get('/getTimeZone/{country_id}', [CountryController::class, 'getCountriesTimeZones']);
 Route::post('/forgot-password-otp', [PasswordResetTokensController::class, 'sendForgotPasswordOTP']);
 Route::post('/password-reset/{otp}', [PasswordResetTokensController::class, 'reset']);
 
