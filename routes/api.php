@@ -38,6 +38,7 @@ use App\Http\Controllers\OneGoUserController;
 use App\Http\Controllers\ResellerCallCommissionController;
 use App\Http\Controllers\VoiceMailController;
 use App\Http\Controllers\TimeGroupController;
+use App\Http\Controllers\TimeConditionController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -432,6 +433,17 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/{id?}', [TimeGroupController::class, 'getAllTimeGroup']);
 		Route::put('/{id}', [TimeGroupController::class, 'updateTimeGroup']);
 		Route::delete('/{id}', [TimeGroupController::class, 'deleteTimeGroup']);
+	});
+
+	# Time Conditions Manage 
+	Route::group(['prefix' => 'time-condition'], function () {
+		Route::post('/', [TimeConditionController::class, 'addTimeCondition']);		
+		Route::get('/active', [TimeConditionController::class, 'getAllActiveTimeCondition']);
+		//Route::get('/getByCompany/{company_id}/{country_id}', [TimeConditionController::class, 'getTimeConditionByCompanyAndCountry']);
+		Route::get('/{id?}', [TimeConditionController::class, 'getAllTimeCondition']);
+		Route::patch('/changeStatus/{id}', [TimeConditionController::class, 'changeTimeConditionStatus']);		
+		Route::put('/{id}', [TimeConditionController::class, 'updateTimeCondition']);
+		Route::delete('/{id}', [TimeConditionController::class, 'deleteTimeCondition']);
 	});
 });
 
