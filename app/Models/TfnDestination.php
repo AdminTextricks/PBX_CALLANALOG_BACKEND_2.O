@@ -10,7 +10,11 @@ class TfnDestination extends Model
     use HasFactory;
 
     protected $fillable = [
-        'company_id', 'tfn_id', 'destination_type_id', 'destination_id', 'priority'
+        'company_id',
+        'tfn_id',
+        'destination_type_id',
+        'destination_id',
+        'priority'
     ];
 
     public function destination_types()
@@ -74,5 +78,16 @@ class TfnDestination extends Model
         if ($destinationId == 7) {
             return;
         }
+    }
+
+    public function terminate($destinationId)
+    {
+        if ($destinationId == 9) {
+            return;
+        }
+    }
+    public function timeConditions()
+    {
+        return $this->belongsTo(TimeCondition::class, 'destination_id', 'id');
     }
 }

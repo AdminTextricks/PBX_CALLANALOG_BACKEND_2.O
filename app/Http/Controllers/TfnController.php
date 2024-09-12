@@ -293,10 +293,36 @@ class TfnController extends Controller
                             $subQuery->where('name', 'like', "%{$params}%");
                         })
                         ->orWhereHas('tfn_destinations', function ($subQuery) use ($params) {
-                            $subQuery->whereHas('destinationType', function ($nestedQuery) use ($params) {
-                                $nestedQuery->where('destination_type', 'like', "%{$params}%");
-                            })
-                                ->orWhere('destination_id', 'like', "%{$params}%");
+                            $subQuery->where('destination_id', 'LIKE', "%$params%")
+                                ->orWhereHas('destinationType', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('destination_type', 'LIKE', "%$params%");
+                                })
+                                ->orWhereHas('conferences', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('confno', 'LIKE', "%$params%")->orWhere('conf_name', 'LIKE', "%$params%");
+                                })
+                                ->orWhereHas('ringGroups', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('ringno', 'LIKE', "%$params%");
+                                })
+                                ->orWhereHas('queues', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('name', 'LIKE', "%$params%");
+                                })
+                                ->orWhereHas('voiceMail', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('mailbox', 'LIKE', "%$params%")->orWhere('fullname', 'LIKE', "%$params%");
+                                })
+                                ->orWhereHas('ivrs', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('name', 'LIKE', "%$params%");
+                                })
+                                ->orWhereHas('timeConditions', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('name', 'LIKE', "%$params%")
+                                        ->orWhere('time_zone', 'LIKE', "%$params%")
+                                        ->orWhere('tc_match_destination_type', 'LIKE', "%$params%")
+                                        ->orWhere('tc_match_destination_id', 'LIKE', "%$params%")
+                                        ->orWhere('tc_non_match_destination_type', 'LIKE', "%$params%")
+                                        ->orWhere('tc_non_match_destination_id', 'LIKE', "%$params%");
+                                })
+                                ->orWhereHas('extensions', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('name', 'LIKE', "%$params%");
+                                });
                         });
                 });
             }
@@ -335,10 +361,36 @@ class TfnController extends Controller
                         })
                         ->orWhereHas('tfn_destinations', function ($subQuery) use ($params, $user) {
                             $subQuery->where('company_id', '=', $user->company_id)
-                                ->whereHas('destinationType', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('destination_type', 'like', "%{$params}%");
+                                ->orWhere('destination_id', 'LIKE', "%$params%")
+                                ->orWhereHas('destinationType', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('destination_type', 'LIKE', "%$params%");
                                 })
-                                ->orWhere('destination_id', 'like', "%{$params}%");
+                                ->orWhereHas('conferences', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('confno', 'LIKE', "%$params%")->orWhere('conf_name', 'LIKE', "%$params%");
+                                })
+                                ->orWhereHas('ringGroups', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('ringno', 'LIKE', "%$params%");
+                                })
+                                ->orWhereHas('queues', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('name', 'LIKE', "%$params%");
+                                })
+                                ->orWhereHas('voiceMail', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('mailbox', 'LIKE', "%$params%")->orWhere('fullname', 'LIKE', "%$params%");
+                                })
+                                ->orWhereHas('ivrs', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('name', 'LIKE', "%$params%");
+                                })
+                                ->orWhereHas('timeConditions', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('name', 'LIKE', "%$params%")
+                                        ->orWhere('time_zone', 'LIKE', "%$params%")
+                                        ->orWhere('tc_match_destination_type', 'LIKE', "%$params%")
+                                        ->orWhere('tc_match_destination_id', 'LIKE', "%$params%")
+                                        ->orWhere('tc_non_match_destination_type', 'LIKE', "%$params%")
+                                        ->orWhere('tc_non_match_destination_id', 'LIKE', "%$params%");
+                                })
+                                ->orWhereHas('extensions', function ($nestedQuery) use ($params) {
+                                    $nestedQuery->where('name', 'LIKE', "%$params%");
+                                });
                         });
                 });
             }
@@ -388,6 +440,13 @@ class TfnController extends Controller
                         break;
                     case 8:
                         $destination->load('ivrs:id,name');
+                        break;
+                    case 9:
+                        // $terminate = $destination->terminate($destination->destination_id); 
+                        // $destination['Terminate'] = $terminate;
+                        break;
+                    case 10:
+                        $destination->load('timeConditions:id,name,time_zone,tc_match_destination_type,tc_match_destination_id,tc_non_match_destination_type,tc_non_match_destination_id');
                         break;
                 }
             });
@@ -467,6 +526,13 @@ class TfnController extends Controller
                         break;
                     case 8:
                         $destination->load('ivrs:id,name');
+                        break;
+                    case 9:
+                        // $terminate = $destination->terminate($destination->destination_id); 
+                        // $destination['Terminate'] = $terminate;
+                        break;
+                    case 10:
+                        $destination->load('timeConditions:id,name,time_zone,tc_match_destination_type,tc_match_destination_id,tc_non_match_destination_type,tc_non_match_destination_id');
                         break;
                 }
             });
@@ -1430,7 +1496,7 @@ class TfnController extends Controller
 
     public function setTfnAuthenticstion(Request $request)
     {
-       
+
         $validator = Validator::make($request->all(), [
             'tfn_auth'          => 'required',
             'tfn_id'            => 'required|numeric|exists:tfns,id',
@@ -1473,7 +1539,7 @@ class TfnController extends Controller
                 }
             } else {
                 $TfnAuthentication = TfnAuthentication::where('tfn_id', $request->tfn_id)->delete();
-                Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth ]);                 
+                Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth]);
                 DB::commit();
                 return $this->output(true, "TFN Authentication Updated Successfully!", [], 200);
             }

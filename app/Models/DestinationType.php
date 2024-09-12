@@ -10,6 +10,8 @@ class DestinationType extends Model
     use HasFactory;
 
     protected $fillable = [
-        'destination_type', 'status'
+        'destination_type',
+        'type',
+        'status'
     ];
 }
