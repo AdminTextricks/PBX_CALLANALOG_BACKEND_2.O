@@ -293,36 +293,59 @@ class TfnController extends Controller
                             $subQuery->where('name', 'like', "%{$params}%");
                         })
                         ->orWhereHas('tfn_destinations', function ($subQuery) use ($params) {
-                            $subQuery->where('destination_id', 'LIKE', "%$params%")
-                                ->orWhereHas('destinationType', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('destination_type', 'LIKE', "%$params%");
+                            $subQuery->where(function ($q) use ($params) {
+                                $q->where('destination_id', 'LIKE', "%$params%")
+                                    ->orWhereHas('destinationType', function ($nestedQuery) use ($params) {
+                                        $nestedQuery->where('destination_type', 'LIKE', "%$params%");
+                                    });
+                                $q->orWhere(function ($q2) use ($params) {
+                                    $q2->where('destination_type_id', '=', 10) // Time Conditions
+                                        ->whereHas('timeConditions', function ($nestedQuery) use ($params) {
+                                            $nestedQuery->where('name', 'LIKE', "%$params%")
+                                                ->orWhere('time_zone', 'LIKE', "%$params%")
+                                                ->orWhere('tc_match_destination_type', 'LIKE', "%$params%")
+                                                ->orWhere('tc_match_destination_id', 'LIKE', "%$params%")
+                                                ->orWhere('tc_non_match_destination_type', 'LIKE', "%$params%")
+                                                ->orWhere('tc_non_match_destination_id', 'LIKE', "%$params%");
+                                        });
                                 })
-                                ->orWhereHas('conferences', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('confno', 'LIKE', "%$params%")->orWhere('conf_name', 'LIKE', "%$params%");
-                                })
-                                ->orWhereHas('ringGroups', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('ringno', 'LIKE', "%$params%");
-                                })
-                                ->orWhereHas('queues', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('name', 'LIKE', "%$params%");
-                                })
-                                ->orWhereHas('voiceMail', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('mailbox', 'LIKE', "%$params%")->orWhere('fullname', 'LIKE', "%$params%");
-                                })
-                                ->orWhereHas('ivrs', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('name', 'LIKE', "%$params%");
-                                })
-                                ->orWhereHas('timeConditions', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('name', 'LIKE', "%$params%")
-                                        ->orWhere('time_zone', 'LIKE', "%$params%")
-                                        ->orWhere('tc_match_destination_type', 'LIKE', "%$params%")
-                                        ->orWhere('tc_match_destination_id', 'LIKE', "%$params%")
-                                        ->orWhere('tc_non_match_destination_type', 'LIKE', "%$params%")
-                                        ->orWhere('tc_non_match_destination_id', 'LIKE', "%$params%");
-                                })
-                                ->orWhereHas('extensions', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('name', 'LIKE', "%$params%");
-                                });
+                                    ->orWhere(function ($q2) use ($params) {
+                                        $q2->where('destination_type_id', '=', 8) // IVR
+                                            ->whereHas('ivrs', function ($nestedQuery) use ($params) {
+                                                $nestedQuery->where('name', 'LIKE', "%$params%");
+                                            });
+                                    })
+                                    ->orWhere(function ($q2) use ($params) {
+                                        $q2->where('destination_type_id', '=', 6) // Ring Groups
+                                            ->whereHas('ringGroups', function ($nestedQuery) use ($params) {
+                                                $nestedQuery->where('ringno', 'LIKE', "%$params%");
+                                            });
+                                    })
+                                    ->orWhere(function ($q2) use ($params) {
+                                        $q2->where('destination_type_id', '=', 5) // Conferences
+                                            ->whereHas('conferences', function ($nestedQuery) use ($params) {
+                                                $nestedQuery->where('confno', 'LIKE', "%$params%")->orWhere('conf_name', 'LIKE', "%$params%");
+                                            });
+                                    })
+                                    ->orWhere(function ($q2) use ($params) {
+                                        $q2->where('destination_type_id', '=', 3) // Voice Mail
+                                            ->whereHas('voiceMail', function ($nestedQuery) use ($params) {
+                                                $nestedQuery->where('mailbox', 'LIKE', "%$params%")->orWhere('fullname', 'LIKE', "%$params%");
+                                            });
+                                    })
+                                    ->orWhere(function ($q2) use ($params) {
+                                        $q2->where('destination_type_id', '=', 2) // Extensions
+                                            ->whereHas('extensions', function ($nestedQuery) use ($params) {
+                                                $nestedQuery->where('name', 'LIKE', "%$params%");
+                                            });
+                                    })
+                                    ->orWhere(function ($q2) use ($params) {
+                                        $q2->where('destination_type_id', '=', 1) // Queues
+                                            ->whereHas('queues', function ($nestedQuery) use ($params) {
+                                                $nestedQuery->where('name', 'LIKE', "%$params%");
+                                            });
+                                    });
+                            });
                         });
                 });
             }
@@ -360,37 +383,59 @@ class TfnController extends Controller
                             $subQuery->where('name', 'like', "%{$params}%");
                         })
                         ->orWhereHas('tfn_destinations', function ($subQuery) use ($params, $user) {
-                            $subQuery->where('company_id', '=', $user->company_id)
-                                ->orWhere('destination_id', 'LIKE', "%$params%")
-                                ->orWhereHas('destinationType', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('destination_type', 'LIKE', "%$params%");
+                            $subQuery->where(function ($q) use ($params, $user) {
+                                $q->where('destination_id', 'LIKE', "%$params%")->where('company_id', '=', $user->company_id)
+                                    ->orWhereHas('destinationType', function ($nestedQuery) use ($params) {
+                                        $nestedQuery->where('destination_type', 'LIKE', "%$params%");
+                                    });
+                                $q->orWhere(function ($q2) use ($params) {
+                                    $q2->where('destination_type_id', '=', 10) // Time Conditions
+                                        ->whereHas('timeConditions', function ($nestedQuery) use ($params) {
+                                            $nestedQuery->where('name', 'LIKE', "%$params%")
+                                                ->orWhere('time_zone', 'LIKE', "%$params%")
+                                                ->orWhere('tc_match_destination_type', 'LIKE', "%$params%")
+                                                ->orWhere('tc_match_destination_id', 'LIKE', "%$params%")
+                                                ->orWhere('tc_non_match_destination_type', 'LIKE', "%$params%")
+                                                ->orWhere('tc_non_match_destination_id', 'LIKE', "%$params%");
+                                        });
                                 })
-                                ->orWhereHas('conferences', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('confno', 'LIKE', "%$params%")->orWhere('conf_name', 'LIKE', "%$params%");
-                                })
-                                ->orWhereHas('ringGroups', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('ringno', 'LIKE', "%$params%");
-                                })
-                                ->orWhereHas('queues', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('name', 'LIKE', "%$params%");
-                                })
-                                ->orWhereHas('voiceMail', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('mailbox', 'LIKE', "%$params%")->orWhere('fullname', 'LIKE', "%$params%");
-                                })
-                                ->orWhereHas('ivrs', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('name', 'LIKE', "%$params%");
-                                })
-                                ->orWhereHas('timeConditions', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('name', 'LIKE', "%$params%")
-                                        ->orWhere('time_zone', 'LIKE', "%$params%")
-                                        ->orWhere('tc_match_destination_type', 'LIKE', "%$params%")
-                                        ->orWhere('tc_match_destination_id', 'LIKE', "%$params%")
-                                        ->orWhere('tc_non_match_destination_type', 'LIKE', "%$params%")
-                                        ->orWhere('tc_non_match_destination_id', 'LIKE', "%$params%");
-                                })
-                                ->orWhereHas('extensions', function ($nestedQuery) use ($params) {
-                                    $nestedQuery->where('name', 'LIKE', "%$params%");
-                                });
+                                    ->orWhere(function ($q2) use ($params) {
+                                        $q2->where('destination_type_id', '=', 8) // IVR
+                                            ->whereHas('ivrs', function ($nestedQuery) use ($params) {
+                                                $nestedQuery->where('name', 'LIKE', "%$params%");
+                                            });
+                                    })
+                                    ->orWhere(function ($q2) use ($params) {
+                                        $q2->where('destination_type_id', '=', 6) // Ring Groups
+                                            ->whereHas('ringGroups', function ($nestedQuery) use ($params) {
+                                                $nestedQuery->where('ringno', 'LIKE', "%$params%");
+                                            });
+                                    })
+                                    ->orWhere(function ($q2) use ($params) {
+                                        $q2->where('destination_type_id', '=', 5) // Conferences
+                                            ->whereHas('conferences', function ($nestedQuery) use ($params) {
+                                                $nestedQuery->where('confno', 'LIKE', "%$params%")->orWhere('conf_name', 'LIKE', "%$params%");
+                                            });
+                                    })
+                                    ->orWhere(function ($q2) use ($params) {
+                                        $q2->where('destination_type_id', '=', 3) // Voice Mail
+                                            ->whereHas('voiceMail', function ($nestedQuery) use ($params) {
+                                                $nestedQuery->where('mailbox', 'LIKE', "%$params%")->orWhere('fullname', 'LIKE', "%$params%");
+                                            });
+                                    })
+                                    ->orWhere(function ($q2) use ($params) {
+                                        $q2->where('destination_type_id', '=', 2) // Extensions
+                                            ->whereHas('extensions', function ($nestedQuery) use ($params) {
+                                                $nestedQuery->where('name', 'LIKE', "%$params%");
+                                            });
+                                    })
+                                    ->orWhere(function ($q2) use ($params) {
+                                        $q2->where('destination_type_id', '=', 1) // Queues
+                                            ->whereHas('queues', function ($nestedQuery) use ($params) {
+                                                $nestedQuery->where('name', 'LIKE', "%$params%");
+                                            });
+                                    });
+                            });
                         });
                 });
             }
