@@ -150,7 +150,7 @@ class TimeConditionController extends Controller
 		$data->each(function ($data) {		
 			switch ($data->tc_match_destination_type) {
 				case 1:
-					$data->load('queues:id,name');
+					$data->load('queue:id,name');
 					break;
 				case 2:
 					$data->load('extensions:id,name');
@@ -167,10 +167,44 @@ class TimeConditionController extends Controller
 				case 8:
 					$data->load('ivrs:id,name');
 					break;
-				case 10:
-					$data->load('time_conditions:id,name');
+				case 9:
+					$destina = $this->getDestinationName($data->tc_match_destination_type);
+					$data[$destina] = array('id'=>$data->tc_match_destination_type, 'value'=>$destina);
 					break;
+				default:
+				$destina = $this->getDestinationName($data->tc_match_destination_type);
+				$data[$destina] = array('id'=>$data->tc_match_destination_type, 'value'=>$data->tc_match_destination_id);
 			}           
+        });
+
+		$data->each(function ($data) {		
+			switch ($data->tc_non_match_destination_type) {
+				case 1:
+					$data->load('queue_:id,name');
+					break;
+				case 2:
+					$data->load('extensions_:id,name');
+					break;
+				case 3:
+					$data->load('voiceMail_:id,mailbox,fullname,email');
+					break;                   
+				case 5:
+					$data->load('conferences_:id,conf_name,confno');
+					break;
+				case 6:
+					$data->load('ringGroups_:id,ringno');
+					break;
+				case 8:
+					$data->load('ivrs_:id,name');
+					break;	
+				case 9:
+					$destina = $this->getDestinationName($data->tc_match_destination_type);
+					$data[$destina.'_'] = array('id'=>$data->tc_match_destination_type, 'value'=>$destina);
+					break;
+				default:
+					$destina = $this->getDestinationName($data->tc_match_destination_type);
+					$data[$destina.'_'] = array('id'=>$data->tc_match_destination_type, 'value'=>$data->tc_match_destination_id);						
+			}         
         });
 
 
@@ -181,6 +215,11 @@ class TimeConditionController extends Controller
 		} else {
 			return $this->output(true, 'No Record Found', []);
 		}
+	}
+
+	public function getDestinationName($id){
+		$data = DB::table('destination_types')->where('id', $id)->first();
+		return $data->destination_type;
 	}
 
     public function changeTimeConditionStatus(Request $request, $id)
