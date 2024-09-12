@@ -73,12 +73,14 @@ class TimeConditionController extends Controller
 				$data = TimeCondition::select()
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
+						->with('timeGroup:id,name')
                         ->where('id', $TimeCondition_id)->orderBy('id', 'DESC')->get();
 			} else {
 				if ($params != "") {
 					$data = TimeCondition::select()
 							->with('company:id,company_name,email,mobile')
 							->with('country:id,country_name')
+							->with('timeGroup:id,name')
 							->orWhere('name', 'LIKE', "%$params%")
 							->orWhereHas('company', function ($query) use ($params) {
 								$query->where('company_name', 'like', "%{$params}%");
@@ -95,6 +97,7 @@ class TimeConditionController extends Controller
 					$data = TimeCondition::select()
 							->with('company:id,company_name,email,mobile')
 							->with('country:id,country_name')
+							->with('timeGroup:id,name')
 							->orderBy('id', 'DESC')
 							->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				}
@@ -105,6 +108,7 @@ class TimeConditionController extends Controller
 			if ($TimeCondition_id) {
 				$data = TimeCondition::with('company:id,company_name,email,mobile')
                     ->with('country:id,country_name')
+					->with('timeGroup:id,name')
 					->select()
 					->where('id', $TimeCondition_id)
 					->where('company_id', '=',  $user->company_id)
@@ -115,6 +119,7 @@ class TimeConditionController extends Controller
 					$data = TimeCondition::select()
 						->with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
+						->with('timeGroup:id,name')
 						->where('company_id', '=',  $user->company_id)
 						->where(function($query) use($params) {
 							$query->where('name', 'like', "%{$params}%")
@@ -128,6 +133,7 @@ class TimeConditionController extends Controller
 				} else {
 					$data = TimeCondition::with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
+						->with('timeGroup:id,name')
 						->where('company_id', '=',  $user->company_id)
 						->select()
 						->orderBy('id', 'DESC')
@@ -139,6 +145,35 @@ class TimeConditionController extends Controller
 				}
 			}
 		}
+
+	
+		$data->each(function ($data) {		
+			switch ($data->tc_match_destination_type) {
+				case 1:
+					$data->load('queues:id,name');
+					break;
+				case 2:
+					$data->load('extensions:id,name');
+					break;
+				case 3:
+					$data->load('voiceMail:id,mailbox,fullname,email');
+					break;                   
+				case 5:
+					$data->load('conferences:id,conf_name,confno');
+					break;
+				case 6:
+					$data->load('ringGroups:id,ringno');
+					break;
+				case 8:
+					$data->load('ivrs:id,name');
+					break;
+				case 10:
+					$data->load('time_conditions:id,name');
+					break;
+			}           
+        });
+
+
 		if ($data->isNotEmpty()) {
 			$dd = $data->toArray();
 			unset($dd['links']);
