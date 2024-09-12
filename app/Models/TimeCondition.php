@@ -31,4 +31,38 @@ class TimeCondition extends Model
     {
         return $this->belongsTo(Country::class);
     }
+
+    public function timeGroup()
+    {
+        return $this->belongsTo(TimeGroup::class, 'time_group_id');
+    }
+    public function ringGroups()
+    {
+        return $this->belongsTo(RingGroup::class, 'tc_match_destination_id');
+    }
+
+    public function extensions()
+    {
+        return $this->belongsTo(Extension::class, 'tc_match_destination_id');
+    }
+
+    public function voiceMail()
+    {
+        return $this->belongsTo(VoiceMail::class, 'tc_match_destination_id');
+    }
+
+    public function queues()
+    {
+        return $this->belongsTo(Queue::class, 'tc_match_destination_id');
+    }
+
+    public function ivrs()
+    {
+        return $this->belongsTo(Ivr::class, 'tc_match_destination_id');
+    }
+
+    public function conferences()
+    {
+        return $this->belongsTo(Conference::class, 'tc_match_destination_id');
+    }
 }
