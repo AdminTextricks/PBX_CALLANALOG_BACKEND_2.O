@@ -165,19 +165,19 @@ class TimeConditionController extends Controller
 					$data->load('queue:id,name as value');
 					break;
 				case 2:
-					$data->load('extensions:id,name as value');
+					$data->load('extension:id,name as value');
 					break;
 				case 3:
 					$data->load('voiceMail:id,mailbox as value,email');
 					break;                   
 				case 5:
-					$data->load('conferences:id,confno as value');
+					$data->load('conference:id,confno as value');
 					break;
 				case 6:
-					$data->load('ringGroups:id,ringno as value');
+					$data->load('ringGroup:id,ringno as value');
 					break;
 				case 8:
-					$data->load('ivrs:id,name as value');
+					$data->load('ivr:id,name as value');
 					break;
 				case 9:
 					$destina = $this->getDestinationName($data->tc_match_destination_type);
@@ -195,19 +195,19 @@ class TimeConditionController extends Controller
 					$data->load('queue_:id,name as value');
 					break;
 				case 2:
-					$data->load('extensions_:id,name as value');
+					$data->load('extension_:id,name as value');
 					break;
 				case 3:
 					$data->load('voiceMail_:id,mailbox as value,email');
 					break;                   
 				case 5:
-					$data->load('conferences_:id,confno as value');
+					$data->load('conference_:id,confno as value');
 					break;
 				case 6:
-					$data->load('ringGroups_:id,ringno as value');
+					$data->load('ringGroup_:id,ringno as value');
 					break;
 				case 8:
-					$data->load('ivrs_:id,name as value');
+					$data->load('ivr_:id,name as value');
 					break;	
 				case 9:
 					$destina = $this->getDestinationName($data->tc_non_match_destination_type);
