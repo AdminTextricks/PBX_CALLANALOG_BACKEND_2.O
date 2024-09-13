@@ -81,11 +81,13 @@ class VoiceMailController extends Controller
 			if ($VoiceMail_id) {
 				$data = VoiceMail::select()
                         ->with('company:id,company_name,email,mobile')
+						->with('audio:id,name,media_file')
                         ->where('id', $VoiceMail_id)->orderBy('id', 'DESC')->get();
 			} else {
 				if ($params != "") {
 					$data = VoiceMail::select()
 							->with('company:id,company_name,email,mobile')
+							->with('audio:id,name,media_file')
 							->orWhere('mailbox', 'LIKE', "%$params%")
                             ->orWhere('email', 'like', "%{$params}%")
 							->orWhereHas('company', function ($query) use ($params) {
@@ -99,6 +101,7 @@ class VoiceMailController extends Controller
 				}else{
 					$data = VoiceMail::select()
 							->with('company:id,company_name,email,mobile')
+							->with('audio:id,name,media_file')
 							->orderBy('id', 'DESC')
 							->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				}                
@@ -107,6 +110,7 @@ class VoiceMailController extends Controller
             $VoiceMail_id = $request->id ?? NULL;
 			if ($VoiceMail_id) {
 				$data = VoiceMail::with('company:id,company_name,email,mobile')
+					->with('audio:id,name,media_file')
                     ->select()
 					->where('id', $VoiceMail_id)
 					->where('company_id', '=',  $user->company_id)
@@ -114,7 +118,8 @@ class VoiceMailController extends Controller
 					->get();
 			} else {
 				if ($params != "") {
-					$data = VoiceMail::with('company:id,company_name,email,mobile')	
+					$data = VoiceMail::with('company:id,company_name,email,mobile')
+						->with('audio:id,name,media_file')	
                         ->where('company_id', '=',  $user->company_id)
 						->where(function($query) use($params) {
 							$query->where('mailbox', 'like', "%{$params}%")
@@ -126,7 +131,8 @@ class VoiceMailController extends Controller
 						->orderBy('id', 'DESC')
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
-					$data = VoiceMail::with('company:id,company_name,email,mobile')                        
+					$data = VoiceMail::with('company:id,company_name,email, mobile')
+							->with('audio:id,name,media_file')
                             ->where('company_id', '=',  $user->company_id)
                             ->orderBy('id', 'DESC')
                             ->select()->paginate(
