@@ -74,6 +74,8 @@ class TimeConditionController extends Controller
                         ->with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
 						->with('timeGroup:id,name')
+						->with('match_destination_type:id,destination_type')
+						->with('non_match_destination_type:id,destination_type')
                         ->where('id', $TimeCondition_id)->orderBy('id', 'DESC')->get();
 			} else {
 				if ($params != "") {
@@ -81,6 +83,8 @@ class TimeConditionController extends Controller
 							->with('company:id,company_name,email,mobile')
 							->with('country:id,country_name')
 							->with('timeGroup:id,name')
+							->with('match_destination_type:id,destination_type')
+							->with('non_match_destination_type:id,destination_type')
 							->orWhere('name', 'LIKE', "%$params%")
 							->orWhereHas('company', function ($query) use ($params) {
 								$query->where('company_name', 'like', "%{$params}%");
@@ -98,6 +102,8 @@ class TimeConditionController extends Controller
 							->with('company:id,company_name,email,mobile')
 							->with('country:id,country_name')
 							->with('timeGroup:id,name')
+							->with('match_destination_type:id,destination_type')
+							->with('non_match_destination_type:id,destination_type')
 							->orderBy('id', 'DESC')
 							->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				}
@@ -109,6 +115,8 @@ class TimeConditionController extends Controller
 				$data = TimeCondition::with('company:id,company_name,email,mobile')
                     ->with('country:id,country_name')
 					->with('timeGroup:id,name')
+					->with('match_destination_type:id,destination_type')
+					->with('non_match_destination_type:id,destination_type')
 					->select()
 					->where('id', $TimeCondition_id)
 					->where('company_id', '=',  $user->company_id)
@@ -120,6 +128,8 @@ class TimeConditionController extends Controller
 						->with('company:id,company_name,email,mobile')	
                         ->with('country:id,country_name')
 						->with('timeGroup:id,name')
+						->with('match_destination_type:id,destination_type')
+						->with('non_match_destination_type:id,destination_type')
 						->where('company_id', '=',  $user->company_id)
 						->where(function($query) use($params) {
 							$query->where('name', 'like', "%{$params}%")
@@ -134,6 +144,8 @@ class TimeConditionController extends Controller
 					$data = TimeCondition::with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
 						->with('timeGroup:id,name')
+						->with('match_destination_type:id,destination_type')
+						->with('non_match_destination_type:id,destination_type')
 						->where('company_id', '=',  $user->company_id)
 						->select()
 						->orderBy('id', 'DESC')
@@ -198,12 +210,12 @@ class TimeConditionController extends Controller
 					$data->load('ivrs_:id,name');
 					break;	
 				case 9:
-					$destina = $this->getDestinationName($data->tc_match_destination_type);
-					$data[str_replace(' ', '_',$destina).'_'] = array('id'=>$data->tc_match_destination_type, 'value'=>$destina);
+					$destina = $this->getDestinationName($data->tc_non_match_destination_type);
+					$data[str_replace(' ', '_',$destina).'_'] = array('id'=>$data->tc_non_match_destination_type, 'value'=>$destina);
 					break;
 				default:
-					$destina = $this->getDestinationName($data->tc_match_destination_type);
-					$data[str_replace(' ', '_',$destina).'_'] = array('id'=>$data->tc_match_destination_type, 'value'=>$data->tc_match_destination_id);						
+					$destina = $this->getDestinationName($data->tc_non_match_destination_type);
+					$data[str_replace(' ', '_',$destina).'_'] = array('id'=>$data->tc_non_match_destination_type, 'value'=>$data->tc_match_destination_id);						
 			}         
         });
 

@@ -36,6 +36,17 @@ class TimeCondition extends Model
     {
         return $this->belongsTo(TimeGroup::class, 'time_group_id');
     }
+
+    public function match_destination_type()
+    {
+        return $this->belongsTo(DestinationType::class, 'tc_match_destination_type');
+    }
+
+    public function non_match_destination_type()
+    {
+        return $this->belongsTo(DestinationType::class, 'tc_non_match_destination_type');
+    }
+
     public function ringGroups()
     {
         return $this->belongsTo(RingGroup::class, 'tc_match_destination_id');
