@@ -181,12 +181,12 @@ class TimeConditionController extends Controller
 					break;
 				case 9:
 					$destina = $this->getDestinationName($data->tc_match_destination_type);
-					$data[str_replace(' ', '_',$destina)] = array('id'=>$data->tc_match_destination_type, 'value'=>$destina);
+					$data[strtolower(str_replace(' ', '_',$destina))] = array('id'=>$data->tc_match_destination_type, 'value'=>$destina);
 					break;
 				default:
 				$destina = $this->getDestinationName($data->tc_match_destination_type);
-				$data[str_replace(' ', '_',$destina)] = array('id'=>$data->tc_match_destination_type, 'value'=>$data->tc_match_destination_id);
-			}           
+				$data[strtolower(str_replace(' ', '_',$destina))] = array('id'=>$data->tc_match_destination_type, 'value'=>$data->tc_match_destination_id);
+			} 
         });
 
 		$data->each(function ($data) {		
@@ -211,11 +211,11 @@ class TimeConditionController extends Controller
 					break;	
 				case 9:
 					$destina = $this->getDestinationName($data->tc_non_match_destination_type);
-					$data[str_replace(' ', '_',$destina).'_'] = array('id'=>$data->tc_non_match_destination_type, 'value'=>$destina);
+					$data[strtolower(str_replace(' ', '_',$destina)).'_'] = array('id'=>$data->tc_non_match_destination_type, 'value'=>$destina);
 					break;
 				default:
 					$destina = $this->getDestinationName($data->tc_non_match_destination_type);
-					$data[str_replace(' ', '_',$destina).'_'] = array('id'=>$data->tc_non_match_destination_type, 'value'=>$data->tc_match_destination_id);						
+					$data[strtolower(str_replace(' ', '_',$destina)).'_'] = array('id'=>$data->tc_non_match_destination_type, 'value'=>$data->tc_match_destination_id);						
 			}         
         });
 
