@@ -1012,8 +1012,8 @@ class ExtensionController extends Controller
                             return $this->output(false,'Extension not exist with us.', [], 409);
                         }
                     }
-                    Log::error('Multiple Remove Extension From File: ' . $removeExtensionFile );
 
+                    Log::error('Multiple Remove Extension From File: ' . $removeExtensionFile );
                     $server_flag = config('app.server_flag');
                     if ($server_flag == 1) {
                         $shell_script = config('app.shell_script');
