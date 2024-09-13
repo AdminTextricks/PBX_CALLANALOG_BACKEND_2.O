@@ -995,15 +995,7 @@ class ExtensionController extends Controller
                             $removeExtensionFile = config('app.softphone_template_url');                
                             $this->removeExtensionFromConfFile($Extension->name, $removeExtensionFile);
 
-                            Log::error('Multiple Remove Extension From File: ' . $removeExtensionFile );
-
-                            $server_flag = config('app.server_flag');
-                            if ($server_flag == 1) {
-                                $shell_script = config('app.shell_script');
-                                $result = shell_exec('sudo ' . $shell_script);
-                                Log::error('Extension Update File Transfer Log : ' . $result);
-                                $this->sipReload();
-                            }
+                            
                             $resdelete = $Extension->delete();
                             if ($resdelete) {
                                 Cart::where('item_id', '=', $id)->delete();
@@ -1019,6 +1011,15 @@ class ExtensionController extends Controller
                             DB::commit();
                             return $this->output(false,'Extension not exist with us.', [], 409);
                         }
+                    }
+                    Log::error('Multiple Remove Extension From File: ' . $removeExtensionFile );
+
+                    $server_flag = config('app.server_flag');
+                    if ($server_flag == 1) {
+                        $shell_script = config('app.shell_script');
+                        $result = shell_exec('sudo ' . $shell_script);
+                        Log::error('Extension Update File Transfer Log : ' . $result);
+                        $this->sipReload();
                     }
                     return $this->output(true,'Success',200);
                 }else{
