@@ -162,22 +162,22 @@ class TimeConditionController extends Controller
 		$data->each(function ($data) {		
 			switch ($data->tc_match_destination_type) {
 				case 1:
-					$data->load('queue:id,name');
+					$data->load('queue:id,name as value');
 					break;
 				case 2:
-					$data->load('extensions:id,name');
+					$data->load('extensions:id,name as value');
 					break;
 				case 3:
-					$data->load('voiceMail:id,mailbox,fullname,email');
+					$data->load('voiceMail:id,mailbox as value,email');
 					break;                   
 				case 5:
-					$data->load('conferences:id,conf_name,confno');
+					$data->load('conferences:id,confno as value');
 					break;
 				case 6:
-					$data->load('ringGroups:id,ringno');
+					$data->load('ringGroups:id,ringno as value');
 					break;
 				case 8:
-					$data->load('ivrs:id,name');
+					$data->load('ivrs:id,name as value');
 					break;
 				case 9:
 					$destina = $this->getDestinationName($data->tc_match_destination_type);
@@ -192,22 +192,22 @@ class TimeConditionController extends Controller
 		$data->each(function ($data) {		
 			switch ($data->tc_non_match_destination_type) {
 				case 1:
-					$data->load('queue_:id,name');
+					$data->load('queue_:id,name as value');
 					break;
 				case 2:
-					$data->load('extensions_:id,name');
+					$data->load('extensions_:id,name as value');
 					break;
 				case 3:
-					$data->load('voiceMail_:id,mailbox,fullname,email');
+					$data->load('voiceMail_:id,mailbox as value,email');
 					break;                   
 				case 5:
-					$data->load('conferences_:id,conf_name,confno');
+					$data->load('conferences_:id,confno as value');
 					break;
 				case 6:
-					$data->load('ringGroups_:id,ringno');
+					$data->load('ringGroups_:id,ringno as value');
 					break;
 				case 8:
-					$data->load('ivrs_:id,name');
+					$data->load('ivrs_:id,name as value');
 					break;	
 				case 9:
 					$destina = $this->getDestinationName($data->tc_non_match_destination_type);
