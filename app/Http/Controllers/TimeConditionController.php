@@ -169,11 +169,11 @@ class TimeConditionController extends Controller
 					break;
 				case 9:
 					$destina = $this->getDestinationName($data->tc_match_destination_type);
-					$data[$destina] = array('id'=>$data->tc_match_destination_type, 'value'=>$destina);
+					$data[str_replace(' ', '_',$destina).'_'] = array('id'=>$data->tc_match_destination_type, 'value'=>$destina);
 					break;
 				default:
 				$destina = $this->getDestinationName($data->tc_match_destination_type);
-				$data[$destina] = array('id'=>$data->tc_match_destination_type, 'value'=>$data->tc_match_destination_id);
+				$data[str_replace(' ', '_',$destina).'_'] = array('id'=>$data->tc_match_destination_type, 'value'=>$data->tc_match_destination_id);
 			}           
         });
 
