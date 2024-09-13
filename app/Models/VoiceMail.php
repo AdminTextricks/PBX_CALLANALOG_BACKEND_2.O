@@ -32,6 +32,7 @@ class VoiceMail extends Model
         'forcename',        
         'forcegreetings',        
         'hidefromdir',        
+        'audio_id',
         'status'        
     ];
 
