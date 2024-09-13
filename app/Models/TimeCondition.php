@@ -47,20 +47,20 @@ class TimeCondition extends Model
         return $this->belongsTo(DestinationType::class, 'tc_non_match_destination_type');
     }
 
-    public function ringGroups()
+    public function ringGroup()
     {
         return $this->belongsTo(RingGroup::class, 'tc_match_destination_id');
     }
-    public function ringGroups_()
+    public function ringGroup_()
     {
         return $this->belongsTo(RingGroup::class, 'tc_non_match_destination_id');
     }
 
-    public function extensions()
+    public function extension()
     {
         return $this->belongsTo(Extension::class, 'tc_match_destination_id');
     }
-    public function extensions_()
+    public function extension_()
     {
         return $this->belongsTo(Extension::class, 'tc_non_match_destination_id');
     }
@@ -83,20 +83,20 @@ class TimeCondition extends Model
         return $this->belongsTo(Queue::class, 'tc_non_match_destination_id');
     }
 
-    public function ivrs()
+    public function ivr()
     {
         return $this->belongsTo(Ivr::class, 'tc_match_destination_id');
     }
-    public function ivrs_()
+    public function ivr_()
     {
         return $this->belongsTo(Ivr::class, 'tc_non_match_destination_id');
     }
 
-    public function conferences()
+    public function conference()
     {
         return $this->belongsTo(Conference::class, 'tc_match_destination_id');
     }
-    public function conferences_()
+    public function conference_()
     {
         return $this->belongsTo(Conference::class, 'tc_non_match_destination_id');
     }
