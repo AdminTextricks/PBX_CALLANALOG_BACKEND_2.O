@@ -50,4 +50,5 @@ class VoiceMail extends Model
     {
         return $this->belongsTo(IvrMedia::class, 'audio_id', 'id');
     }
+    
 }

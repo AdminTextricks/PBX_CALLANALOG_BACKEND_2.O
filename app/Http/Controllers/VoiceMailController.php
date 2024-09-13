@@ -152,7 +152,6 @@ class VoiceMailController extends Controller
 		}
 	}
 
-
     public function getAllVoiceMailByCompany(Request $request, $company_id)
     {
 		$user = \Auth::user();
