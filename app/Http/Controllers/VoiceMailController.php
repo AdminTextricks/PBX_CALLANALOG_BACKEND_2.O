@@ -29,6 +29,7 @@ class VoiceMailController extends Controller
 				'fullname'  => 'required|string|max:20',
 				'email'     => 'required|email|max:255',
                 'dialout'   => 'required|numeric',
+                'audio_id' 	=> 'nullable|numeric',
 			]);
 			if ($validator->fails()){
 				return $this->output(false, $validator->errors()->first(), [], 409);
@@ -44,6 +45,7 @@ class VoiceMailController extends Controller
                         'fullname' 	    => $request->fullname,
                         'email' 	    => $request->email,
                         'dialout' 	    => $request->dialout,
+                        'audio_id' 	    => $request->audio_id,
                     ]);
                 if($VoiceMail){
                     Extension::where('name', $request->mailbox)->update([
@@ -203,6 +205,7 @@ class VoiceMailController extends Controller
                     'fullname'  => 'required|string|max:20',
                     'email'     => 'required|email|max:255',
                     'dialout'   => 'required|numeric',
+					'audio_id'  => 'nullable',
 				]);
 				if ($validator->fails()){
 					return $this->output(false, $validator->errors()->first(), [], 409);
@@ -218,6 +221,7 @@ class VoiceMailController extends Controller
 					$VoiceMail->fullname    = $request->fullname;
 					$VoiceMail->email       = $request->email;
 					$VoiceMail->dialout     = $request->dialout;
+					$VoiceMail->audio_id    = isset($request->audio_id) ? $request->audio_id : NULL;
 					$VoiceMailsRes          = $VoiceMail->save();
 					if($VoiceMailsRes){
 						$VoiceMail = VoiceMail::where('id', $id)->first();        
