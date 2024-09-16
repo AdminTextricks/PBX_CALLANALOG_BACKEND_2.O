@@ -150,7 +150,7 @@ class IvrController extends Controller
 				$data = Ivr::with('company:id,company_name,email,mobile')
                             ->with('country:id,country_name')
                             ->with('IvrMedia:id,name,media_file,file_ext')
-				    	    ->select()->where('id', $Ivr_id)->get();
+				    	    ->select()->where('id', $Ivr_id)->orderBy('id', 'DESC')->get();
 			} else {
 				if ($params != "") {
 					$data = Ivr::with('company:id,company_name,email,mobile')
@@ -169,12 +169,13 @@ class IvrController extends Controller
                             ->orWhereHas('country', function ($query) use ($params) {
                                 $query->where('country_name', 'like', "%{$params}%");
                             })
+                            ->orderBy('id', 'DESC')
 			    			->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
 					$data = Ivr::with('company:id,company_name,email,mobile')
                             ->with('country:id,country_name')
                             ->with('IvrMedia:id,name,media_file,file_ext')
-					    	->select()->paginate(
+					    	->select()->orderBy('id', 'DESC')->paginate(
                                 $perPage = $perPageNo,
                                 $columns = ['*'],
                                 $pageName = 'page'
@@ -187,7 +188,7 @@ class IvrController extends Controller
 				$data = Ivr::with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->with('IvrMedia:id,name,media_file,file_ext')
-					    ->select()->where('id', $Ivr_id)->get();
+					    ->select()->where('id', $Ivr_id)->orderBy('id', 'DESC')->get();
 			} else {
 				if ($params != "") {
 					$data = Ivr::with('company:id,company_name,email,mobile')
@@ -203,13 +204,14 @@ class IvrController extends Controller
                                     $query->where('country_name', 'like', "%{$params}%");
                                 });
                             })
+                            ->orderBy('id', 'DESC')
                             ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
 					$data = Ivr::with('company:id,company_name,email,mobile')
                             ->with('country:id,country_name')
                             ->with('IvrMedia:id,name,media_file,file_ext')
                             ->where('company_id', '=',  $user->company_id)
-                            ->select()->paginate(
+                            ->select()->orderBy('id', 'DESC')->paginate(
                                 $perPage = $perPageNo,
                                 $columns = ['*'],
                                 $pageName = 'page'
