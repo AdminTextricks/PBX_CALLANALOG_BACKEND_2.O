@@ -156,7 +156,7 @@ class IvrOptionController extends Controller
        // $ivrGetall = IvrOption::with('childrenRecursive')->where('ivr_id', $ivr_id)->get();
 
         $data = IvrOption::select()
-                    ->with('ivr:id,name')
+                    ->with('ivr_:id,name')
                     ->with('destination_type:id,destination_type')
                     ->where('ivr_id', $ivr_id)
                     ->get();
