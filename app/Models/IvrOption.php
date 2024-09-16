@@ -13,7 +13,7 @@ class IvrOption extends Model
         'company_id',
         'ivr_id',
         'input_digit',
-        'destination_type',
+        'destination_type_id',
         'destination_id',
         'parent_id',
     ];
