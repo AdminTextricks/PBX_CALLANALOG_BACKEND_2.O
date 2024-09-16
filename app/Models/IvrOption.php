@@ -25,11 +25,11 @@ class IvrOption extends Model
      */
     public function ivr()
     {
-        return $this->belongsTo(Ivr::class);
+        return $this->belongsTo(Ivr::class, 'destination_id');
     }
     public function ivr_()
     {
-        return $this->belongsTo(Ivr::class);
+        return $this->belongsTo(Ivr::class,'ivr_id');
     }
 
     public function childrenRecursive()
