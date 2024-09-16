@@ -81,9 +81,9 @@ class IvrOptionController extends Controller
                     return $this->output(false, $validator->errors()->first(), [], 409);
                 } else {  
                     $IvrOptionExist = IvrOption::where('company_id', $request->company_id)
-                                    ->where('ivr_id', $request->ivr_id)
-                                    ->where('input_digit', $request->input_digit)
-                                    ->first();
+                                ->where('ivr_id', $request->ivr_id)
+                                ->where('input_digit', $request->input_digit)
+                                ->first();
                     if (!$IvrOptionExist || $IvrOptionExist->id == $id) {
                         $IvrOption->ivr_id      = $request->ivr_id;
                         $IvrOption->input_digit = $request->input_digit;
@@ -107,7 +107,7 @@ class IvrOptionController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error occurred in creating IVR Options : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            Log::error('Error occurred in updating IVR Options : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
@@ -195,10 +195,9 @@ class IvrOptionController extends Controller
         });            
 
 
-        $ivrOptionArr = $this->buildTree($data);
-
-       // $ivrOptionArr = $ivrGetall->toArray();       
-        if ($ivrOptionArr) {
+        //$ivrOptionArr = $this->buildTree($data);
+        $ivrOptionArr = $data->toArray();
+        if ($data->isNotEmpty()) {
             return $this->output(true, 'success', $ivrOptionArr, 200);
         } else {
             return $this->output(true, 'No Record Found', [], 200);

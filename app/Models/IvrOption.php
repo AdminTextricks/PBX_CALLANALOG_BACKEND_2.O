@@ -68,4 +68,5 @@ class IvrOption extends Model
     {
         return $this->belongsTo(TimeCondition::class, 'destination_id');
     }
+    
 }
