@@ -27,6 +27,10 @@ class IvrOption extends Model
     {
         return $this->belongsTo(Ivr::class);
     }
+    public function ivr_()
+    {
+        return $this->belongsTo(Ivr::class);
+    }
 
     public function childrenRecursive()
     {
