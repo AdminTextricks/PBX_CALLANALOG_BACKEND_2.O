@@ -36,6 +36,7 @@ return new class extends Migration
             $table->string('destination', 20)->nullable()->index();
             $table->string('hangup_cause', 20)->nullable();
             $table->string('receive_ip', 20)->nullable();
+            $table->string('trunk_name', 20)->nullable();
             $table->string('codec', 20)->nullable();
             $table->string('cost', 20)->nullable();
             $table->timestamps();
