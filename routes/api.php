@@ -371,7 +371,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/', [IvrOptionController::class,'addIvrOption']);
 		Route::put('/{id}', [IvrOptionController::class,'editIvrOption']);
 		Route::delete('/{id}', [IvrOptionController::class,'removeIvrOption']);	
-		Route::get('/{company_id}', [IvrOptionController::class,'getIvroptionsByCompanyId']);		
+		Route::get('/{ivr_id}', [IvrOptionController::class,'getIvrOptions']);		
 	
 	});
 

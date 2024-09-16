@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('ivr_options', function (Blueprint $table) {
             $table->bigIncrements('id'); 
-            $table->unsignedBigInteger('company_id');
+           // $table->unsignedBigInteger('company_id');
             $table->unsignedBigInteger('ivr_id');
             $table->integer('input_digit');
             $table->unsignedBigInteger('destination_type_id');
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->integer('parent_id')->default(0);
             $table->timestamps();
             $table->foreign('ivr_id')->references('id')->on('ivrs');
-			$table->foreign('company_id')->references('id')->on('companies'); 
+			//$table->foreign('company_id')->references('id')->on('companies'); 
             $table->foreign('destination_type_id')->references('id')->on('destination_types'); 
         });
     }
