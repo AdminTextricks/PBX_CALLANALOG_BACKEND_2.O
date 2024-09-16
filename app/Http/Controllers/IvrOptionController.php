@@ -23,8 +23,9 @@ class IvrOptionController extends Controller
                 'company_id'        => 'required|numeric|exists:companies,id',
                 'ivr_id'            => 'required|numeric|exists:ivrs,id',
                 'input_digit'       => 'required|numeric',
-                'destination_type'  => 'required|string',
+                'destination_type_id'  => 'required|string',
                 'destination_id'    => 'required|numeric',
+                'parent_id'         => 'nullable',
             ]);
             if ($validator->fails()) {
                 DB::commit();
@@ -42,7 +43,7 @@ class IvrOptionController extends Controller
                         'company_id'   => $request->company_id,
                         'ivr_id'        => $request->ivr_id,
                         'input_digit'   => $request->input_digit,                            
-                        'destination_type'=> $request->destination_type,
+                        'destination_type_id'=> $request->destination_type_id,
                         'destination_id'  => $request->destination_id,
                         'parent_id'       => isset($request->parent_id) ? $request->parent_id : 0,
                     ]);   
@@ -74,7 +75,7 @@ class IvrOptionController extends Controller
                     'company_id'        => 'required|numeric|exists:companies,id',
                     'ivr_id'            => 'required|numeric|exists:ivrs,id',
                     'input_digit'       => 'required|numeric',
-                    'destination_type'  => 'required|string',
+                    'destination_type_id'  => 'required|string',
                     'destination_id'    => 'required|numeric',
                 ]);
                 if ($validator->fails()) {
@@ -90,7 +91,7 @@ class IvrOptionController extends Controller
                         $IvrOption->company_id  = $request->company_id;
                         $IvrOption->ivr_id      = $request->ivr_id;
                         $IvrOption->input_digit = $request->input_digit;
-                        $IvrOption->destination_type= $request->destination_type;
+                        $IvrOption->destination_type_id= $request->destination_type_id;
                         $IvrOption->destination_id  = $request->destination_id;
                         $IvrOption->parent_id       = isset($request->parent_id) ? $request->parent_id : 0;
                         $IvrOptionRes = $IvrOption->save();
@@ -138,7 +139,7 @@ class IvrOptionController extends Controller
                     ->where('company_id', $company_id)->get();
         $ivrOptionArr = $ivrGetall->toArray();
         /*foreach($ivrOptionArr as $key => $ivrOption){            
-            if($ivrOption['destination_type'] == 'Ivr'){
+            if($ivrOption['destination_type_id'] == 'Ivr'){
                 $targetDetails = Ivr::select('name')->where('id', $ivrOption['destination_id'])->get();
             }
             $data = json_decode($targetDetails, true);

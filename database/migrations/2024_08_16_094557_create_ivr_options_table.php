@@ -16,12 +16,13 @@ return new class extends Migration
             $table->unsignedBigInteger('company_id');
             $table->unsignedBigInteger('ivr_id');
             $table->integer('input_digit');
-            $table->string('destination_type');
+            $table->unsignedBigInteger('destination_type_id');
             $table->integer('destination_id');
             $table->integer('parent_id')->default(0);
             $table->timestamps();
             $table->foreign('ivr_id')->references('id')->on('ivrs');
 			$table->foreign('company_id')->references('id')->on('companies'); 
+            $table->foreign('destination_type_id')->references('id')->on('destination_types'); 
         });
     }
 
