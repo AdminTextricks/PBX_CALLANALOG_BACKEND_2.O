@@ -39,6 +39,7 @@ use App\Http\Controllers\ResellerCallCommissionController;
 use App\Http\Controllers\VoiceMailController;
 use App\Http\Controllers\TimeGroupController;
 use App\Http\Controllers\TimeConditionController;
+use App\Http\Controllers\NotificationController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -445,6 +446,13 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::put('/{id}', [TimeConditionController::class, 'updateTimeCondition']);
 		Route::delete('/{id}', [TimeConditionController::class, 'deleteTimeCondition']);
 	});
+
+	# Notifications 
+	Route::group(['prefix' => 'notifications'], function () {
+		Route::get('/', [NotificationController::class, 'getAllNotifications']);
+
+	});
+	
 });
 
 Route::get('/route-cache', function() {
