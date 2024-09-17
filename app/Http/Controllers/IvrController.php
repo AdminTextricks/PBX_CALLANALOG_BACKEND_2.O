@@ -256,9 +256,9 @@ class IvrController extends Controller
             DB::beginTransaction();
             $Ivr = Ivr::where('id', $id)->first();
             if($Ivr){
+                IvrOption::where('ivr_id', $id)->delete();
 				$resdelete = $Ivr->delete();
-                if ($resdelete) {
-                    IvrOption::where('ivr_id', $id)->delete();
+                if ($resdelete) {                   
                     DB::commit();
                     return $this->output(true,'Success',200);
                 } else {

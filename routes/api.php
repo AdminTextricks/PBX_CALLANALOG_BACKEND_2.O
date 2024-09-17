@@ -416,6 +416,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/', [VoiceMailController::class, 'addVoiceMail']);
 		Route::get('/getAllOrByCompany', [VoiceMailController::class, 'getAllOrByCompany']);
 		Route::get('/getByCompany/{company_id}', [VoiceMailController::class, 'getAllVoiceMailByCompany']);
+		Route::get('/get', [VoiceMailController::class, 'getVoiceMail']);
 		Route::get('/{id?}', [VoiceMailController::class, 'getAllVoiceMail']);
 		Route::put('/{id}', [VoiceMailController::class, 'updateVoiceMail']);
 		Route::delete('/{id}', [VoiceMailController::class, 'deleteVoiceMail']);

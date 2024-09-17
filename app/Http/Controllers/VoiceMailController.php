@@ -191,6 +191,37 @@ class VoiceMailController extends Controller
 	}
 
 
+	public function getVoiceMail(Request $request)
+    {
+		$validator = Validator::make($request->all(), [
+			'company_id'=> 'required|numeric|exists:companies,id',
+			'country_id'=> 'required|numeric|exists:countries,id',			
+		]);
+		if ($validator->fails()){
+			return $this->output(false, $validator->errors()->first(), [], 409);
+		}
+
+		$e_query = Extension::select('id','name')->where('mailbox', '1');
+		$e_query->where('company_id', $request->get('company_id'));
+        $e_query->where('country_id', $request->get('country_id'));
+		$e_data = $e_query->orderBy('id', 'DESC')->get()->pluck('name');
+
+		if(!empty($e_data)){
+			$query = VoiceMail::select('id','mailbox')->whereIn('mailbox',$e_data);
+			$data = $query->orderBy('id', 'DESC')->get();
+
+			if($data->isNotEmpty()){
+				return $this->output(true, 'Success', $data->toArray());
+			}else{
+				return $this->output(true, 'No Record Found', []);
+			}
+		}else{
+			return $this->output(true, 'No Record Found', []);
+		}
+		
+	}
+
+
     public function updateVoiceMail(Request $request, $id)
 	{
 		try { 
