@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\LOG;
 use Illuminate\Support\Facades\DB;
 use Validator;
-use App\Notifications\ActivityNotification;
+
 
 class IvrOptionController extends Controller
 {
