@@ -131,7 +131,7 @@ class VoiceMailController extends Controller
 						->orderBy('id', 'DESC')
 						->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
 				} else {
-					$data = VoiceMail::with('company:id,company_name,email, mobile')
+					$data = VoiceMail::with('company:id,company_name,email,mobile')
 							->with('audio:id,name,media_file')
                             ->where('company_id', '=',  $user->company_id)
                             ->orderBy('id', 'DESC')
