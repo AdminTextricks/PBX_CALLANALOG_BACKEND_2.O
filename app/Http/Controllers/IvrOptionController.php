@@ -96,7 +96,7 @@ class IvrOptionController extends Controller
                         if ($IvrOptionRes) {
                             $response = $IvrOption->toArray();
                             DB::commit();
-                            return $this->output(true, 'Ivr Option added successfully.', $response, 200);
+                            return $this->output(true, 'Ivr Option updated successfully.', $response, 200);
                         } else {
                             DB::commit();
                             return $this->output(false, 'Error occurred in Ivr option updating. Please try again!.', [], 200);
@@ -197,18 +197,11 @@ class IvrOptionController extends Controller
                     $data[strtolower(str_replace(' ', '_', $destina))] = array('id' => $data->destination_type_id, 'value' => $data->destination_id);
             }
         });
-
-
         //$ivrOptionArr = $this->buildTree($data);
         $ivrOptionArr = $data->toArray();
         if ($data->isNotEmpty()) {
-
-            $user->notify(new ActivityNotification($user,'This is a notification message'));
-
             return $this->output(true, 'success', $ivrOptionArr, 200);
-        } else {
-            $admin = User::find(1);
-            $admin->notify(new ActivityNotification($user, 'This is a notification message'));
+        } else {           
             return $this->output(true, 'No Record Found', [], 200);
         }
 
