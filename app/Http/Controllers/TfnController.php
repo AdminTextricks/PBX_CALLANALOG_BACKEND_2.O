@@ -1584,7 +1584,7 @@ class TfnController extends Controller
                 }
             } else {
                 $TfnAuthentication = TfnAuthentication::where('tfn_id', $request->tfn_id)->delete();
-                Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => $tfn_auth]);
+                Tfn::where('id', $request->tfn_id)->update(['tfn_auth' => '0']);
                 DB::commit();
                 return $this->output(true, "TFN Authentication Updated Successfully!", [], 200);
             }
