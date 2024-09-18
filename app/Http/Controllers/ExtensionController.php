@@ -21,10 +21,7 @@ use Carbon\Carbon;
 
 class ExtensionController extends Controller
 {
-    public function __construct()
-    {
-
-    }
+    public function __construct() {}
 
     public function generateExtensions(Request $request)
     {
@@ -87,7 +84,7 @@ class ExtensionController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'country_id'    => 'required|numeric|exists:countries,id',
-			'company_id'	=> 'required|numeric|exists:companies,id',
+            'company_id'    => 'required|numeric|exists:companies,id',
             'name.*' => 'required|unique:extensions,name',
             //'callbackextension' => 'required|integer|digits_between:2,5',
             'agent_name' => 'required|max:150',
@@ -228,7 +225,7 @@ class ExtensionController extends Controller
 
                             if ($Company->plan_id == 1 && !in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
                                 $cartIds = Cart::insert($Cart);
-                                $response['total_extension'] = count($item_ids);//$Extensions;//->toArray();
+                                $response['total_extension'] = count($item_ids); //$Extensions;//->toArray();
                                 $response['Show_Cart'] = 'Yes';
                                 DB::commit();
                                 return $this->output(true, 'Extension added successfully in cart.', $response);
@@ -252,7 +249,7 @@ class ExtensionController extends Controller
                                     }
                                     $payment_status = $request->payment_type;
                                 }
-                                
+
                                 $invoicetable_id = DB::table('invoices')->max('id');
                                 if (!$invoicetable_id) {
                                     $invoice_id = 'INV/' . date('Y') . '/00001';
@@ -273,48 +270,48 @@ class ExtensionController extends Controller
                                 $purchase_item = array();
                                 foreach ($item_ids as $item_id => $item) {
                                     $purchase_item[] = $item;
-                                    $InvoiceItems = InvoiceItems::create([                                    
+                                    $InvoiceItems = InvoiceItems::create([
                                         'invoice_id'    => $Invoice->id,
                                         'country_id'    => $request->country_id,
                                         'item_type'     => 'Extension',
                                         'item_number'   => $item,
                                         'item_price'    => $item_price,
                                     ]);
-                                    
+
                                     $webrtc_template_url = config('app.webrtc_template_url');
                                     $addExtensionFile = $webrtc_template_url;
                                     $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
                                     $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
                                 }
-                                
+
                                 $payment = Payments::create([
                                     'company_id'        => $request->company_id,
                                     'invoice_id'        => $Invoice->id,
                                     'ip_address'        => $request->ip(),
                                     'invoice_number'    => $invoice_id,
-                                    'order_id'          =>  $invoice_id. '-UID-' .$request->company_id,
+                                    'order_id'          =>  $invoice_id . '-UID-' . $request->company_id,
                                     'item_numbers'      => implode(',', $purchase_item),
                                     'payment_type'      => $payment_status,
                                     'payment_currency'  => 'USD',
                                     'payment_price'     => $TotalItemPrice,
                                     'stripe_charge_id'  => '',
-                                    'transaction_id'    => $TotalItemPrice.'-'.time(),
+                                    'transaction_id'    => $TotalItemPrice . '-' . time(),
                                     'status'            => 1,
                                 ]);
-                                
+
                                 $emailData['title']         = 'Invoice From Callanalog';
                                 $emailData['item_numbers']  = $item_ids;
                                 $emailData['item_types']    = 'Extension';
                                 $emailData['price']         = $TotalItemPrice;
-                                $emailData['invoice_number']= $invoice_id;
+                                $emailData['invoice_number'] = $invoice_id;
                                 $emailData['email']         = $Company->email;
-                                $emailData['email_template']= 'invoice';
+                                $emailData['email_template'] = 'invoice';
                                 dispatch(new \App\Jobs\SendEmailJob($emailData));
-                                
+
                                 $response['total_extension'] = count($item_ids);
                                 //$Extensions;//->toArray();
                                 $response['Show_Cart'] = 'No';
-                                
+
                                 $server_flag = config('app.server_flag');
                                 if ($server_flag == 1) {
                                     $shell_script = config('app.shell_script');
@@ -349,18 +346,18 @@ class ExtensionController extends Controller
 
     public function deleteExtension(Request $request, $id)
     {
-        try {  
+        try {
             DB::beginTransaction();
             $Extension = Extension::where('id', $id)->first();
-            if($Extension){
-                
+            if ($Extension) {
+
                 $removeExtensionFile = config('app.webrtc_template_url');
                 $this->removeExtensionFromConfFile($Extension->name, $removeExtensionFile);
-                
-                $removeExtensionFile = config('app.softphone_template_url');                
+
+                $removeExtensionFile = config('app.softphone_template_url');
                 $this->removeExtensionFromConfFile($Extension->name, $removeExtensionFile);
 
-                Log::error('removeExtensionFile: ' . $removeExtensionFile );
+                Log::error('removeExtensionFile: ' . $removeExtensionFile);
 
                 $server_flag = config('app.server_flag');
                 if ($server_flag == 1) {
@@ -369,61 +366,61 @@ class ExtensionController extends Controller
                     Log::error('Extension Update File Transfer Log : ' . $result);
                     $this->sipReload();
                 }
-				$resdelete = $Extension->delete();
+                $resdelete = $Extension->delete();
                 if ($resdelete) {
                     Cart::where('item_id', '=', $id)->delete();
                     RingMember::where('extension', $Extension->name)->delete();
                     QueueMember::where('membername', $Extension->name)->delete();
                     DB::commit();
-                    return $this->output(true,'Success',200);
+                    return $this->output(true, 'Success', 200);
                 } else {
                     DB::commit();
-                    return $this->output(false, 'Error occurred in Extension deleting. Please try again!.', [], 209);                    
+                    return $this->output(false, 'Error occurred in Extension deleting. Please try again!.', [], 209);
                 }
-            }else{
+            } else {
                 DB::commit();
-                return $this->output(false,'Extension not exist with us.', [], 409);
+                return $this->output(false, 'Extension not exist with us.', [], 409);
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error occurred in Extension Deleting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            Log::error('Error occurred in Extension Deleting : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
 
     public function changeExtensionStatus(Request $request, $id)
-	{
-		try { 
-			DB::beginTransaction(); 
-			$validator = Validator::make($request->all(), [
-				'status' => 'required',
-			]);
-			if ($validator->fails()){
-				DB::commit();
-				return $this->output(false, $validator->errors()->first(), [], 409);
-			}		
-			$Extension = Extension::find($id);
-			if(is_null($Extension)){
-				DB::commit();
-				return $this->output(false, 'This Extension not exist with us. Please try again!.', [], 409);
-			}else{				
-				$Extension->status = $request->status;
-				$ExtensionsRes = $Extension->save();
-				if($ExtensionsRes){
-					$Extension = Extension::where('id', $id)->first();        
-					$response = $Extension->toArray();
-					DB::commit();
-					return $this->output(true, 'Extension status updated successfully.', $response, 200);
-				}else{
-					DB::commit();
-					return $this->output(false, 'Error occurred in Extension Updating. Please try again!.', [], 200);
-				}				
-			}
-		} catch (\Exception $e) {
-			DB::rollback();
-			Log::error('Error occurred in Extension Updating : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
-			return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
-		}
+    {
+        try {
+            DB::beginTransaction();
+            $validator = Validator::make($request->all(), [
+                'status' => 'required',
+            ]);
+            if ($validator->fails()) {
+                DB::commit();
+                return $this->output(false, $validator->errors()->first(), [], 409);
+            }
+            $Extension = Extension::find($id);
+            if (is_null($Extension)) {
+                DB::commit();
+                return $this->output(false, 'This Extension not exist with us. Please try again!.', [], 409);
+            } else {
+                $Extension->status = $request->status;
+                $ExtensionsRes = $Extension->save();
+                if ($ExtensionsRes) {
+                    $Extension = Extension::where('id', $id)->first();
+                    $response = $Extension->toArray();
+                    DB::commit();
+                    return $this->output(true, 'Extension status updated successfully.', $response, 200);
+                } else {
+                    DB::commit();
+                    return $this->output(false, 'Error occurred in Extension Updating. Please try again!.', [], 200);
+                }
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error occurred in Extension Updating : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
     }
 
     public function getAllExtensions(Request $request)
@@ -439,7 +436,7 @@ class ExtensionController extends Controller
                 $data = Extension::select()
                     //->with('company:id,company_name,email,mobile,balance')
                     ->with(['company' => function ($query) {
-                        $query->select('id', 'company_name', 'email','mobile','balance','plan_id'); // select specific fields from company
+                        $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id'); // select specific fields from company
                     }, 'company.user_plan' => function ($query) {
                         $query->select('id', 'name'); // select specific fields from user_plan
                     }])
@@ -451,12 +448,12 @@ class ExtensionController extends Controller
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
                         //->with('company:id,company_name,email,mobile,balance')
                         ->with(['company' => function ($query) {
-                            $query->select('id', 'company_name', 'email','mobile','balance','plan_id'); // select specific fields from company
+                            $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id'); // select specific fields from company
                         }, 'company.user_plan' => function ($query) {
                             $query->select('id', 'name'); // select specific fields from user_plan
                         }])
                         ->with('country:id,country_name')
-                        ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')                        
+                        ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
                         ->orWhere('name', 'like', "%$params%")
                         //->orWhere('callbackextension', 'LIKE', "%$params%")
                         //->orWhere('agent_name', 'LIKE', "%$params%")
@@ -475,7 +472,7 @@ class ExtensionController extends Controller
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
                         //->with('company:id,company_name,email,mobile,balance,plan_id')
                         ->with(['company' => function ($query) {
-                            $query->select('id', 'company_name', 'email','mobile','balance','plan_id'); // select specific fields from company
+                            $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id'); // select specific fields from company
                         }, 'company.user_plan' => function ($query) {
                             $query->select('id', 'name'); // select specific fields from user_plan
                         }])
@@ -495,7 +492,7 @@ class ExtensionController extends Controller
                 $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
                     //->with('company:id,company_name,email,mobile,balance')
                     ->with(['company' => function ($query) {
-                        $query->select('id', 'company_name', 'email','mobile','balance','plan_id'); // select specific fields from company
+                        $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id'); // select specific fields from company
                     }, 'company.user_plan' => function ($query) {
                         $query->select('id', 'name'); // select specific fields from user_plan
                     }])
@@ -505,33 +502,33 @@ class ExtensionController extends Controller
                     ->where('extensions.company_id', '=', $user->company_id)
                     ->orderBy('id', 'DESC')
                     ->get();
-            } else {                
+            } else {
                 if ($params != "") {
                     //DB::enableQueryLog();
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
-						//->with('company:id,company_name,email,mobile,balance')
+                        //->with('company:id,company_name,email,mobile,balance')
                         ->with(['company' => function ($query) {
-                            $query->select('id', 'company_name', 'email','mobile','balance','plan_id'); // select specific fields from company
+                            $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id'); // select specific fields from company
                         }, 'company.user_plan' => function ($query) {
                             $query->select('id', 'name'); // select specific fields from user_plan
                         }])
                         ->with('country:id,country_name')
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-                        ->where('extensions.company_id', '=', $user->company_id) 
-						->where(function($query) use($params) {
-							$query->where('name', 'like', "%{$params}%")
-							->orWhereHas('country', function ($query) use ($params) {
-								$query->where('country_name', 'like', "%{$params}%");
-							});
-						})
+                        ->where('extensions.company_id', '=', $user->company_id)
+                        ->where(function ($query) use ($params) {
+                            $query->where('name', 'like', "%{$params}%")
+                                ->orWhereHas('country', function ($query) use ($params) {
+                                    $query->where('country_name', 'like', "%{$params}%");
+                                });
+                        })
                         ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
-                        //dd(DB::getQueryLog());
+                    //dd(DB::getQueryLog());
                 } else {
                     $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
                         //->with('company:id,company_name,email,mobile,balance')
                         ->with(['company' => function ($query) {
-                            $query->select('id', 'company_name', 'email','mobile','balance','plan_id'); // select specific fields from company
+                            $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id'); // select specific fields from company
                         }, 'company.user_plan' => function ($query) {
                             $query->select('id', 'name'); // select specific fields from user_plan
                         }])
@@ -540,10 +537,10 @@ class ExtensionController extends Controller
                         ->where('extensions.company_id', '=', $user->company_id)
                         ->orderBy('id', 'DESC')
                         ->paginate(
-                        $perPage = $perPageNo,
-                        $columns = ['*'],
-                        $pageName = 'page'
-                    );
+                            $perPage = $perPageNo,
+                            $columns = ['*'],
+                            $pageName = 'page'
+                        );
                 }
             }
         }
@@ -570,10 +567,10 @@ class ExtensionController extends Controller
             } else {
                 $validator = Validator::make($request->all(), [
                     'country_id'    => 'required|numeric|exists:countries,id',
-					'company_id'	=> 'required|numeric|exists:companies,id',
+                    'company_id'    => 'required|numeric|exists:companies,id',
                     'name'          => 'required|unique:extensions,name,' . $Extension->id,
                     'callbackextension' => 'required',
-                    'agent_name'=> 'required',
+                    'agent_name' => 'required',
                     'secret'    => 'required',
                     'barge'     => 'required|in:0,1',
                     'recording' => 'required|in:0,1',
@@ -583,7 +580,7 @@ class ExtensionController extends Controller
                     'callerid'  => 'required_if:callgroup,1',
                     'sip_temp'  => 'required|in:WEBRTC,SOFTPHONE',
                     'dial_timeout'  => 'required',
-                ],[
+                ], [
                     'callbackextension' => 'Intercom number already exists.',
                 ]);
                 if ($validator->fails()) {
@@ -598,7 +595,7 @@ class ExtensionController extends Controller
                     ->first();
                 if (!$ExtensionOld) {
                     $Extension_intercom = Extension::where('callbackextension', $request->callbackextension)
-                    ->where('company_id', $request->company_id)->where('id', '!=', $id)->first();
+                        ->where('company_id', $request->company_id)->where('id', '!=', $id)->first();
                     if ($Extension_intercom) {
                         DB::commit();
                         return $this->output(false, 'Intercom number already exists with us. Please try again with different!.', [], 409);
@@ -632,27 +629,27 @@ class ExtensionController extends Controller
                     }
 
                     //if ($Extension->sip_temp != $request->sip_temp) { 
-                        if ($request->sip_temp == 'WEBRTC') {
-                            $addExtensionFile = $webrtc_template_url;
-                            $removeExtensionFile = $softphone_template_url;
-                        } else {
-                            $addExtensionFile = $softphone_template_url;
-                            $removeExtensionFile = $webrtc_template_url;
-                        }
+                    if ($request->sip_temp == 'WEBRTC') {
+                        $addExtensionFile = $webrtc_template_url;
+                        $removeExtensionFile = $softphone_template_url;
+                    } else {
+                        $addExtensionFile = $softphone_template_url;
+                        $removeExtensionFile = $webrtc_template_url;
+                    }
 
-                        Log::error('addExtensionFile : ' . $addExtensionFile . '  / removeExtensionFile: ' . $removeExtensionFile );
+                    Log::error('addExtensionFile : ' . $addExtensionFile . '  / removeExtensionFile: ' . $removeExtensionFile);
 
-                        $ConfTemplate = ConfTemplate::select()->where('template_id', $request->sip_temp)->first();
-                        $this->addExtensionInConfFile($request->name, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
-                        $this->removeExtensionFromConfFile($request->name, $removeExtensionFile);
+                    $ConfTemplate = ConfTemplate::select()->where('template_id', $request->sip_temp)->first();
+                    $this->addExtensionInConfFile($request->name, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
+                    $this->removeExtensionFromConfFile($request->name, $removeExtensionFile);
 
-                        $server_flag = config('app.server_flag');
-                        if ($server_flag == 1) {
-                            $shell_script = config('app.shell_script');
-                            $result = shell_exec('sudo ' . $shell_script);
-                            Log::error('Extension Update File Transfer Log : ' . $result);
-                            $this->sipReload();
-                        }
+                    $server_flag = config('app.server_flag');
+                    if ($server_flag == 1) {
+                        $shell_script = config('app.shell_script');
+                        $result = shell_exec('sudo ' . $shell_script);
+                        Log::error('Extension Update File Transfer Log : ' . $result);
+                        $this->sipReload();
+                    }
                     //}
 
 
@@ -785,39 +782,38 @@ class ExtensionController extends Controller
         fputs($socket, "Action: Logoff\r\n\r\n");
         while (!feof($socket))
             $response .= fread($socket, 5038);
-        fclose($socket); 
+        fclose($socket);
 
         $lines = explode("\n", $response);
         $data = array();
-        foreach ($lines as $line) 
-        {
+        foreach ($lines as $line) {
             $line = trim($line); // Remove leading/trailing whitespace 
             if (empty($line)) {
                 continue; // Skip empty lines
             }
             if (strpos($line, "OK") !== false || strpos($line, "UNREACHABLE") !== false || strpos($line, "LAGGED") !== false) {
-                $columns = preg_split('/\s+/', $line);                
+                $columns = preg_split('/\s+/', $line);
                 if (strpos($columns[1], "/") !== false) {
                     $columns[1] = substr($columns[1], 0, strpos($columns[1], "/"));
                 }
-                if(is_numeric($columns[1])){
+                if (is_numeric($columns[1])) {
 
                     if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
                         $extension = Extension::with('company:id,company_name,email,mobile')
-                                    ->select('id', 'name', 'agent_name', 'sip_temp','callbackextension', 'country_id', 'company_id')
-                                    ->where('name', $columns[1])->first();
-                    }else{
+                            ->select('id', 'name', 'agent_name', 'sip_temp', 'callbackextension', 'country_id', 'company_id')
+                            ->where('name', $columns[1])->first();
+                    } else {
                         $extension = Extension::with('company:id,company_name,email,mobile')
-                                    ->select('id', 'name', 'agent_name', 'sip_temp','callbackextension', 'country_id', 'company_id')
-                                    ->where('company_id', $user->company_id)
-                                    ->where('name', $columns[1])->first();
+                            ->select('id', 'name', 'agent_name', 'sip_temp', 'callbackextension', 'country_id', 'company_id')
+                            ->where('company_id', $user->company_id)
+                            ->where('name', $columns[1])->first();
                     }
 
                     if ($extension != null) {
                         $clientId   = $extension->company_id;
                         $agent      = $extension->agent_name;
                         $phone_type = $extension->sip_temp;
-                        $client_name= $extension->company->company_name;
+                        $client_name = $extension->company->company_name;
                         $email      = $extension->company->email;
 
                         if (in_array('D', $columns)) {
@@ -826,19 +822,19 @@ class ExtensionController extends Controller
                         }
 
                         if ($phone_type == 'WEBRTC') {
-                            $user_type = "Web Phone";                    
+                            $user_type = "Web Phone";
                         } else {
                             $user_type = "Soft Phone";
                         }
                         if (in_array('A', $columns)) {
                             unset($columns[5]);
-                            $columns = array_values($columns);                  
-                        } 
+                            $columns = array_values($columns);
+                        }
                         $port = $columns[5];
                         if ($columns[5] == 0) {
                             $port = 'Unreachable';
                         }
-        
+
                         $status = trim($columns[6] . ' ' . $columns[7] . ' ' . $columns[8]);
                         if ($port == 0 || $status == 'UNREACHABLE') {
                             if ($status == 'UNREACHABLE') {
@@ -850,7 +846,7 @@ class ExtensionController extends Controller
                         } else {
                             $status = 'REACHABLE';
                         }
-                        
+
                         $peerData = array(
                             "companyName"   => $client_name,
                             "agent_name"    => $agent,
@@ -859,14 +855,14 @@ class ExtensionController extends Controller
                             "name"      => $columns[1] . '/' . $columns[1],
                             "host"      => $columns[2],
                             "status"    => $status,
-                            "status_val"=> trim($columns[7] . ' ' . $columns[8]),
+                            "status_val" => trim($columns[7] . ' ' . $columns[8]),
                         );
                         $data[] = $peerData;
                     }
                 }
             }
         }
-        if (count($data) > 0 ) {
+        if (count($data) > 0) {
             return $this->output(true, 'Success', $data, 200);
         } else {
             return $this->output(true, 'No Record Found', []);
@@ -875,18 +871,18 @@ class ExtensionController extends Controller
 
     public function getExtensionsNumberPassword(Request $request, $company_id)
     {
-        try{    
-            $Extension  = Extension::select('country_id','name', 'secret')
-                                ->with('country:id,country_name')
-                                ->where('status', '1')
-                                ->where('host', 'dynamic')
-                                ->where('company_id', $company_id)->get();
+        try {
+            $Extension  = Extension::select('country_id', 'name', 'secret')
+                ->with('country:id,country_name')
+                ->where('status', '1')
+                ->where('host', 'dynamic')
+                ->where('company_id', $company_id)->get();
 
-            $Tfn        = Tfn::select('country_id','tfn_number')
-                                ->with('countries:id,country_name')
-                                ->where('status', 1)
-                                ->where('activated', '1')
-                                ->where('company_id', $company_id)->get();
+            $Tfn        = Tfn::select('country_id', 'tfn_number')
+                ->with('countries:id,country_name')
+                ->where('status', 1)
+                ->where('activated', '1')
+                ->where('company_id', $company_id)->get();
             $response['Extension']  = $Extension->toArray();
             $response['Tfn']        = $Tfn->toArray();
             if ($Extension->isNotEmpty() ||  $Tfn->isNotEmpty()) {
@@ -894,11 +890,10 @@ class ExtensionController extends Controller
             } else {
                 return $this->output(true, 'No Record Found', []);
             }
-            
-        } catch (\Exception $e) {            
-            Log::error('Error in fetching extension number and secret : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());            
+        } catch (\Exception $e) {
+            Log::error('Error in fetching extension number and secret : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
-        }        
+        }
     }
 
     public function updateExtensionsDetails(Request $request)
@@ -918,7 +913,7 @@ class ExtensionController extends Controller
             ]);
             if ($validator->fails()) {
                 return $this->output(false, $validator->errors()->first(), [], 409);
-            }else{
+            } else {
                 $input = $request->all();
                 $extension = $input['extension'];
                 if (is_array($extension)) {
@@ -937,14 +932,14 @@ class ExtensionController extends Controller
                             $addExtensionFile = $softphone_template_url;
                             $removeExtensionFile = $webrtc_template_url;
                         }
-    
-                        Log::error('addExtensionFile : ' . $addExtensionFile . '  / removeExtensionFile: ' . $removeExtensionFile );
-    
+
+                        Log::error('addExtensionFile : ' . $addExtensionFile . '  / removeExtensionFile: ' . $removeExtensionFile);
+
                         $ConfTemplate = ConfTemplate::select()->where('template_id', $data['sip_temp'])->first();
                         $this->addExtensionInConfFile($data['name'], $addExtensionFile, $data['secret'], '12345', $ConfTemplate->template_contents);
-                        $this->removeExtensionFromConfFile($data['name'], $removeExtensionFile);    
+                        $this->removeExtensionFromConfFile($data['name'], $removeExtensionFile);
                     }
-                    
+
                     $server_flag = config('app.server_flag');
                     if ($server_flag == 1) {
                         $shell_script = config('app.shell_script');
@@ -954,19 +949,19 @@ class ExtensionController extends Controller
                     }
 
 
-                    if (count($extension_details) > 0 ) {
+                    if (count($extension_details) > 0) {
                         return $this->output(true, 'Success', $extension_details, 200);
                     } else {
                         return $this->output(true, 'No Records updated', []);
                     }
-                }else{
+                } else {
                     return $this->output(false, 'Wrong extension value format.');
                 }
             }
-        } catch (\Exception $e) {            
-            Log::error('Error in fetching extension Details : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());            
+        } catch (\Exception $e) {
+            Log::error('Error in fetching extension Details : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
-        }  
+        }
     }
 
 
@@ -980,22 +975,22 @@ class ExtensionController extends Controller
             ]);
             if ($validator->fails()) {
                 return $this->output(false, $validator->errors()->first(), [], 409);
-            }else{
+            } else {
                 $input = $request->all();
                 $extensionsId = $input['extension'];
                 if (is_array($extensionsId)) {
                     foreach ($extensionsId as $id) {
                         DB::beginTransaction();
                         $Extension = Extension::where('id', $id)->first();
-                        if($Extension){
+                        if ($Extension) {
 
                             $removeExtensionFile = config('app.webrtc_template_url');
                             $this->removeExtensionFromConfFile($Extension->name, $removeExtensionFile);
-                            
-                            $removeExtensionFile = config('app.softphone_template_url');                
+
+                            $removeExtensionFile = config('app.softphone_template_url');
                             $this->removeExtensionFromConfFile($Extension->name, $removeExtensionFile);
 
-                            
+
                             $resdelete = $Extension->delete();
                             if ($resdelete) {
                                 Cart::where('item_id', '=', $id)->delete();
@@ -1005,15 +1000,15 @@ class ExtensionController extends Controller
                                 //return $this->output(true,'Success',200);
                             } else {
                                 DB::commit();
-                                return $this->output(false, 'Error occurred in Extension deleting. Please try again!.', [], 209);                    
+                                return $this->output(false, 'Error occurred in Extension deleting. Please try again!.', [], 209);
                             }
-                        }else{
+                        } else {
                             DB::commit();
-                            return $this->output(false,'Extension not exist with us.', [], 409);
+                            return $this->output(false, 'Extension not exist with us.', [], 409);
                         }
                     }
 
-                    Log::error('Multiple Remove Extension From File: ' . $removeExtensionFile );
+                    Log::error('Multiple Remove Extension From File: ' . $removeExtensionFile);
                     $server_flag = config('app.server_flag');
                     if ($server_flag == 1) {
                         $shell_script = config('app.shell_script');
@@ -1021,14 +1016,14 @@ class ExtensionController extends Controller
                         Log::error('Extension Update File Transfer Log : ' . $result);
                         $this->sipReload();
                     }
-                    return $this->output(true,'Success',200);
-                }else{
+                    return $this->output(true, 'Success', 200);
+                } else {
                     return $this->output(false, 'Wrong extension value format.');
                 }
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error occurred in Multi Extension Deleting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            Log::error('Error occurred in Multi Extension Deleting : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
@@ -1036,13 +1031,11 @@ class ExtensionController extends Controller
 
     public function getExtensionsByCompany(Request $request, $company_id)
     {
-        $Company = Company::find($company_id);		
-        if(is_null($Company)){
-           
+        $Company = Company::find($company_id);
+        if (is_null($Company)) {
+
             return $this->output(false, 'This Company not exist with us. Please try again!.', [], 409);
-        }
-        else
-        {
+        } else {
             $data = Extension::with('company:id,company_name,email,mobile')
                 ->with('country:id,country_name')
                 ->select('id', 'name', 'agent_name', 'callbackextension', 'country_id', 'company_id')
@@ -1058,7 +1051,7 @@ class ExtensionController extends Controller
             } else {
                 return $this->output(true, 'No Record Found', []);
             }
-        }        
+        }
     }
 
     /***  get extension list for barging */
@@ -1066,23 +1059,23 @@ class ExtensionController extends Controller
     {
         $user = \Auth::user();
         $company_id = $request->company_id ?? NULL;
-       // return $user->roles->first()->slug;
+        // return $user->roles->first()->slug;
         if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
-           
+
             $data = Extension::select('id', 'name', 'agent_name')
                 ->where('barge', '1')
                 ->where('status', 1)
                 ->orderBy('id', 'DESC')
                 ->get();
-        }else{
+        } else {
             $data = Extension::select('id', 'name', 'agent_name')
                 ->where('company_id', $company_id)
                 ->where('barge', '1')
                 ->where('status', 1)
                 ->orderBy('id', 'DESC')
                 ->get();
-        }   
-        
+        }
+
         if ($data->isNotEmpty()) {
             $dd = $data->toArray();
             unset($dd['links']);
@@ -1098,7 +1091,7 @@ class ExtensionController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'country_id'    => 'required|numeric|exists:countries,id',
-			'company_id'	=> 'required|numeric|exists:companies,id',
+            'company_id'    => 'required|numeric|exists:companies,id',
             'id.*'          => 'required|exists:extensions,id',
             'payment_type'  => 'nullable',
         ]);
@@ -1130,27 +1123,26 @@ class ExtensionController extends Controller
                                 DB::commit();
                                 return $this->output(false, 'Company account has insufficient balance!');
                             } else {
-                                $item_ids = []; 
+                                $item_ids = [];
                                 $status = '1';
                                 $host = 'dynamic';
                                 $payment_status = ($Company->plan_id == 1) ? $request->payment_type : 'Free';
-                              
+
                                 foreach ($extensions_id as $id) {
                                     $Extension = Extension::find($id);
                                     $sip_temp = $Extension->sip_temp;
-                                   
+
                                     $startingdate = Carbon::now();
-                                    if($Company->plan_id == 2){
+                                    if ($Company->plan_id == 2) {
                                         $expirationdate = $startingdate->addDays(179);
-                                    }else{
-                                        if($startingdate > $Extension->expirationdate)
-                                        {
+                                    } else {
+                                        if ($startingdate > $Extension->expirationdate) {
                                             $expirationdate = $startingdate->addDays(29);
-                                        }else{
+                                        } else {
                                             $dt = Carbon::create($Extension->expirationdate);
                                             $expirationdate = $dt->addDays(29);
                                         }
-                                    } 
+                                    }
 
 
                                     $Extension->startingdate    = $startingdate;
@@ -1159,21 +1151,21 @@ class ExtensionController extends Controller
                                     $Extension->updated_at      = Carbon::now();
                                     $Extension->status          = $status;
                                     $ExtensionRes               = $Extension->save();
-                                    
-                                    if($ExtensionRes){
-                                        if($sip_temp == 'WEBRTC'){
+
+                                    if ($ExtensionRes) {
+                                        if ($sip_temp == 'WEBRTC') {
                                             $addExtensionFile = config('app.webrtc_template_url');
-                                        }else{
+                                        } else {
                                             $addExtensionFile = config('app.webrtc_template_url');
                                         }
-                                        
+
                                         $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
                                         $this->addExtensionInConfFile($Extension->name, $addExtensionFile, $Extension->secret, $Company->account_code, $ConfTemplate->template_contents);
 
                                         $item_ids[$id] = $Extension->name;
                                     }
-                                } 
-                                
+                                }
+
                                 if ($Company->plan_id == 1 && $request->payment_type == 'Paid') {
                                     $Company = Company::where('id', $request->company_id)->first();
                                     if ($Company->balance > $TotalItemPrice) {
@@ -1192,7 +1184,7 @@ class ExtensionController extends Controller
                                     }
                                     $payment_status = $request->payment_type;
                                 }
-                                
+
                                 $invoicetable_id = DB::table('invoices')->max('id');
                                 if (!$invoicetable_id) {
                                     $invoice_id = 'INV/' . date('Y') . '/00001';
@@ -1213,7 +1205,7 @@ class ExtensionController extends Controller
                                 $purchase_item = array();
                                 foreach ($item_ids as $item_id => $item) {
                                     $purchase_item[] = $item;
-                                    $InvoiceItems = InvoiceItems::create([                                    
+                                    $InvoiceItems = InvoiceItems::create([
                                         'invoice_id'    => $Invoice->id,
                                         'country_id'    => $request->country_id,
                                         'item_type'     => 'Extension',
@@ -1221,38 +1213,36 @@ class ExtensionController extends Controller
                                         'item_price'    => $item_price,
                                         'item_category' => 'Renew',
                                     ]);
-                                    
-                                    
                                 }
-                                
+
                                 $payment = Payments::create([
                                     'company_id'        => $request->company_id,
                                     'invoice_id'        => $Invoice->id,
                                     'ip_address'        => $request->ip(),
                                     'invoice_number'    => $invoice_id,
-                                    'order_id'          => $invoice_id. '-UID-' .$request->company_id,
+                                    'order_id'          => $invoice_id . '-UID-' . $request->company_id,
                                     'item_numbers'      => implode(',', $purchase_item),
                                     'payment_type'      => $payment_status,
                                     'payment_currency'  => 'USD',
                                     'payment_price'     => $TotalItemPrice,
                                     'stripe_charge_id'  => '',
-                                    'transaction_id'    => $TotalItemPrice.'-'.time(),
+                                    'transaction_id'    => $TotalItemPrice . '-' . time(),
                                     'status'            => 1,
                                 ]);
-                                
+
                                 $emailData['title']         = 'Invoice From Callanalog';
                                 $emailData['item_numbers']  = $item_ids;
                                 $emailData['item_types']    = 'Extension';
                                 $emailData['price']         = $TotalItemPrice;
-                                $emailData['invoice_number']= $invoice_id;
+                                $emailData['invoice_number'] = $invoice_id;
                                 $emailData['email']         = $Company->email;
-                                $emailData['email_template']= 'invoice';
+                                $emailData['email_template'] = 'invoice';
                                 dispatch(new \App\Jobs\SendEmailJob($emailData));
-                                
+
                                 $response['total_extension'] = count($item_ids);
                                 //$Extensions;//->toArray();
                                 $response['Show_Cart'] = 'No';
-                                
+
                                 $server_flag = config('app.server_flag');
                                 if ($server_flag == 1) {
                                     $shell_script = config('app.shell_script');
@@ -1262,7 +1252,6 @@ class ExtensionController extends Controller
                                 }
                                 DB::commit();
                                 return $this->output(true, 'Extension renew successfully.', $response);
-                                
                             }
                         } else {
                             DB::commit();
@@ -1276,7 +1265,7 @@ class ExtensionController extends Controller
                     DB::commit();
                     return $this->output(false, 'Company not exist with us.', [], 409);
                 }
-            }else{
+            } else {
                 DB::commit();
                 return $this->output(false, 'You are not authorized user.', [], 409);
             }
@@ -1288,4 +1277,42 @@ class ExtensionController extends Controller
     }
 
     /************ End */
+
+    public function extensionexpDateUpdate(Request $request)
+    {
+        $user = \Auth::user();
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|numeric',
+            'expirationdate' => 'required',
+        ], [
+            'name.required' => 'Extension Number is Required',
+            'expirationdate.required' => 'Expiration Date is Required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 400);
+        }
+        try {
+            if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                $dataChangeExtensions = Extension::where('name', $request->name)->first();
+                if (is_null($dataChangeExtensions)) {
+                    return $this->output(false, 'This Number does not exist with us. Please try again!', [], 404);
+                }
+                // $dataChangeExtensions->startingdate = Carbon::now();
+                $dataChangeExtensions->expirationdate = $request->expirationdate;
+                $dateData = $dataChangeExtensions->save();
+                if ($dateData) {
+                    $response = $dataChangeExtensions->toArray();
+                    return $this->output(true, "Extension Number Date update Successfully!.", $response, 200);
+                } else {
+                    return $this->output(false, "Somthing went wrong. While Tfn Date update", [], 400);
+                }
+            } else {
+                return $this->output(false, 'Sorry! You are not authorized.', [], 400);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error occurred in Extension Number Date change : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
 }
