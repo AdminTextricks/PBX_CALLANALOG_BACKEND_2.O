@@ -424,8 +424,8 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	# TFN authentication Manage 
 	Route::group(['prefix' => 'tfn-auth'], function () {
-		Route::post('/', [TfnController::class, 'setTfnAuthenticstion']);		
-		Route::get('/{tfn_id}', [TfnController::class, 'getTfnAuthenticstion']);
+		Route::post('/', [TfnController::class, 'setTfnAuthentication']);		
+		Route::get('/{tfn_id}', [TfnController::class, 'getTfnAuthentication']);
 	});
 
 	# Time Group Manage 

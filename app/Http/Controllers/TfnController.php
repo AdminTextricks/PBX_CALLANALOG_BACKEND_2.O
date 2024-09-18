@@ -1428,7 +1428,7 @@ class TfnController extends Controller
         }
     }
 
-    public function setTfnAuthenticstion(Request $request)
+    public function setTfnAuthentication(Request $request)
     {
        
         $validator = Validator::make($request->all(), [
@@ -1483,7 +1483,7 @@ class TfnController extends Controller
         }
     }
 
-    public function getTfnAuthenticstion(Request $request, $tfn_id)
+    public function getTfnAuthentication(Request $request, $tfn_id)
     {
         try {
             $TfnAuthentication = TfnAuthentication::where('tfn_id', $tfn_id)->first();
