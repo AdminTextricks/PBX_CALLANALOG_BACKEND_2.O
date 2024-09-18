@@ -223,6 +223,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	# Manage Extensions
 	Route::group(['prefix' => 'extensions'], function () {		
+		Route::post('/extensionDateChange', [ExtensionController::class, 'extensionexpDateUpdate']);
 		Route::post('/multiEdit', [ExtensionController::class, 'updateExtensionsDetails']);
 		Route::get('/getSipRegistrationList', [ExtensionController::class, 'getSipRegistrationList'])->name('getSipRegistrationList');
 		Route::get('/quickView/{company_id}', [ExtensionController::class, 'getExtensionsNumberPassword']);
