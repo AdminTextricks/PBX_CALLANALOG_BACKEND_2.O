@@ -43,10 +43,11 @@ class TfnController extends Controller
             $validator = Validator::make($request->all(), [
                 'tfn_number'                => 'required|numeric|unique:tfns',
                 'tfn_provider'              => 'required|numeric',
-                'tfn_group_id'              => 'required|numeric',
+                'prefix'                    => 'required|numeric',
+                // 'tfn_group_id'              => 'required|numeric',
                 'country_id'                => 'required|numeric',
-                'monthly_rate'              => 'required',
-                'connection_charge'         => 'required',
+                // 'monthly_rate'              => 'required',
+                // 'connection_charge'         => 'required',
                 'selling_rate'              => 'required',
                 'aleg_retail_min_duration'  => 'required|numeric',
                 'aleg_billing_block'        => 'required|numeric',
@@ -60,12 +61,12 @@ class TfnController extends Controller
                     $addTfns = Tfn::where('tfn_number', $request->tfn_number)->first();
                     if (!$addTfns) {
                         $addTfns = Tfn::create([
-                            'tfn_number'               => $request->tfn_number,
+                            'tfn_number'               => $request->prefix . $request->tfn_number,
                             'tfn_provider'             => $request->tfn_provider,
-                            'tfn_group_id'             => $request->tfn_group_id,
+                            // 'tfn_group_id'             => $request->tfn_group_id,
                             'country_id'               => $request->country_id,
-                            'monthly_rate'             => $request->monthly_rate,
-                            'connection_charge'        => $request->connection_charge,
+                            // 'monthly_rate'             => $request->monthly_rate,
+                            // 'connection_charge'        => $request->connection_charge,
                             'selling_rate'             => $request->selling_rate,
                             'aleg_retail_min_duration' => $request->aleg_retail_min_duration,
                             'aleg_billing_block'       => $request->aleg_billing_block,
@@ -106,10 +107,10 @@ class TfnController extends Controller
             $validator = Validator::make($request->all(), [
                 'tfn_number'                => 'required|numeric|unique:tfns,tfn_number,' . $updateTfns->id,
                 'tfn_provider'              => 'required|numeric',
-                'tfn_group_id'              => 'required|numeric',
+                // 'tfn_group_id'              => 'required|numeric',
                 'country_id'                => 'required|numeric',
-                'monthly_rate'              => 'required',
-                'connection_charge'         => 'required',
+                // 'monthly_rate'              => 'required',
+                // 'connection_charge'         => 'required',
                 'selling_rate'              => 'required',
                 'aleg_retail_min_duration'  => 'required|numeric',
                 'aleg_billing_block'        => 'required|numeric',
@@ -123,10 +124,10 @@ class TfnController extends Controller
                 DB::beginTransaction();
                 //$updateTfns->tfn_number               = $request->tfn_number;
                 $updateTfns->tfn_provider             = $request->tfn_provider;
-                $updateTfns->tfn_group_id             = $request->tfn_group_id;
+                // $updateTfns->tfn_group_id             = $request->tfn_group_id;
                 $updateTfns->country_id               = $request->country_id;
-                $updateTfns->monthly_rate             = $request->monthly_rate;
-                $updateTfns->connection_charge        = $request->connection_charge;
+                // $updateTfns->monthly_rate             = $request->monthly_rate;
+                // $updateTfns->connection_charge        = $request->connection_charge;
                 $updateTfns->selling_rate             = $request->selling_rate;
                 $updateTfns->aleg_retail_min_duration = $request->aleg_retail_min_duration;
                 $updateTfns->aleg_billing_block       = $request->aleg_billing_block;
@@ -262,7 +263,7 @@ class TfnController extends Controller
             'countries:id,country_name,phone_code,currency_symbol',
             'trunks:id,type,name',
             'company:id,company_name,email,balance',
-            'tfn_groups:id,tfngroup_name',
+            // 'tfn_groups:id,tfngroup_name',
             'main_plans:id,name',
             'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
             'tfn_destinations.destinationType:id,destination_type'
@@ -517,7 +518,7 @@ class TfnController extends Controller
                 'countries:id,country_name,phone_code,currency_symbol',
                 'trunks:id,type,name',
                 'company:id,company_name,email',
-                'tfn_groups:id,tfngroup_name',
+                // 'tfn_groups:id,tfngroup_name',
                 'main_plans:id,name',
                 'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
                 'tfn_destinations.destinationType:id,destination_type'
@@ -532,7 +533,7 @@ class TfnController extends Controller
                 'countries:id,country_name,phone_code,currency_symbol',
                 'trunks:id,type,name',
                 'company:id,company_name,email',
-                'tfn_groups:id,tfngroup_name',
+                // 'tfn_groups:id,tfngroup_name',
                 'main_plans:id,name',
                 'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
                 'tfn_destinations.destinationType:id,destination_type'
@@ -692,8 +693,8 @@ class TfnController extends Controller
             }
             $tfn_number = trim($column[0]);
             $tfn_provider = trim($column[1]);
-            $tfn_group_id = trim($column[2]);
-            $country_id = trim($column[3]);
+            // $tfn_group_id = trim($column[2]);
+            $country_id = trim($column[2]);
             // $countryData = Country::select('*')->where('iso3', $country_id)->first();
             $countryData = Country::select('*')->where('country_name', $country_id)->first();
             if (is_null($countryData)) {
@@ -707,22 +708,22 @@ class TfnController extends Controller
             if (is_null($tfn_group_idData)) {
                 return ['Status' => false, 'Message' => 'No Tfn Group ' . $tfn_group_idData . ' Record Found!', 'data' => [], 'code' => 404];
             }
-            $tfn_providerData = Trunk::select('*')->where('type', "Inbound")->where('name', $tfn_provider)->first();
-            $tfn_group_idData = TfnGroups::select('*')->where('tfngroup_name', $tfn_group_id)->first();
+            // $tfn_providerData = Trunk::select('*')->where('type', "Inbound")->where('name', $tfn_provider)->first();
+            // $tfn_group_idData = TfnGroups::select('*')->where('tfngroup_name', $tfn_group_id)->first();
             $tfncsv = Tfn::select('*')->where('tfn_number', $tfn_number)->first();
 
             if (is_null($tfncsv)) {
                 $tfncsv = new Tfn();
-                $tfncsv->tfn_number = trim($column[0]);
+                $tfncsv->tfn_number = $countryData->phone_code . trim($column[0]);
                 $tfncsv->tfn_provider = $tfn_providerData->id;
-                $tfncsv->tfn_group_id = $tfn_group_idData->id;
+                // $tfncsv->tfn_group_id = $tfn_group_idData->id;
                 $tfncsv->country_id = $countryData->id;
                 $tfncsv->activated = '0';
-                $tfncsv->monthly_rate = trim($column[4]);
-                $tfncsv->connection_charge = trim($column[5]);
-                $tfncsv->selling_rate = trim($column[6]);
-                $tfncsv->aleg_retail_min_duration = trim($column[7]);
-                $tfncsv->aleg_billing_block = trim($column[8]);
+                // $tfncsv->monthly_rate = trim($column[4]);
+                // $tfncsv->connection_charge = trim($column[5]);
+                $tfncsv->selling_rate = trim($column[3]);
+                $tfncsv->aleg_retail_min_duration = trim($column[4]);
+                $tfncsv->aleg_billing_block = trim($column[5]);
                 $tfncsv->status = 1;
                 $response = $tfncsv->save();
 
