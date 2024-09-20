@@ -679,7 +679,7 @@ class TfnController extends Controller
         foreach ($chunkdata as $column) {
             // return count($column);
             // return $column;
-            if (count($column) < 9) {
+            if (count($column) < 6) {
                 continue;
             }
 
@@ -704,13 +704,13 @@ class TfnController extends Controller
             if (is_null($tfn_providerData)) {
                 return ['Status' => false, 'Message' => 'No Inbound Trunk ' . $tfn_provider . ' Record Found!', 'data' => [], 'code' => 404];
             }
-            $tfn_group_idData = TfnGroups::select('*')->where('tfngroup_name', $tfn_group_id)->first();
-            if (is_null($tfn_group_idData)) {
-                return ['Status' => false, 'Message' => 'No Tfn Group ' . $tfn_group_idData . ' Record Found!', 'data' => [], 'code' => 404];
-            }
+            // $tfn_group_idData = TfnGroups::select('*')->where('tfngroup_name', $tfn_group_id)->first();
+            // if (is_null($tfn_group_idData)) {
+            //     return ['Status' => false, 'Message' => 'No Tfn Group ' . $tfn_group_idData . ' Record Found!', 'data' => [], 'code' => 404];
+            // }
             // $tfn_providerData = Trunk::select('*')->where('type', "Inbound")->where('name', $tfn_provider)->first();
             // $tfn_group_idData = TfnGroups::select('*')->where('tfngroup_name', $tfn_group_id)->first();
-            $tfncsv = Tfn::select('*')->where('tfn_number', $tfn_number)->first();
+            $tfncsv = Tfn::select('*')->where('tfn_number', $countryData . $tfn_number)->first();
 
             if (is_null($tfncsv)) {
                 $tfncsv = new Tfn();
