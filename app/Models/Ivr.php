@@ -18,6 +18,7 @@ class Ivr extends Model
         'description',
         'ivr_media_id',
         'timeout',
+        'direct_destination',
         'status',
     ];
 

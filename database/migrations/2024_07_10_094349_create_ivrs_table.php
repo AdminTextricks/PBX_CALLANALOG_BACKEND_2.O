@@ -14,12 +14,12 @@ return new class extends Migration
         Schema::create('ivrs', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('company_id');
-            $table->integer('country_id')->default(0);;
-            //$table->tinyInteger('input_auth_type')->nullable();
+            $table->integer('country_id')->default(0);            
             $table->string('name', 256)->nullable()->index();
             $table->string('description', 256)->nullable();            
             $table->integer('ivr_media_id')->default(0);
             $table->string('timeout',256)->nullable();
+            $table->enum('direct_destination',['0','1'])->default(0);
             $table->tinyInteger('status')->default(1);
             $table->timestamps();
             $table->foreign('company_id')->references('id')->on('companies');

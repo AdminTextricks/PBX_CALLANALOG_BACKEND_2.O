@@ -21,8 +21,8 @@ class OutboundCallRateController extends Controller
             'selling_rate'  => 'required',
             'init_block'    => 'required',
             'billing_block' => 'required',
-            'start_date'    => 'required',
-            'stop_date'     => 'required',
+            'start_date'    => 'nullable',
+            'stop_date'     => 'nullable',
         ]);
         if ($validator->fails()){
             return $this->output(false, $validator->errors()->first(), [], 409);
@@ -179,8 +179,8 @@ class OutboundCallRateController extends Controller
                     'selling_rate'  => 'required',
                     'init_block'    => 'required',
                     'billing_block' => 'required',
-                    'start_date'    => 'required',
-                    'stop_date'     => 'required',
+                    'start_date'    => 'nullable',
+                    'stop_date'     => 'nullable',
                 ]);
                 if ($validator->fails()){
                     return $this->output(false, $validator->errors()->first(), [], 409);

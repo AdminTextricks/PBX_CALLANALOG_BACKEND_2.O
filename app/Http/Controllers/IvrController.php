@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\LOG;
 use Illuminate\Support\Facades\DB;
 use App\Models\Ivr;
 use App\Models\IvrOption;
+use App\Models\IvrDirectDestination;
 use Validator;
 
 class IvrController extends Controller
@@ -26,7 +27,12 @@ class IvrController extends Controller
                 'description'   => 'nullable|string',
                 'ivr_media_id'  => 'required|numeric',
                 'timeout'       => 'nullable|string',
-                
+                'direct_destination'    => 'required|numeric|in:0,1',
+                'destination_type_id'   => 'required_if:direct_destination,1',
+                'destination_id'        => 'required_with:destination_type_id',
+                'authentication'        => 'required_if:direct_destination,1|in:0,1',
+                'authentication_type'   => 'required_if:authentication,1|in:1,2,3,4',
+                'authentication_digit'  => 'required_if:authentication_type,1,2',
             ]);
             if ($validator->fails()) {
                 return $this->output(false, $validator->errors()->first(), [], 409);
@@ -38,11 +44,27 @@ class IvrController extends Controller
                     'company_id'    => $request->company_id,
                     'country_id'    => $request->country_id,
                     'name'          => $request->name,
-                    //'input_auth_type'=> $request->input_auth_type,
                     'description'   => $request->description,
                     'ivr_media_id'  => $request->ivr_media_id,
-                    'timeout'       => $request->timeout,                
+                    'timeout'       => $request->timeout,
+                    'direct_destination'    => $request->direct_destination,
                 ]);
+
+                if ($request->get('direct_destination')) {
+                    $direct_destination = [
+                        'ivr_id'                => $Ivr->id,                        
+                        'destination_type_id'   => $request->destination_type_id,
+                        'destination_id'        => $request->destination_id,
+                        'authentication'        => $request->authentication,
+                    ];
+                    if($request->get('authentication')){
+                        //$direct_destination['authentication']        = $request->authentication;
+                        $direct_destination['authentication_type']   = $request->authentication_type;
+                        $direct_destination['authentication_digit']  = $request->authentication_digit;
+                    }
+                    IvrDirectDestination::create($direct_destination);
+                }                
+                
                 $response = $Ivr->toArray();                
                 return $this->output(true, 'IVR added successfully.', $response, 200);            
             }else{
