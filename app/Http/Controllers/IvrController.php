@@ -22,7 +22,6 @@ class IvrController extends Controller
             $validator = Validator::make($request->all(), [
                 'country_id'    => 'required|numeric|exists:countries,id',
 				'company_id'	=> 'required|numeric|exists:companies,id',
-                //'input_auth_type'=> 'required|numeric',
                 'name'          => 'required|string|max:255|unique:ivrs',
                 'description'   => 'nullable|string',
                 'ivr_media_id'  => 'required|numeric',
@@ -30,8 +29,8 @@ class IvrController extends Controller
                 'direct_destination'    => 'required|numeric|in:0,1',
                 'destination_type_id'   => 'required_if:direct_destination,1',
                 'destination_id'        => 'required_with:destination_type_id',
-                'authentication'        => 'required_if:direct_destination,1|in:0,1',
-                'authentication_type'   => 'required_if:authentication,1|in:1,2,3,4',
+                'authentication'        => 'required|in:0,1',
+                'authentication_type'   => 'required_if:authentication,1',
                 'authentication_digit'  => 'required_if:authentication_type,1,2',
             ]);
             if ($validator->fails()) {

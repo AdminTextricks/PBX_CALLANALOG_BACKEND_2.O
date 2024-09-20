@@ -15,8 +15,8 @@ return new class extends Migration
             $table->bigIncrements('id'); 
             $table->unsignedBigInteger('ivr_id');
             $table->enum('authentication',['0','1'])->default(0);
-            $table->string('authentication_type')->nullable();
-            $table->string('authentication_digit')->nullable();
+            $table->integer('authentication_type')->nullable();
+            $table->integer('authentication_digit')->nullable();
             $table->unsignedBigInteger('destination_type_id');
             $table->integer('destination_id');
             $table->timestamps();
