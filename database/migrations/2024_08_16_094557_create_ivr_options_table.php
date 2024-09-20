@@ -18,8 +18,8 @@ return new class extends Migration
             $table->unsignedBigInteger('destination_type_id');
             $table->integer('destination_id');
             $table->enum('authentication',['0','1'])->default(0);
-            $table->string('authentication_type')->nullable();
-            $table->string('authentication_digit')->nullable();
+            $table->integer('authentication_type')->nullable();
+            $table->integer('authentication_digit')->nullable();
             $table->integer('parent_id')->default(0);
             $table->timestamps();
             $table->foreign('ivr_id')->references('id')->on('ivrs');
