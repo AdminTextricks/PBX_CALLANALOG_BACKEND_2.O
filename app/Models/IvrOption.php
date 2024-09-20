@@ -15,6 +15,9 @@ class IvrOption extends Model
         'input_digit',
         'destination_type_id',
         'destination_id',
+        'authentication',
+        'authentication_type',
+        'authentication_digit',
         'parent_id',
     ];
 

@@ -13,7 +13,6 @@ class Ivr extends Model
         'id',
         'company_id',
         'country_id',
-       // 'input_auth_type',        
         'name',
         'description',
         'ivr_media_id',
