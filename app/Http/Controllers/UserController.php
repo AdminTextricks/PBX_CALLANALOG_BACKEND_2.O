@@ -528,6 +528,7 @@ class UserController extends Controller
             ->with('state:id,state_name')
             ->with('roles')
             ->with('userDocuments')
+            ->with('reseller_wallets:id,user_id,balance')
             ->with(['company', 'company.user_plan:id,name'])
             ->where('email', $request->email)->first();
         if ($user) {
