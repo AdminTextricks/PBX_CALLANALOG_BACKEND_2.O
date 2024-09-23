@@ -24,11 +24,14 @@ class IvrOptionController extends Controller
             DB::beginTransaction();
             $validator = Validator::make($request->all(), [
                 /// 'company_id'        => 'required|numeric|exists:companies,id',
-                'ivr_id' => 'required|numeric|exists:ivrs,id',
-                'input_digit' => 'required|numeric',
-                'destination_type_id' => 'required|string',
-                'destination_id' => 'required|numeric',
-                'parent_id' => 'nullable',
+                'ivr_id'                => 'required|numeric|exists:ivrs,id',
+                'input_digit'           => 'required|numeric',
+                'destination_type_id'   => 'required|string',
+                'destination_id'        => 'required|numeric',
+                'authentication'        => 'required|in:0,1',
+                'authentication_type'   => 'required_if:authentication,1',
+                'authentication_digit'  => 'required_if:authentication_type,1,2',
+                'parent_id'             => 'nullable',
             ]);
             if ($validator->fails()) {
                 DB::commit();
@@ -43,11 +46,14 @@ class IvrOptionController extends Controller
                 if (!$IvrOption) {
                     $IvrOption = IvrOption::create([
                         //'company_id'   => $request->company_id,
-                        'ivr_id' => $request->ivr_id,
-                        'input_digit' => $request->input_digit,
-                        'destination_type_id' => $request->destination_type_id,
-                        'destination_id' => $request->destination_id,
-                        'parent_id' => isset($request->parent_id) ? $request->parent_id : 0,
+                        'ivr_id'                => $request->ivr_id,
+                        'input_digit'           => $request->input_digit,
+                        'destination_type_id'   => $request->destination_type_id,
+                        'destination_id'        => $request->destination_id,
+                        'authentication'        => $request->authentication,
+                        'authentication_type'   => $request->authentication_type,
+                        'authentication_digit'  => $request->authentication_digit,
+                        'parent_id'             => isset($request->parent_id) ? $request->parent_id : 0,
                     ]);
                     $response = $IvrOption->toArray();
                     DB::commit();
@@ -74,10 +80,13 @@ class IvrOptionController extends Controller
                 return $this->output(false, 'This Ivr option not exist with us. Please try again!.', [], 404);
             } else {
                 $validator = Validator::make($request->all(), [
-                    'ivr_id'            => 'required|numeric|exists:ivrs,id',
-                    'input_digit'       => 'required|numeric',
-                    'destination_type_id' => 'required|string',
-                    'destination_id'    => 'required|numeric',
+                    'ivr_id'                => 'required|numeric|exists:ivrs,id',
+                    'input_digit'           => 'required|numeric',
+                    'destination_type_id'   => 'required|string',
+                    'destination_id'        => 'required|numeric',
+                    'authentication'        => 'required|in:0,1',
+                    'authentication_type'   => 'required_if:authentication,1',
+                    'authentication_digit'  => 'required_if:authentication_type,1,2',
                 ]);
                 if ($validator->fails()) {
                     DB::commit();
@@ -87,11 +96,14 @@ class IvrOptionController extends Controller
                         ->where('input_digit', $request->input_digit)
                         ->first();
                     if (!$IvrOptionExist || $IvrOptionExist->id == $id) {
-                        $IvrOption->ivr_id = $request->ivr_id;
-                        $IvrOption->input_digit = $request->input_digit;
+                        $IvrOption->ivr_id              = $request->ivr_id;
+                        $IvrOption->input_digit         = $request->input_digit;
                         $IvrOption->destination_type_id = $request->destination_type_id;
-                        $IvrOption->destination_id = $request->destination_id;
-                        $IvrOption->parent_id = isset($request->parent_id) ? $request->parent_id : 0;
+                        $IvrOption->destination_id      = $request->destination_id;
+                        $IvrOption->authentication      = $request->authentication;
+                        $IvrOption->authentication_type = $request->authentication_type;
+                        $IvrOption->authentication_digit= $request->authentication_digit;
+                        $IvrOption->parent_id           = isset($request->parent_id) ? $request->parent_id : 0;
                         $IvrOptionRes = $IvrOption->save();
                         if ($IvrOptionRes) {
                             $response = $IvrOption->toArray();
@@ -162,6 +174,7 @@ class IvrOptionController extends Controller
         $data = IvrOption::select()
             ->with('ivr_:id,name')
             ->with('destination_type:id,destination_type')
+            ->with('authenticationType:id,name')
             ->where('ivr_id', $ivr_id)
             ->get();
 
