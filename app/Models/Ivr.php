@@ -40,4 +40,12 @@ class Ivr extends Model
     {
         return $this->belongsTo(IvrMedia::class,'ivr_media_id');
     }
+
+    public function ivrDirectDestination()
+    {
+        return $this->hasOne(IvrDirectDestination::class,'ivr_id', 'id');
+    }
+    
+    
+    
 }
