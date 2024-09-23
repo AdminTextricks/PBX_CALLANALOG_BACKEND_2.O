@@ -11,13 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tfn_authentications', function (Blueprint $table) {
+        Schema::create('authentication_options', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('tfn_id');
-            $table->string('authentication_type', 20)->nullable();
-            $table->string('auth_digit', 20)->nullable();
+            $table->string('name', 150)->nullable();
             $table->timestamps();
-            $table->foreign('tfn_id')->references('id')->on('tfns');
         });
     }
 
@@ -26,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tfn_authentications');
+        Schema::dropIfExists('authentication_options');
     }
 };

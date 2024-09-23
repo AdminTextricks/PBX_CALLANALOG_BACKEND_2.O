@@ -366,6 +366,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::patch('/changeStatus/{id}', [IvrController::class, 'changeIVRStatus']);
 		Route::put('/{id}', [IvrController::class, 'updateIvr']);
 		Route::get('/active', [IvrController::class, 'getAllActiveIvrList']);
+		Route::get('/dd', [IvrController::class, 'getDirectDestination']);
 		Route::get('/{id?}', [IvrController::class, 'getAllIvrList']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [IvrController::class, 'getIvrListByCompanyAndCountry']);
 		Route::delete('/{id}', [IvrController::class, 'deleteIvr']);
