@@ -9,7 +9,7 @@ use App\Models\Ivr;
 use App\Models\IvrOption;
 use App\Models\IvrDirectDestination;
 use Validator;
-
+use Illuminate\Support\Collection;
 class IvrController extends Controller
 {
     public function __construct(){
@@ -112,11 +112,16 @@ class IvrController extends Controller
 		} else {
             $validator = Validator::make($request->all(), [
                 'name'          => 'required|string|max:255|unique:ivrs,name,' . $Ivr->id, 
-                //input_auth_type'=> 'required|numeric',
                 'country_id'    => 'required|numeric',
                 'description'   => 'nullable|string',
                 'ivr_media_id'  => 'required|numeric',
                 'timeout'       => 'nullable|string',
+                'direct_destination'    => 'required|numeric|in:0,1',
+                'destination_type_id'   => 'required_if:direct_destination,1',
+                'destination_id'        => 'required_with:destination_type_id',
+                'authentication'        => 'required|in:0,1',
+                'authentication_type'   => 'required_if:authentication,1',
+                'authentication_digit'  => 'required_if:authentication_type,1,2',
             ]);
 			if ($validator->fails()) {
 				return $this->output(false, $validator->errors()->first(), [], 409);
@@ -124,12 +129,26 @@ class IvrController extends Controller
 
                 $Ivr->name  = $request->name;
                 $Ivr->country_id  = $request->country_id;
-                //$Ivr->input_auth_type = $request->input_auth_type;
                 $Ivr->description = $request->description;
                 $Ivr->ivr_media_id = $request->ivr_media_id;
                 $Ivr->timeout = $request->timeout;
+                $Ivr->direct_destination = $request->direct_destination;
                 $IvrRes = $Ivr->save();
                 if ($IvrRes) {
+                    if ($request->get('direct_destination')) {
+                        $direct_destination = [
+                            'ivr_id'                => $id, 
+                            'destination_type_id'   => $request->destination_type_id,
+                            'destination_id'        => $request->destination_id,
+                            'authentication'        => $request->authentication,
+                        ];
+                        if($request->get('authentication')){
+                            $direct_destination['authentication_type']   = $request->authentication_type;
+                            $direct_destination['authentication_digit']  = $request->authentication_digit;
+                        }
+                        IvrDirectDestination::where('ivr_id', $id)->update($direct_destination);
+                    }
+
                     $Ivr = Ivr::where('id', $id)->first();
                     $response = $Ivr->toArray();
                     return $this->output(true, 'Ivr updated successfully.', $response, 200);
@@ -171,12 +190,16 @@ class IvrController extends Controller
 				$data = Ivr::with('company:id,company_name,email,mobile')
                             ->with('country:id,country_name')
                             ->with('IvrMedia:id,name,media_file,file_ext')
+                            ->with('ivrDirectDestination')
+                            ->with('ivrDirectDestination.AuthenticationType')
 				    	    ->select()->where('id', $Ivr_id)->orderBy('id', 'DESC')->get();
 			} else {
 				if ($params != "") {
 					$data = Ivr::with('company:id,company_name,email,mobile')
                             ->with('country:id,country_name')
                             ->with('IvrMedia:id,name,media_file,file_ext')
+                            ->with('ivrDirectDestination')
+                            ->with('ivrDirectDestination.AuthenticationType')
                             ->where('name', 'LIKE', "%$params%")
                             ->orWhereHas('IvrMedia', function ($query) use ($params) {
                                 $query->where('name', 'like', "%{$params}%");
@@ -196,6 +219,9 @@ class IvrController extends Controller
 					$data = Ivr::with('company:id,company_name,email,mobile')
                             ->with('country:id,country_name')
                             ->with('IvrMedia:id,name,media_file,file_ext')
+                            ->with('ivrDirectDestination')
+                            ->with('ivrDirectDestination.AuthenticationType:id,name')
+                            ->with('ivrDirectDestination.destination_type:id,destination_type')
 					    	->select()->orderBy('id', 'DESC')->paginate(
                                 $perPage = $perPageNo,
                                 $columns = ['*'],
@@ -209,12 +235,16 @@ class IvrController extends Controller
 				$data = Ivr::with('company:id,company_name,email,mobile')
                         ->with('country:id,country_name')
                         ->with('IvrMedia:id,name,media_file,file_ext')
+                        ->with('ivrDirectDestination')
+                        ->with('ivrDirectDestination.AuthenticationType')
 					    ->select()->where('id', $Ivr_id)->orderBy('id', 'DESC')->get();
 			} else {
 				if ($params != "") {
 					$data = Ivr::with('company:id,company_name,email,mobile')
                             ->with('country:id,country_name')
                             ->with('IvrMedia:id,name,media_file,file_ext')
+                            ->with('ivrDirectDestination')
+                            ->with('ivrDirectDestination.AuthenticationType')
                             ->where('company_id', '=',  $user->company_id)                            
                             ->where(function($query) use($params) {
                                 $query->orWhere('name', 'LIKE', "%$params%")
@@ -231,6 +261,8 @@ class IvrController extends Controller
 					$data = Ivr::with('company:id,company_name,email,mobile')
                             ->with('country:id,country_name')
                             ->with('IvrMedia:id,name,media_file,file_ext')
+                            ->with('ivrDirectDestination')
+                            ->with('ivrDirectDestination.AuthenticationType')
                             ->where('company_id', '=',  $user->company_id)
                             ->select()->orderBy('id', 'DESC')->paginate(
                                 $perPage = $perPageNo,
@@ -240,6 +272,57 @@ class IvrController extends Controller
 				}
 			}
 		}
+
+// return  $data;
+
+ /* $data->each(function ($item) {
+
+    //dd($item);
+    // Check if ivr_direct_destination exists and is not null
+    if (isset($item->ivrDirectDestination) && $item->ivrDirectDestination) {
+        // Now safely access destination_type_id
+        $destinationTypeId = $item->ivrDirectDestination->destination_type_id;
+        echo 'Destination Type ID: ' . $destinationTypeId . "\n";
+    } else {
+        echo 'No ivr_direct_destination found for item ID: ' . $item->id . "\n";
+    }
+}); */
+
+        $data->each(function ($data) {
+            if (isset($data->ivrDirectDestination) && $data->ivrDirectDestination) {
+                switch ($data->ivrDirectDestination->destination_type_id) {
+                    case 1:
+                        $data->ivrDirectDestination->load('queue:id,name as value');
+                        break;
+                    case 2:
+                        $data->ivrDirectDestination->load('extension:id,name as value');
+                        break;
+                    case 3:
+                        $data->ivrDirectDestination->load('voiceMail:id,mailbox as value,email');
+                        break;
+                    case 5:
+                        $data->ivrDirectDestination->load('conference:id,confno as value');
+                        break;
+                    case 6:
+                        $data->ivrDirectDestination->load('ringGroup:id,ringno as value');
+                        break;
+                    case 8:
+                        $data->ivrDirectDestination->load('Ivr:id,name as value');
+                        break;
+                    case 9:
+                        $destina = $this->getDestinationName($data->ivrDirectDestination->destination_type_id);
+                        $data[strtolower(str_replace(' ', '_', $destina))] = array('id' => $data->ivrDirectDestination->destination_type_id, 'value' => $destina);
+                        break;
+                    case 10:
+                        $data->ivrDirectDestination->load('timeCondition:id,name as value');
+                        break;
+                    default:
+                        $destina = $this->getDestinationName($data->ivrDirectDestination->destination_type_id);
+                        $data[strtolower(str_replace(' ', '_', $destina))] = array('id' => $data->ivrDirectDestination->destination_type_id, 'value' => $data->destination_id);
+                }
+            }
+        }); 
+       
 		if ($data->isNotEmpty()) {
 			$dd = $data->toArray();
 			unset($dd['links']);
@@ -248,6 +331,12 @@ class IvrController extends Controller
 			return $this->output(true, 'No Record Found', []);
 		}
 	}
+
+    public function getDestinationName($id)
+    {
+        $data = DB::table('destination_types')->where('id', $id)->first();
+        return $data->destination_type;
+    }
 
     public function getIvrListByCompanyAndCountry(Request $request, $country_id, $company_id)
     {
@@ -294,6 +383,18 @@ class IvrController extends Controller
             DB::rollback();
             Log::error('Error occurred in IVR Deleting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
+
+    public function getDirectDestination(Request $request)
+    {
+        $data = IvrDirectDestination::select()->with('AuthenticationType:id,name')->orderBy('id', 'DESC')->get();
+
+        if (is_null($data)) {
+            return $this->output(false, 'No Recode found', [], 200);   
+        } else {
+            $authdata = $data->toArray();
+            return $this->output(true, 'Success',   $authdata, 200);
         }
     }
 }
