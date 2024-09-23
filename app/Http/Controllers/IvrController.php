@@ -191,7 +191,8 @@ class IvrController extends Controller
                             ->with('country:id,country_name')
                             ->with('IvrMedia:id,name,media_file,file_ext')
                             ->with('ivrDirectDestination')
-                            ->with('ivrDirectDestination.AuthenticationType')
+                            ->with('ivrDirectDestination.AuthenticationType:id,name')
+                            ->with('ivrDirectDestination.destination_type:id,destination_type')
 				    	    ->select()->where('id', $Ivr_id)->orderBy('id', 'DESC')->get();
 			} else {
 				if ($params != "") {
@@ -199,7 +200,8 @@ class IvrController extends Controller
                             ->with('country:id,country_name')
                             ->with('IvrMedia:id,name,media_file,file_ext')
                             ->with('ivrDirectDestination')
-                            ->with('ivrDirectDestination.AuthenticationType')
+                            ->with('ivrDirectDestination.AuthenticationType:id,name')
+                            ->with('ivrDirectDestination.destination_type:id,destination_type')
                             ->where('name', 'LIKE', "%$params%")
                             ->orWhereHas('IvrMedia', function ($query) use ($params) {
                                 $query->where('name', 'like', "%{$params}%");
@@ -236,7 +238,8 @@ class IvrController extends Controller
                         ->with('country:id,country_name')
                         ->with('IvrMedia:id,name,media_file,file_ext')
                         ->with('ivrDirectDestination')
-                        ->with('ivrDirectDestination.AuthenticationType')
+                        ->with('ivrDirectDestination.AuthenticationType:id,name')
+                        ->with('ivrDirectDestination.destination_type:id,destination_type')
 					    ->select()->where('id', $Ivr_id)->orderBy('id', 'DESC')->get();
 			} else {
 				if ($params != "") {
@@ -244,7 +247,8 @@ class IvrController extends Controller
                             ->with('country:id,country_name')
                             ->with('IvrMedia:id,name,media_file,file_ext')
                             ->with('ivrDirectDestination')
-                            ->with('ivrDirectDestination.AuthenticationType')
+                            ->with('ivrDirectDestination.AuthenticationType:id,name')
+                            ->with('ivrDirectDestination.destination_type:id,destination_type')
                             ->where('company_id', '=',  $user->company_id)                            
                             ->where(function($query) use($params) {
                                 $query->orWhere('name', 'LIKE', "%$params%")
@@ -262,7 +266,8 @@ class IvrController extends Controller
                             ->with('country:id,country_name')
                             ->with('IvrMedia:id,name,media_file,file_ext')
                             ->with('ivrDirectDestination')
-                            ->with('ivrDirectDestination.AuthenticationType')
+                            ->with('ivrDirectDestination.AuthenticationType:id,name')
+                            ->with('ivrDirectDestination.destination_type:id,destination_type')
                             ->where('company_id', '=',  $user->company_id)
                             ->select()->orderBy('id', 'DESC')->paginate(
                                 $perPage = $perPageNo,
@@ -272,21 +277,6 @@ class IvrController extends Controller
 				}
 			}
 		}
-
-// return  $data;
-
- /* $data->each(function ($item) {
-
-    //dd($item);
-    // Check if ivr_direct_destination exists and is not null
-    if (isset($item->ivrDirectDestination) && $item->ivrDirectDestination) {
-        // Now safely access destination_type_id
-        $destinationTypeId = $item->ivrDirectDestination->destination_type_id;
-        echo 'Destination Type ID: ' . $destinationTypeId . "\n";
-    } else {
-        echo 'No ivr_direct_destination found for item ID: ' . $item->id . "\n";
-    }
-}); */
 
         $data->each(function ($data) {
             if (isset($data->ivrDirectDestination) && $data->ivrDirectDestination) {
