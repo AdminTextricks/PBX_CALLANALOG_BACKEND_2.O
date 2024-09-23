@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ResellerCommissionOfItems;
+use App\Models\TfnsHistory;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -252,4 +253,19 @@ class Controller extends BaseController
         //echo "Registration removed. The SIP user $nname has been removed from the webrtc_template.conf file.";
     }
 
+    public function TfnHistories($company_id, $assign_id, $number, $payment_for, $msg)
+    {
+        $insert_tfn_histories = TfnsHistory::create([
+            'company_id'  => $company_id,
+            'assign_by'   => $assign_id,
+            'tfn_number'  => $number,
+            'payment_for' => $payment_for,
+            'message'     => "Tfn Number is {$msg} Successfully!",
+        ]);
+        if (!is_null($insert_tfn_histories)) {
+            return array('Status' => 'true', 'insert_tfn_historiesData' => $insert_tfn_histories);
+        } else {
+            return array('Status' => 'false', 'Message' => 'No Commission Found.');
+        }
+    }
 }
