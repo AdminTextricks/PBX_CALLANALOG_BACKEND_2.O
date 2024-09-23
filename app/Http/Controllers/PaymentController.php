@@ -11,6 +11,8 @@ use App\Models\Invoice;
 use App\Models\InvoiceItems;
 use App\Models\Payments;
 use App\Models\RechargeHistory;
+use App\Models\ResellerRechargeHistories;
+use App\Models\ResellerWallet;
 use App\Models\State;
 use App\Models\Tfn;
 use Exception;
@@ -203,6 +205,11 @@ class PaymentController extends Controller
                                     'expirationdate' => date('Y-m-d H:i:s', strtotime('+29 days')),
                                     'status' => 1,
                                 ]);
+                            }
+                            $insert_tfn_histories = $this->TfnHistories($user->company->id, $user->id, $numbers_list_tfn->tfn_number,  $value, $value);
+                            if (!$insert_tfn_histories['Status'] == 'true') {
+                                DB::rollback();
+                                return $this->output(false, 'Oops Somthing went wrong!!. Failed to insert data into Tfns History Table.', 400);
                             }
                         } else {
                             $numbers_list = Extension::where('name', $itemNumber)->first();
@@ -1116,6 +1123,11 @@ class PaymentController extends Controller
                                 'status' => 1,
                             ]);
                         }
+                         $insert_tfn_histories = $this->TfnHistories($user->company->id, $user->id, $numbers_list_tfn->tfn_number,  $value, $value);
+                            if (!$insert_tfn_histories['Status'] == 'true') {
+                                DB::rollback();
+                                return $this->output(false, 'Oops Somthing went wrong!!. Failed to insert data into Tfns History Table.', 400);
+                            }
                     } else {
                         $numbers_list = Extension::where('name', $itemNumber)->first();
                         if ($numbers_list && $numbers_list->expirationdate != NULL) {
@@ -1237,4 +1249,144 @@ class PaymentController extends Controller
             return $this->output(false, 'Oops! Something Went Wrong. Mismatch values', 409);
         }
     }
+
+
+    // Reseller Payment Section Start ::::
+
+
+    public function ReselleraddToWallet(Request $request)
+    {
+        $user = \Auth::user();
+        $getcountry = Country::select('*')->where('id', $user->country_id)->first();
+        $getstate = State::select('state_name')->where('id', $user->state_id)->first();
+        $validator = Validator::make($request->all(), [
+            "amount" => 'required',
+
+        ]);
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+
+        $stripe = new \Stripe\StripeClient(config('stripe.stripe.secret_test'));
+        try {
+            DB::beginTransaction();
+            // Create a customer with a payment source
+            // $token = 'tok_visa';
+            $token = $request->token;
+            if (!$token) {
+                DB::rollback();
+                return $this->output(false, 'Card Token not found.', 400);
+            }
+
+
+            $customer = $stripe->customers->create([
+                'name' => $user->name,
+                'email' => $user->email,
+                'source' => $token
+            ]);
+
+            $paymentIntent = $stripe->paymentIntents->create([
+                'amount' => $request->amount * 100,
+                'currency' => 'USD',
+                'customer' => $customer->id,
+                'description' => "Wallet Payments",
+                'metadata' => [
+                    'item_id' => "Wallet Payments",
+                    'billing_details' => json_encode([
+                        'city' => $user->city ?? NULL,
+                        'country' => $getcountry->country_name ?? NULL,
+                        'state' => $getstate->state_name ?? NULL,
+                        'postal_code' => $user->zip ?? NULL,
+                        'email' => $user->email,
+                        'name' => $user->name,
+                        'phone' => $user->mobile,
+                    ])
+                ],
+
+            ]);
+
+            // Create a charge for the customer
+            $charge = $stripe->charges->create([
+                'customer' => $customer->id,
+                'amount' => $request->amount * 100,
+                'currency' => 'USD',
+                'description' => 'Wallet Payments',
+                'ip' => $request->ip(),
+                'metadata' => [
+                    'item_id' => 'Wallet Payments',
+                ]
+            ]);
+
+
+            // Create Invoice
+            $invoiceStripe = $stripe->invoices->create([
+                'customer' => $customer->id,
+                'auto_advance' => false,
+            ]);
+
+            // Create Invoice Items
+            $invoice_item = $stripe->invoiceItems->create([
+                'customer' => $customer->id,
+                'invoice' => $invoiceStripe->id,
+                'amount' => $request->amount * 100,
+                'currency' => 'USD',
+                'description' => 'Wallet Payments',
+            ]);
+
+            $chargeJson = $charge->jsonSerialize();
+
+            if ($chargeJson['amount_refunded'] == 0 && empty($chargeJson['failure_code']) && $chargeJson['paid'] == 1 && $chargeJson['captured'] == 1) {
+                $reseller_payment = ResellerWallet::where('user_id', $user->id)->first();
+                if (!$reseller_payment) {
+                    DB::rollback();
+                    return $this->output(false, 'Reseller User not found!!.');
+                } else {
+                    //Recharge History Update::
+                    // return $user->reseller_wallets->balance;
+                    $rechargeHistory_data = ResellerRechargeHistories::create([
+                        'user_id' => $user->id,
+                        'old_balance' => $user->reseller_wallets->balance,
+                        'added_balance'   => $charge->amount / 100,
+                        'total_balance'   => $user->reseller_wallets->balance + $request->amount,
+                        'currency'        => 'USD',
+                        'payment_type'    => 'Card',
+                        'transaction_id'  => $chargeJson['balance_transaction'],
+                        'stripe_charge_id' => $chargeJson['id'],
+                        'recharged_by'    => 'Self',
+                        'status'          => 1
+                    ]);
+                    if (!$rechargeHistory_data) {
+                        DB::rollback();
+                        return $this->output(false, 'Failed to Create Recharge History!!.', 400);
+                    } else {
+                        $reseller_payment->balance = $reseller_payment->balance + $request->amount;
+                        $reseller_result = $reseller_payment->save();
+                    }
+                }
+                $response = $reseller_payment->toArray();
+                DB::commit();
+                // Finalize and Pay the Invoice
+                $finalizedInvoice = $stripe->invoices->finalizeInvoice($invoiceStripe->id);
+                $paidInvoice = $stripe->invoices->pay($finalizedInvoice->id);
+                return $this->output(true, 'Payment Added To Wallet successfully.', $response, 200);
+            } else {
+                DB::rollback();
+                return $this->output(false, 'Payment failed!!. Please Try Again.', null, 400);
+            }
+        } catch (\Stripe\Exception\CardException $e) {
+            return $this->output(false, 'Payment failed. ' . $e->getMessage(), null, 400);
+        } catch (\Stripe\Exception\InvalidRequestException $e) {
+            return $this->output(false, 'Payment failed. ' . $e->getMessage(), null, 400);
+        } catch (\Stripe\Exception\AuthenticationException $e) {
+            return $this->output(false, 'Payment failed. ' . $e->getMessage(), null, 400);
+        } catch (\Stripe\Exception\ApiConnectionException $e) {
+            return $this->output(false, 'Payment failed. ' . $e->getMessage(), null, 400);
+        } catch (\Stripe\Exception\ApiErrorException $e) {
+            return $this->output(false, 'Payment failed. ' . $e->getMessage(), null, 400);
+        }
+    }
+
+
+
+    // Reseller Payment Section END ::::
 }

@@ -302,11 +302,14 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/pay', [PaymentController::class, 'PayNow']);
 		Route::post('/Striperefund', [PaymentController::class, 'RefundStripePayment']);
 		Route::post('/paywithwallet', [PaymentController::class, 'PaywithWallet']);
+		Route::post('/reselleraddToWallet', [PaymentController::class, 'ResellerAddToWallet']);
 		Route::post('/addbalance', [PaymentController::class, 'addToWallet']);
 		Route::post('/nowpayment/create', [NowPaymentsController::class, 'createPayment']);
 		Route::get('/nowpayment/status/{paymentId}', [NowPaymentsController::class, 'checkPaymentStatus']);
 		Route::post('/nowpayment/add-to-wallet', [NowPaymentsController::class, 'nowPaymentsAddToWallet']);
 		Route::get('/nowpayment/add-to-wallet/status/{paymentId}', [NowPaymentsController::class, 'nowPaymentsWalletcheckPaymentsStatus']);
+		Route::post('/nowpayment/reseller-add-to-wallet', [NowPaymentsController::class, 'ResellernowPaymentsaddToWallet']);
+		Route::get('/nowpayment/reseller-add-to-wallet/status/{paymentId}', [NowPaymentsController::class, 'ReselletnowPaymentsWalletcheckPaymentsStatus']);
 	});
 
 

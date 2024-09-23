@@ -955,7 +955,8 @@ class TfnController extends Controller
                 // Invoice Data
                 // $invoice_amount_assign = 0;
                 foreach ($request->tfn_number as $tfn_number) {
-                    $result = $this->assignTfnToCompany($tfn_number, $company, $user);
+                    $value = "Free";
+                    $result = $this->assignTfnToCompany($tfn_number, $company, $user, $value);
                     if (!$result['success']) {
                         DB::rollBack();
                         return $this->output(false, $result['message'], null, 400);
@@ -965,11 +966,10 @@ class TfnController extends Controller
                 if ($total_price > 0 && $company->balance > $total_price) {
                     //Company Balance 
                     $company->balance -= $total_price;
-
-
                     if ($company->save()) {
                         foreach ($request->tfn_number as $tfn_number) {
-                            $result = $this->assignTfnToCompany($tfn_number, $company, $user);
+                            $value = "Paid";
+                            $result = $this->assignTfnToCompany($tfn_number, $company, $user, $value);
                             if (!$result['success']) {
                                 DB::rollBack();
                                 return $this->output(false, $result['message'], null, 400);
@@ -1050,7 +1050,7 @@ class TfnController extends Controller
         }
     }
 
-    private function assignTfnToCompany($tfn_number, $company, $user)
+    private function assignTfnToCompany($tfn_number, $company, $user, $value)
     {
         $inbound_trunk = explode(',', $company->inbound_permission);
 
@@ -1071,7 +1071,12 @@ class TfnController extends Controller
                     'startingdate' => date('Y-m-d H:i:s'),
                     'expirationdate' => date('Y-m-d H:i:s', strtotime('+29 days')),
                 ]);
+                $insert_tfn_histories = $this->TfnHistories($user->company->id, $user->id, $tfn_number,  $value, "Assigned By Admin");
 
+                if (!$insert_tfn_histories['Status'] == 'true') {
+                    DB::rollback();
+                    return $this->output(false, 'Oops Somthing went wrong!!. Failed to insert data into Tfns History Table.', 400);
+                }
                 Cart::where('item_number', $tfn_number)->delete();
                 return ['success' => true];
             } else {
@@ -1150,7 +1155,8 @@ class TfnController extends Controller
                 // Invoice Data
                 // $invoice_amount_assign = 0;
                 foreach ($request->tfn_number as $tfn_number) {
-                    $result = $this->assignTfnToCompanyRenew($tfn_number, $company, $user);
+                    $value = "Free";
+                    $result = $this->assignTfnToCompanyRenew($tfn_number, $company, $user, $value);
                     if (!$result['success']) {
                         DB::rollBack();
                         return $this->output(false, $result['message'], null, 400);
@@ -1162,7 +1168,8 @@ class TfnController extends Controller
                     $company->balance -= $total_price;
                     if ($company->save()) {
                         foreach ($request->tfn_number as $tfn_number) {
-                            $result = $this->assignTfnToCompanyRenew($tfn_number, $company, $user);
+                            $valye = "Paid";
+                            $result = $this->assignTfnToCompanyRenew($tfn_number, $company, $user, $value);
                             if (!$result['success']) {
                                 DB::rollBack();
                                 return $this->output(false, $result['message'], null, 400);
@@ -1243,7 +1250,7 @@ class TfnController extends Controller
         }
     }
 
-    private function assignTfnToCompanyRenew($tfn_number, $company, $user)
+    private function assignTfnToCompanyRenew($tfn_number, $company, $user, $value)
     {
         $inbound_trunk = explode(',', $company->inbound_permission);
 
@@ -1277,6 +1284,12 @@ class TfnController extends Controller
                     'expirationdate' => $newDate,
                     'status'         => 1,
                 ]);
+                $insert_tfn_histories = $this->TfnHistories($user->company->id, $user->id, $tfn_number,  $value, "Assigned By Admin");
+
+                if (!$insert_tfn_histories['Status'] == 'true') {
+                    DB::rollback();
+                    return $this->output(false, 'Oops Somthing went wrong!!. Failed to insert data into Tfns History Table.', 400);
+                }
                 Cart::where('item_number', $tfn_number)->delete();
                 return ['success' => true];
             } else {

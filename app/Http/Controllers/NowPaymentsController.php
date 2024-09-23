@@ -10,6 +10,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItems;
 use App\Models\Payments;
 use App\Models\RechargeHistory;
+use App\Models\ResellerRechargeHistories;
 use App\Models\State;
 use App\Models\Tfn;
 use App\Services\NowPaymentsService;
@@ -504,4 +505,116 @@ class NowPaymentsController extends Controller
             'refund' => $refundResponse,
         ]);
     }
+
+
+
+    // Reseller Payment Section Start ::::
+    public function ResellernowPaymentsaddToWallet(Request $request)
+    {
+        $user = \Auth::user();
+        $getcountry = Country::select('*')->where('id', $user->country_id)->first();
+        $getstate = State::select('state_name')->where('id', $user->state_id)->first();
+        $validator = Validator::make($request->all(), [
+            "amount" => 'required',
+
+        ]);
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+
+
+        try {
+            if ($validator->fails()) {
+                return $this->output(false, $validator->errors()->first(), [], 409);
+            }
+            $price_currency = 'usd';
+            $price_amount = $request->amount;
+            $orderId = rand(0, 99999);
+            $pay_currency = 'usddtrc20';
+            $paymentAPIW = $this->nowPaymentsService->createPayment($price_currency, $price_amount, $orderId, $pay_currency, $user->email);
+            if (is_null($paymentAPIW)) {
+                DB::rollback();
+                return response()->json(['error' => 'Payment creation failed.'], 500);
+            } else {
+                $paymentId = $paymentAPIW['payment_id'];
+                $paymentUrl = $paymentAPIW['pay_address'];
+
+                $payment_data = ResellerRechargeHistories::create([
+                    'user_id' => $user->id,
+                    // 'ip_address' => $request->ip(),
+                    'old_balance' => $user->reseller_wallets->balance,
+                    // 'added_balance'   => $request->amount,
+                    // 'total_balance'   => $user->reseller_wallets->balance + $request->amount,
+                    'currency'        => 'USD',
+                    'payment_type'    => 'Crypto',
+                    'transaction_id'  => $paymentId,
+                    'stripe_charge_id' => '',
+                    'recharged_by'    => 'Self',
+                    'status' => 0,
+                ]);
+                $qrCode = new QrCode($paymentUrl);
+                $writer = new PngWriter();
+                $result = $writer->write($qrCode);
+                $qrCodePath = public_path('qr_codes/' . $paymentId . '.png');
+                $result->saveToFile($qrCodePath);
+                return response()->json([
+                    'payment' =>  $paymentAPIW,
+                    'qr_code_url' => asset('qr_codes/' . $paymentId . '.png'),
+                ]);
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Wallet Payment creation failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Wallet Payment creation failed.'], 500);
+        }
+    }
+
+    public function ReselletnowPaymentsWalletcheckPaymentsStatus(Request $request, $paymentId)
+    {
+        $user = \Auth::user();
+        $NowPaymentData = $this->nowPaymentsService->getPaymentStatus($paymentId);
+        try {
+            if ($NowPaymentData && $NowPaymentData['payment_status'] == "partially_paid" || $NowPaymentData['payment_status'] == "finished") {
+                // if ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
+                if (isset($NowPaymentData['actually_paid']) && $NowPaymentData['actually_paid'] !== $NowPaymentData['pay_amount']) {
+                    $paid_amount = $NowPaymentData['pay_amount'];
+                }
+                $nowPayment_charge_id = Str::random(30);
+                DB::beginTransaction();
+
+                $payment = ResellerRechargeHistories::where('transaction_id', '=', $paymentId)->first();
+                if (is_null($payment)) {
+                    DB::rollback();
+                    return $this->output(false, 'Something Went Wrong. please try again', 400);
+                } else {
+                    // Payments Table Update
+                    // $payment->payment_price = $NowPaymentData['pay_amount'];
+                    $total_balance =  $payment->old_balance + $paid_amount + $paid_amount * 0.05;
+                    $added_balance_data = $paid_amount + $paid_amount * 0.05;
+                    $added_balance = number_format($added_balance_data, 2, '.', '');
+                    $balance_total = number_format($total_balance, 2, '.', '');
+
+                    $payment->added_balance = $added_balance;
+                    $payment->total_balance  =  $balance_total;
+                    $payment->status = 1;
+                    $payment->save();
+
+                    $response['payment'] = $payment->toArray();
+                    $response['crypto_payment_status'] = $NowPaymentData['payment_status'];
+                    DB::commit();
+                    return $this->output(true, 'Amount Credit in Wallet.', $response, 200);
+                }
+            } else {
+
+                $pstatus['crypto_payment_status'] = $NowPaymentData['payment_status'];
+                return $this->output(true, 'Payment Status ' .  $NowPaymentData['payment_status'], $pstatus, 200);
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Payment failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Payment failed.'], 500);
+        }
+    }
+
+    // Reseller Payment Section END ::::
 }
