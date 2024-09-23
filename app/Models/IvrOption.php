@@ -40,6 +40,11 @@ class IvrOption extends Model
         return $this->hasMany(IvrOption::class, 'parent_id')->with('childrenRecursive');
     }
 
+    public function authenticationType()
+    {
+        return $this->belongsTo( AuthenticationOption::class,'authentication_type');
+    }
+    
     public function destination_type()
     {
         return $this->belongsTo(DestinationType::class, 'destination_type_id');
