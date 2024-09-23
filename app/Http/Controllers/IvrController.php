@@ -308,7 +308,7 @@ class IvrController extends Controller
                         break;
                     default:
                         $destina = $this->getDestinationName($data->ivrDirectDestination->destination_type_id);
-                        $data[strtolower(str_replace(' ', '_', $destina))] = array('id' => $data->ivrDirectDestination->destination_type_id, 'value' => $data->destination_id);
+                        $data[strtolower(str_replace(' ', '_', $destina))] = array('id' => $data->ivrDirectDestination->destination_type_id, 'value' => $data->ivrDirectDestination->destination_id);
                 }
             }
         }); 
