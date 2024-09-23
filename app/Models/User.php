@@ -101,6 +101,11 @@ class User extends Authenticatable
         return $this->hasMany(ResellerPrice::class);
     }
 
+    public function reseller_wallets()
+    {
+        return $this->hasOne(ResellerWallet::class);
+    }
+
     public function mainPrices()
     {
         return $this->hasMany(MainPrice::class, 'user_id');
