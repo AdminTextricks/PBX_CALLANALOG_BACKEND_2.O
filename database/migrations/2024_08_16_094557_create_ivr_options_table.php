@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('ivr_id');
             $table->integer('input_digit');
             $table->unsignedBigInteger('destination_type_id');
-            $table->integer('destination_id');
+            $table->string('destination_id')->nullable();
             $table->enum('authentication',['0','1'])->default(0);
             $table->integer('authentication_type')->nullable();
             $table->integer('authentication_digit')->nullable();
