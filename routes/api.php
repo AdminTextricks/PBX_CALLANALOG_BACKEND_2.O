@@ -52,7 +52,10 @@ use App\Http\Controllers\NotificationController;
 */
 
 Route::post('/registration', [UserController::class, 'registration']);
-Route::post('/login', [UserController::class, 'login'])->name('login');
+
+Route::middleware(['throttle:5,1', 'log.request.response'])->group(function () {
+	Route::post('/login', [UserController::class, 'login'])->name('login');
+});
 Route::post('/verifyEmail', [UserController::class, 'verifyEmailIdByOTP'])->name('verifyEmailIdByOTP');
 //Route::get('/user/{id?}', [UserController::class, 'getUser']);
 Route::post('/resend-otp', [UserController::class, 'resendOtp'])->name('resendOtp');
@@ -363,7 +366,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::patch('/changeStatus/{id}', [IvrController::class, 'changeIVRStatus']);
 		Route::put('/{id}', [IvrController::class, 'updateIvr']);
 		Route::get('/active', [IvrController::class, 'getAllActiveIvrList']);
-		Route::get('/dd', [IvrController::class, 'getDirectDestination']);
+		//Route::get('/dd', [IvrController::class, 'getDirectDestination']);
 		Route::get('/{id?}', [IvrController::class, 'getAllIvrList']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [IvrController::class, 'getIvrListByCompanyAndCountry']);
 		Route::delete('/{id}', [IvrController::class, 'deleteIvr']);

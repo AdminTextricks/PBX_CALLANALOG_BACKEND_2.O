@@ -301,14 +301,14 @@ class IvrController extends Controller
                         break;
                     case 9:
                         $destina = $this->getDestinationName($data->ivrDirectDestination->destination_type_id);
-                        $data[strtolower(str_replace(' ', '_', $destina))] = array('id' => $data->ivrDirectDestination->destination_type_id, 'value' => $destina);
+                        $data->ivrDirectDestination[strtolower(str_replace(' ', '_', $destina))] = array('id' => $data->ivrDirectDestination->destination_type_id, 'value' => $destina);
                         break;
                     case 10:
                         $data->ivrDirectDestination->load('timeCondition:id,name as value');
                         break;
                     default:
                         $destina = $this->getDestinationName($data->ivrDirectDestination->destination_type_id);
-                        $data[strtolower(str_replace(' ', '_', $destina))] = array('id' => $data->ivrDirectDestination->destination_type_id, 'value' => $data->ivrDirectDestination->destination_id);
+                        $data->ivrDirectDestination[strtolower(str_replace(' ', '_', $destina))] = array('id' => $data->ivrDirectDestination->destination_type_id, 'value' => $data->ivrDirectDestination->destination_id);
                 }
             }
         }); 

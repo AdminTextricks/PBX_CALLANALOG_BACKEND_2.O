@@ -45,4 +45,18 @@ class Handler extends ExceptionHandler
             //
         });
     }
+
+
+    public function render($request, Throwable $exception)
+    {
+        if ($exception instanceof \Illuminate\Http\Exceptions\ThrottleRequestsException) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Too many requests! Please try again later.',
+                'code'    => 429,
+            ], 429);
+        }
+        return parent::render($request, $exception);
+    }
+
 }
