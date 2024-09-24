@@ -76,13 +76,30 @@ class OutboundCallRateController extends Controller
                                         ->with(['tariff','trunk'])
                                         ->where('id', $OutboundCallRate_id)->get();
             }else{
-                $OutboundCallRate_data = OutboundCallRate::select('*') 
+                if ($params != "") {
+                    $OutboundCallRate_data = OutboundCallRate::select('*') 
+                                        ->with(['tariff','trunk'])
+                                        ->where('country_prefix', 'LIKE', "%$params%")
+                                        ->orWhereHas('tariff', function ($query) use ($params) {
+                                            $query->where('tariff_name', 'like', "%{$params}%");
+                                        })
+                                        ->orWhereHas('trunk', function ($query) use ($params) {
+                                            $query->where('name', 'like', "%{$params}%");
+                                        })
+                                        ->paginate(
+                                        $perPage = $perPageNo,
+                                        $columns = ['*'],
+                                        $pageName = 'page'
+                                        );
+                }else{
+                    $OutboundCallRate_data = OutboundCallRate::select('*') 
                                         ->with(['tariff','trunk'])
                                         ->paginate(
                                         $perPage = $perPageNo,
                                         $columns = ['*'],
                                         $pageName = 'page'
                                         );
+                }
             }
 
             if ($OutboundCallRate_data->isNotEmpty()) {
