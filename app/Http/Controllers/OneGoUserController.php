@@ -475,7 +475,7 @@ class OneGoUserController extends Controller
     */
 
 
-    protected function addExtensionInConfFile($extensionName, $conf_file_path, $secret, $account_code, $template_contents)
+    public function addExtensionInConfFile($extensionName, $conf_file_path, $secret, $account_code, $template_contents)
     {
         // Add new user section
         $register_string = "\n[$extensionName]\nusername=$extensionName\nsecret=$secret\naccountcode=$account_code\n$template_contents\n";
