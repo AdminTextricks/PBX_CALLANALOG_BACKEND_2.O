@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('authentication_type')->nullable();
             $table->integer('authentication_digit')->nullable();
             $table->unsignedBigInteger('destination_type_id');
-            $table->integer('destination_id');
+            $table->string('destination_id')->nullable();
             $table->timestamps();
             $table->foreign('ivr_id')->references('id')->on('ivrs');
 			$table->foreign('destination_type_id')->references('id')->on('destination_types'); 
