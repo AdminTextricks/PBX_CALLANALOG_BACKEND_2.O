@@ -1071,7 +1071,7 @@ class TfnController extends Controller
                     'startingdate' => date('Y-m-d H:i:s'),
                     'expirationdate' => date('Y-m-d H:i:s', strtotime('+29 days')),
                 ]);
-                $insert_tfn_histories = $this->TfnHistories($user->company->id, $user->id, $tfn_number,  $value, "Assigned By Admin");
+                $insert_tfn_histories = $this->TfnHistories($company->id, $user->id, $tfn_number,  $value, "Assigned By Admin");
 
                 if (!$insert_tfn_histories['Status'] == 'true') {
                     DB::rollback();
@@ -1168,7 +1168,7 @@ class TfnController extends Controller
                     $company->balance -= $total_price;
                     if ($company->save()) {
                         foreach ($request->tfn_number as $tfn_number) {
-                            $valye = "Paid";
+                            $value = "Paid";
                             $result = $this->assignTfnToCompanyRenew($tfn_number, $company, $user, $value);
                             if (!$result['success']) {
                                 DB::rollBack();
@@ -1284,7 +1284,7 @@ class TfnController extends Controller
                     'expirationdate' => $newDate,
                     'status'         => 1,
                 ]);
-                $insert_tfn_histories = $this->TfnHistories($user->company->id, $user->id, $tfn_number,  $value, "Assigned By Admin");
+                $insert_tfn_histories = $this->TfnHistories($company->id, $user->id, $tfn_number,  $value, "Assigned By Admin");
 
                 if (!$insert_tfn_histories['Status'] == 'true') {
                     DB::rollback();
