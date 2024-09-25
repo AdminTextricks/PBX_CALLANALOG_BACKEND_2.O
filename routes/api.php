@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\NowPaymentsController;
+use App\Http\Controllers\RechargeHistoryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -86,6 +87,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/activeReseller/{reseller_id}', [CompanyController::class, 'getAllActiveCompanyOfReseller']);
 		Route::post('/add-to-wallet', [CompanyController::class, 'AddbalanceForCompanyBySuperAdmin']);
 		Route::get('/resellersCompany/{reseller_id}/{plan_id}', [CompanyController::class, 'getAllActiveCompanyOfResellersByPlanId']);
+		Route::post('/reseller-add-to-wallet', [RechargeHistoryController::class, 'AddbalanceForResellerBySuperAdmin']);		
 		
 	});
 
@@ -298,6 +300,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/getall', [InvoiceController::class, 'getAllInvoiceData']);
 		Route::get('/{id}', [InvoiceController::class, 'getInvoiceData']);
 		Route::post('/', [InvoiceController::class, 'createInvoice']);
+		Route::get('/reseller-recharge-history', [RechargeHistoryController::class, 'getALLresellerRechargeHistory']);
 	});
 
 	# Payments Manage.
