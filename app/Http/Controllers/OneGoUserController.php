@@ -280,6 +280,7 @@ class OneGoUserController extends Controller
             $validator = Validator::make($request->all(), [
                 'country_id'=> 'required|numeric|exists:countries,id',
                 'company_id'=> 'required|numeric|exists:companies,id',
+                'user_id'   => 'required|numeric|exists:users,id',
                 'ringno'    => 'required|unique:ring_groups',
             ]);
             if ($validator->fails()) {
@@ -308,7 +309,7 @@ class OneGoUserController extends Controller
                 return $this->output(true, 'Ring Group added successfully.', $response);
             }else{
                 DB::rollback();
-                return $this->output(false, 'Error occurred in updating One-Go-User Setps.', [], 409);
+                return $this->output(false, 'Error occurred in creating Ring Group.', [], 409);
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -346,13 +347,13 @@ class OneGoUserController extends Controller
             $oneGoUser = $data->toArray();
 
             if(!empty($oneGoUser['parent_id']) && !empty($oneGoUser['company_id']) && !empty($oneGoUser['user_id']) && !empty($oneGoUser['country_id']) && !empty($oneGoUser['tfn_id']) && !empty($oneGoUser['extension_id']) && !empty($oneGoUser['ring_id']))
-            {            
+            {
                 $parent_id = $oneGoUser['parent_id'];
                 $price_for = 'Company';
                 if ($parent_id > 1){
                     $price_for = 'Reseller';
                 }
-                $tfn_price_arr = $this->getItemPrice($oneGoUser['company_id'],$oneGoUser['country_id'], $price_for, $parent_id, 'TFN');                
+                return $tfn_price_arr = $this->getItemPrice($oneGoUser['company_id'],$oneGoUser['country_id'], $price_for, $parent_id, 'TFN');                
                 
                 if ($tfn_price_arr['Status'] == 'true') {
                     $extension_price_arr = $this->getItemPrice($oneGoUser['company_id'],$oneGoUser['country_id'], $price_for, $parent_id, 'Extension');
