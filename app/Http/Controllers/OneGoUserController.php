@@ -30,7 +30,7 @@ class OneGoUserController extends Controller
                     ->with('country:id,country_name')->get();
                     */
 
-            $data = OneGoUser::select('one_go_user_steps.*',DB::raw("GROUP_CONCAT(extensions.name) as extension_name"))
+            $data = OneGoUser::select('one_go_user_steps.*',DB::raw("GROUP_CONCAT(extensions.name) as extension_name,agent_name"))
                     ->with('parent:id,name,email')
 					->with('user:id,name,email')
 					//->with('company:id,parent_id,company_name,email,mobile,plan_id,billing_address,country_id')
