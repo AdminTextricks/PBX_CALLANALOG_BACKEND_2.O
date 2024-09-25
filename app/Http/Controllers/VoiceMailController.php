@@ -287,6 +287,7 @@ class VoiceMailController extends Controller
             DB::beginTransaction();            
             $VoiceMail = VoiceMail::where('id', $id)->first();
             if($VoiceMail){
+				Extension::where('name',$VoiceMail->mailbox)->update(['mailbox'=>'0']);
                 $resdelete = $VoiceMail->delete();
                 if ($resdelete) {
                     DB::commit();
