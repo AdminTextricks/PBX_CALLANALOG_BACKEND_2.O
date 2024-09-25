@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Ivr;
 use App\Models\IvrOption;
 use App\Models\IvrDirectDestination;
+use App\Models\TfnDestination;
 use Validator;
 use Illuminate\Support\Collection;
 class IvrController extends Controller
@@ -356,6 +357,10 @@ class IvrController extends Controller
             DB::beginTransaction();
             $Ivr = Ivr::where('id', $id)->first();
             if($Ivr){
+                TfnDestination::where('destination_type_id', 8)
+                                ->where('destination_id', $id)
+                                ->delete();
+                
                 IvrDirectDestination::where('ivr_id', $id)->delete();
                 IvrOption::where('ivr_id', $id)->delete();
 				$resdelete = $Ivr->delete();
