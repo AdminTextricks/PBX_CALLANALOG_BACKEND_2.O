@@ -20,4 +20,8 @@ class ResellerRechargeHistories extends Model
         'recharged_by',
         'status'
     ];
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
