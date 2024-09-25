@@ -34,7 +34,7 @@ class OneGoUserController extends Controller
                     ->with('parent:id,name,email')
 					->with('user:id,name,email')
 					//->with('company:id,parent_id,company_name,email,mobile,plan_id,billing_address,country_id')
-                    ->with('company.country:id,country_name, phone_code')
+                    ->with('company.country:id,country_name,phone_code')
                     ->with('country:id,country_name')
                     ->with('tfn:id,tfn_number')
                     ->with('ring:id,ringno')
