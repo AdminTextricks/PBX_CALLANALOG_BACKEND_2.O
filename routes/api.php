@@ -296,11 +296,11 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	# Invoices
 	Route::group(['prefix' => 'invoice'], function () {
+		Route::get('/reseller-recharge-history', [RechargeHistoryController::class, 'getALLresellerRechargeHistory']);
 		Route::get('/recharge-history', [InvoiceController::class, 'getRechargehistoryInvoiceData']);
 		Route::get('/getall', [InvoiceController::class, 'getAllInvoiceData']);
 		Route::get('/{id}', [InvoiceController::class, 'getInvoiceData']);
 		Route::post('/', [InvoiceController::class, 'createInvoice']);
-		Route::get('/reseller-recharge-history', [RechargeHistoryController::class, 'getALLresellerRechargeHistory']);
 	});
 
 	# Payments Manage.

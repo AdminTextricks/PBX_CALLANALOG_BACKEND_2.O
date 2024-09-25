@@ -194,20 +194,18 @@ class RechargeHistoryController extends Controller
                     $getrechargehistorydata = $getrechargehistorydata->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 } else {
-                    $getrechargehistorydata = ResellerRechargeHistories::select('*')->with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')->with('user:id,name,email')
+                    $getrechargehistorydata = ResellerRechargeHistories::select('*')->with('user:id,name,email')
                         ->orderBy('id', 'DESC')
                         ->paginate($perPage = $perPageNo, $column = ['*'], $pageName = 'page');
                 }
             }
         } else {
             if ($recharge_id) {
-                $getrechargehistorydata = ResellerRechargeHistories::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
-                    ->select('*')->with('user:id,name,email')
+                $getrechargehistorydata = ResellerRechargeHistories::with('user:id,name,email')
                     ->where('id', $recharge_id)->where('user_id', $user->id)->first();
             } else {
                 if ($params !== "" || $request->has('from_date') || $request->has('to_date')) {
-                    $getrechargehistorydata = ResellerRechargeHistories::with('company:id,company_name,account_code,email,mobile,billing_address,city,zip')
-                        ->with('user:id,name,email')
+                    $getrechargehistorydata = ResellerRechargeHistories::with('user:id,name,email')
                         ->select('*')->where('recharged_by', 'LIKE', "%$params%");
 
                     if ($fromDate) {
