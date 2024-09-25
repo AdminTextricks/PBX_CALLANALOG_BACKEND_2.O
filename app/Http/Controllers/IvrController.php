@@ -356,6 +356,7 @@ class IvrController extends Controller
             DB::beginTransaction();
             $Ivr = Ivr::where('id', $id)->first();
             if($Ivr){
+                IvrDirectDestination::where('ivr_id', $id)->delete();
                 IvrOption::where('ivr_id', $id)->delete();
 				$resdelete = $Ivr->delete();
                 if ($resdelete) {                   
