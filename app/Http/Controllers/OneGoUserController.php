@@ -101,9 +101,10 @@ class OneGoUserController extends Controller
                             ->where('company_id', $request->company_id)
                             ->where('user_id', $request->user_id)
                             ->update([
-                                'tfn_id' => $tfnNumber->id,
-                                'step_no' => '2',
-                                'updated_at' => Carbon::now(),
+                                'country_id'    => $request->country_id,
+                                'tfn_id'        => $tfnNumber->id,
+                                'step_no'       => '2',
+                                'updated_at'    => Carbon::now(),
                             ]);
 
                         $tfnNumberRR = Tfn::where('id', $tfnNumber->id)->first();
