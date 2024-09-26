@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('agent_name', 200)->nullable()->index();
             $table->string('agent_number', 200)->nullable()->index();
             $table->string('duration', 10)->nullable();
+            $table->string('talk_duration', 10)->nullable();
             $table->string('billsec', 10)->nullable();
             $table->string('disposition', 100)->nullable()->index();
             $table->string('call_type')->nullable();
@@ -34,7 +35,7 @@ return new class extends Migration
             $table->string('tfn', 100)->nullable()->index();
             $table->string('destination_type', 100)->nullable();
             $table->string('destination', 20)->nullable()->index();
-            $table->string('hangup_cause', 20)->nullable();
+            //$table->string('hangup_cause', 20)->nullable();
             $table->string('receive_ip', 100)->nullable();
             $table->string('trunk_name', 20)->nullable();
             $table->string('codec', 20)->nullable();

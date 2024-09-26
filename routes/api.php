@@ -404,6 +404,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::post('/addRingGroup', [OneGoUserController::class, 'addRingGroup']);
 		Route::get('/', [OneGoUserController::class,'getOneGoUser']);
 		Route::post('/createInvoice', [OneGoUserController::class,'createInvoice']);
+		Route::post('/oneGoPayment', [OneGoUserController::class,'createOneGoPayment']);
 		//Route::delete('/{id}', [IvrController::class,'deleteIvr']);
 	});
 

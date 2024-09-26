@@ -276,6 +276,7 @@ class ExtensionController extends Controller
                                         'item_type'     => 'Extension',
                                         'item_number'   => $item,
                                         'item_price'    => $item_price,
+                                        'item_category' => ($payment_status == 'Paid') ? 'Purchase' : 'Free',
                                     ]);
 
                                     $webrtc_template_url = config('app.webrtc_template_url');
