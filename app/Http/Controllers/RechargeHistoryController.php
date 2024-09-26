@@ -8,6 +8,7 @@ use App\Models\ResellerRechargeHistories;
 use App\Models\ResellerWallet;
 use App\Models\User;
 use Str;
+use Carbon\Carbon;
 use Validator;
 use Illuminate\Http\Request;
 
@@ -168,10 +169,10 @@ class RechargeHistoryController extends Controller
         $toDate = $request->get('to_date');
 
         if ($fromDate) {
-            $fromDate = \Carbon\Carbon::createFromFormat('d-m-Y', $fromDate)->startOfDay();
+            $fromDate = Carbon::createFromFormat('d-m-Y', $fromDate)->startOfDay();
         }
         if ($toDate) {
-            $toDate = \Carbon\Carbon::createFromFormat('d-m-Y', $toDate)->endOfDay();
+            $toDate = Carbon::createFromFormat('d-m-Y', $toDate)->endOfDay();
         }
 
         if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
