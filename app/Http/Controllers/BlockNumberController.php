@@ -245,6 +245,7 @@ class BlockNumberController extends Controller
 				$BlockNumberOld = BlockNumber::where('digits', $request->digits)
 							->where('subject', $request->subject)
 							->where('id','!=', $id)
+							->where('company_id', $request->company_id)
 							->first();
 				if(!$BlockNumberOld){
 					$BlockNumber->digits    = $request->digits;
