@@ -1788,7 +1788,14 @@ class TfnController extends Controller
                     return $this->output(false, 'This Number does not exist with us. Please try again!', [], 404);
                 }
                 // $dataChangeTfns->startingdate = Carbon::now();
-                $dataChangeTfns->expirationdate = $request->expirationdate;
+                $requestExpirationDate =  \Carbon\Carbon::createFromFormat('Y-m-d', $request->expirationdate);
+                if ($dataChangeTfns->expirationdate > $requestExpirationDate) {
+                    $dataChangeTfns->expirationdate = $requestExpirationDate;
+                    $dataChangeTfns->activated = '0';
+                    $dataChangeTfns->status = 0;
+                } else {
+                    $dataChangeTfns->expirationdate = $requestExpirationDate;
+                }
                 $dateData = $dataChangeTfns->save();
                 if ($dateData) {
                     $response = $dataChangeTfns->toArray();
