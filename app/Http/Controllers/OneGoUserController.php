@@ -399,7 +399,7 @@ class OneGoUserController extends Controller
                                 'payment_status'    => 'Unpaid',                            
                             ]);
 
-                            $InvoiceItems['TFN'][] = InvoiceItems::create([
+                            $InvoiceItems[] = InvoiceItems::create([
                                 'country_id'    => $oneGoUser['country_id'],
                                 'invoice_id'    => $createinvoice->id,
                                 'item_type'     => 'TFN',
@@ -415,7 +415,7 @@ class OneGoUserController extends Controller
                                 $itemNumber = $tfninvoicenumberExt->name;
                                 $itemId = $tfninvoicenumberExt->id;
 
-                                $InvoiceItems['Extension'][] = InvoiceItems::create([
+                                $InvoiceItems[] = InvoiceItems::create([
                                     'country_id'    => $oneGoUser['country_id'],
                                     'invoice_id'    => $createinvoice->id,
                                     'item_type'     => 'Extension',
@@ -436,8 +436,8 @@ class OneGoUserController extends Controller
                                     ]);
 
                             if($steps_result){
-                                $response['Invoice'] = $createinvoice->toArray();
-                                $response['Invoice_items'] = $InvoiceItems;
+                                $response['invoice'] = $createinvoice->toArray();
+                                $response['invoice']['invoice_items'] = $InvoiceItems;
                                 DB::commit();
                                 return $this->output(true, 'Invoice Created Successfully!!.', $response);
                             }else{
