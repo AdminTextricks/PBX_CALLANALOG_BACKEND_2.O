@@ -38,6 +38,8 @@ class OneGoUserController extends Controller
                     ->with('country:id,country_name')
                     ->with('tfn:id,tfn_number')
                     ->with('ring:id,ringno')
+                    //->with('invoice')
+                    ->with('invoice.invoice_items')
                     ->leftjoin("extensions",DB::raw("FIND_IN_SET(extensions.id,one_go_user_steps.extension_id)"),">",DB::raw('0'))
                     ->groupBy("one_go_user_steps.id")
                     ->get(); 
@@ -352,106 +354,108 @@ class OneGoUserController extends Controller
                     ->where('one_go_user_steps.company_id', $request->company_id)
                     ->where('one_go_user_steps.user_id', $request->user_id)
                     ->first(); 
-                 
-            $oneGoUser = $data->toArray();
+            
+            if($data){
+                $oneGoUser = $data->toArray();
 
-            if(!empty($oneGoUser['parent_id']) && !empty($oneGoUser['company_id']) && !empty($oneGoUser['user_id']) && !empty($oneGoUser['country_id']) && !empty($oneGoUser['tfn_id']) && !empty($oneGoUser['extension_id']) && !empty($oneGoUser['ring_id']))
-            {
-                $itemArray = array();
-                $parent_id = $oneGoUser['parent_id'];
-                $price_for = 'Company';
-                if ($parent_id > 1){
-                    $price_for = 'Reseller';
-                }
-                $tfn_price_arr = $this->getItemPrice($oneGoUser['company_id'],$oneGoUser['country_id'], $price_for, $parent_id, 'TFN');                
-                
-                if ($tfn_price_arr['Status'] == 'true') {
-                    $extension_price_arr = $this->getItemPrice($oneGoUser['company_id'],$oneGoUser['country_id'], $price_for, $parent_id, 'Extension');
+                if(!empty($oneGoUser['parent_id']) && !empty($oneGoUser['company_id']) && !empty($oneGoUser['user_id']) && !empty($oneGoUser['country_id']) && !empty($oneGoUser['tfn_id']) && !empty($oneGoUser['extension_id']) && !empty($oneGoUser['ring_id']))
+                {
+                    $itemArray = array();
+                    $parent_id = $oneGoUser['parent_id'];
+                    $price_for = 'Company';
+                    if ($parent_id > 1){
+                        $price_for = 'Reseller';
+                    }
+                    $tfn_price_arr = $this->getItemPrice($oneGoUser['company_id'],$oneGoUser['country_id'], $price_for, $parent_id, 'TFN');                
                     
-                    if ($extension_price_arr['Status'] == 'true') { 
-                        $tfn_price = $tfn_price_arr['TFN_price'];
-                        $extension_price    = $extension_price_arr['Extension_price'];
-
-                        $extension_arr      = explode(',',$oneGoUser['extension_name']);
-                        $extensions_amount  = $extension_price * count($extension_arr);
-                        $invoice_amount_main= $extensions_amount + $tfn_price;
+                    if ($tfn_price_arr['Status'] == 'true') {
+                        $extension_price_arr = $this->getItemPrice($oneGoUser['company_id'],$oneGoUser['country_id'], $price_for, $parent_id, 'Extension');
                         
-                        $invoice_amount     = number_format($invoice_amount_main, 2, '.', '');
+                        if ($extension_price_arr['Status'] == 'true') { 
+                            $tfn_price = $tfn_price_arr['TFN_price'];
+                            $extension_price    = $extension_price_arr['Extension_price'];
 
-                        $invoicetable_id = DB::table('invoices')->max('id');
-                        if (!$invoicetable_id) {
-                            $invoice_id = '#INV/' . date('Y') . '/00001';
-                        } else {
-                            $invoice_id = "#INV/" . date('Y') . "/000" . ($invoicetable_id + 1);
-                        }
-
-                        $createinvoice = Invoice::create([
-                            'company_id'    => $oneGoUser['company_id'],
-                            'country_id'    => $oneGoUser['company']['country_id'],
-                            'state_id'      => $oneGoUser['company']['state_id'],
-                            'invoice_id'    => $invoice_id,
-                            'invoice_currency'  => 'USD',
-                            'invoice_subtotal_amount' => $invoice_amount,
-                            'invoice_amount'    => $invoice_amount,
-                            'payment_status'    => 'Unpaid',                            
-                        ]);
-
-                        $InvoiceItems['TFN'][] = InvoiceItems::create([
-                            'country_id'    => $oneGoUser['country_id'],
-                            'invoice_id'    => $createinvoice->id,
-                            'item_type'     => 'TFN',
-                            'item_id'       => $oneGoUser['tfn_id'],
-                            'item_number'   => $oneGoUser['tfn']['tfn_number'],
-                            'item_price'    => $tfn_price,
-                            'item_category' => 'Purchase',
-                        ]);
-
-                        foreach ($extension_arr as $extension) {
+                            $extension_arr      = explode(',',$oneGoUser['extension_name']);
+                            $extensions_amount  = $extension_price * count($extension_arr);
+                            $invoice_amount_main= $extensions_amount + $tfn_price;
                             
-                            $tfninvoicenumberExt = Extension::select('name','id')->where('name', $extension)->first();
-                            $itemNumber = $tfninvoicenumberExt->name;
-                            $itemId = $tfninvoicenumberExt->id;
+                            $invoice_amount     = number_format($invoice_amount_main, 2, '.', '');
 
-                            $InvoiceItems['Extension'][] = InvoiceItems::create([
+                            $invoicetable_id = DB::table('invoices')->max('id');
+                            if (!$invoicetable_id) {
+                                $invoice_id = '#INV/' . date('Y') . '/00001';
+                            } else {
+                                $invoice_id = "#INV/" . date('Y') . "/000" . ($invoicetable_id + 1);
+                            }
+
+                            $createinvoice = Invoice::create([
+                                'company_id'    => $oneGoUser['company_id'],
+                                'country_id'    => $oneGoUser['company']['country_id'],
+                                'state_id'      => $oneGoUser['company']['state_id'],
+                                'invoice_id'    => $invoice_id,
+                                'invoice_currency'  => 'USD',
+                                'invoice_subtotal_amount' => $invoice_amount,
+                                'invoice_amount'    => $invoice_amount,
+                                'payment_status'    => 'Unpaid',                            
+                            ]);
+
+                            $InvoiceItems['TFN'][] = InvoiceItems::create([
                                 'country_id'    => $oneGoUser['country_id'],
                                 'invoice_id'    => $createinvoice->id,
-                                'item_type'     => 'Extension',
-                                'item_id'       => $itemId,
-                                'item_number'   => $itemNumber,
-                                'item_price'    => $extension_price,
-                                'item_category' => ($oneGoUser['company']['plan_id'] == 2) ? 'Free' : 'Purchase',
+                                'item_type'     => 'TFN',
+                                'item_id'       => $oneGoUser['tfn_id'],
+                                'item_number'   => $oneGoUser['tfn']['tfn_number'],
+                                'item_price'    => $tfn_price,
+                                'item_category' => 'Purchase',
                             ]);
-                        }
 
-                        $steps_result = DB::table('one_go_user_steps')
-                                ->where('company_id', $oneGoUser['company_id'])
-                                ->where('user_id', $oneGoUser['user_id'])
-                                ->update([
-                                    'invoice_id' => $createinvoice->id,
-                                    'step_no' => '5',
-                                    'updated_at' => Carbon::now(),
+                            foreach ($extension_arr as $extension) {
+                                
+                                $tfninvoicenumberExt = Extension::select('name','id')->where('name', $extension)->first();
+                                $itemNumber = $tfninvoicenumberExt->name;
+                                $itemId = $tfninvoicenumberExt->id;
+
+                                $InvoiceItems['Extension'][] = InvoiceItems::create([
+                                    'country_id'    => $oneGoUser['country_id'],
+                                    'invoice_id'    => $createinvoice->id,
+                                    'item_type'     => 'Extension',
+                                    'item_id'       => $itemId,
+                                    'item_number'   => $itemNumber,
+                                    'item_price'    => $extension_price,
+                                    'item_category' => ($oneGoUser['company']['plan_id'] == 2) ? 'Free' : 'Purchase',
                                 ]);
+                            }
 
-                        if($steps_result){
-                            $response['Invoice'] = $createinvoice->toArray();
-                            $response['Invoice_items'] = $InvoiceItems;
-                            DB::commit();
-                            return $this->output(true, 'Invoice Created Successfully!!.', $response);
+                            $steps_result = DB::table('one_go_user_steps')
+                                    ->where('company_id', $oneGoUser['company_id'])
+                                    ->where('user_id', $oneGoUser['user_id'])
+                                    ->update([
+                                        'invoice_id' => $createinvoice->id,
+                                        'step_no' => '5',
+                                        'updated_at' => Carbon::now(),
+                                    ]);
+
+                            if($steps_result){
+                                $response['Invoice'] = $createinvoice->toArray();
+                                $response['Invoice_items'] = $InvoiceItems;
+                                DB::commit();
+                                return $this->output(true, 'Invoice Created Successfully!!.', $response);
+                            }else{
+                                DB::rollback();
+                                return $this->output(false, 'Error occurred in creating Invoice.', [], 409);
+                            }                        
                         }else{
-                            DB::rollback();
-                            return $this->output(false, 'Error occurred in creating Invoice.', [], 409);
-                        }                        
+                            DB::commit();
+                            return $this->output(false, 'Extension price not available for this country. Please contact with support team.');
+                        }
                     }else{
                         DB::commit();
-                        return $this->output(false, 'Extension price not available for this country. Please contact with support team.');
+                        return $this->output(false, 'TFN price not available for this country. Please contact with support team.');
                     }
                 }else{
                     DB::commit();
-                    return $this->output(false, 'TFN price not available for this country. Please contact with support team.');
+                    return $this->output(false, 'Some error occurred in above steps. Please try again.', [], 409);
                 }
-            }else{
-                DB::commit();
-                return $this->output(false, 'Some error occurred in above steps. Please try again.', [], 409);
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -495,7 +499,6 @@ class OneGoUserController extends Controller
                     ->with('tfn:id,tfn_number')
                     ->with('ring:id,ringno')                    
                     ->groupBy("one_go_user_steps.id")
-                    //->where('one_go_user_steps.id', $request->oneGoUser_id)
                     ->where('one_go_user_steps.company_id', $request->company_id)
                     ->where('one_go_user_steps.user_id', $request->user_id)
                     ->first(); 

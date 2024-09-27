@@ -54,4 +54,8 @@ class OneGoUser extends Model
     public function ring(){
         return $this->belongsTo(RingGroup::class, 'ring_id');
     }
+
+    public function invoice(){
+        return $this->belongsTo(Invoice::class, 'invoice_id');
+    }
 }
