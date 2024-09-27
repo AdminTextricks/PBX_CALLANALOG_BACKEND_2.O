@@ -533,87 +533,96 @@ class OneGoUserController extends Controller
                     }
                     $item_number_str =  rtrim($item_numbers,',');
                 
-                    $ResellerWallet = ResellerWallet::select()->where('user_id',$oneGoUser['parent_id'])->first();  
-                    if($payment_price < $ResellerWallet->balance){
+                    $ResellerWallet = ResellerWallet::select()->where('user_id',$oneGoUser['parent_id'])->first(); 
+                    if($ResellerWallet){
+                        if($payment_price < $ResellerWallet->balance){
 
-                        $balance = $ResellerWallet->balance - $payment_price;
-                        $reseller_res = ResellerWallet::where('user_id', $oneGoUser['parent_id'])->update([
-                            'balance' => $balance,
-                        ]);
-                        if($reseller_res){
+                            $balance = $ResellerWallet->balance - $payment_price;
+                            $reseller_res = ResellerWallet::where('user_id', $oneGoUser['parent_id'])->update([
+                                'balance' => $balance,
+                            ]);
+                            if($reseller_res){
 
-                            $payment = Payments::create([
-                                    'company_id'        => $oneGoUser['company']['id'],
-                                    'invoice_id'        => $invoice_id,
-                                    'ip_address'        => $ipAddress,
-                                    'invoice_number'    => $invoice_number,
-                                    'order_id'          => $order_id,
-                                    'item_numbers'      => $item_number_str,
-                                    'payment_type'      => 'Wallet Payment',
-                                    'payment_currency'  => 'USD',
-                                    'payment_price'     => $payment_price,
-                                    'transaction_id'    => time(),
-                                    'status'            => '1',
-                                ]);
+                                $payment = Payments::create([
+                                        'company_id'        => $oneGoUser['company']['id'],
+                                        'invoice_id'        => $invoice_id,
+                                        'ip_address'        => $ipAddress,
+                                        'invoice_number'    => $invoice_number,
+                                        'order_id'          => $order_id,
+                                        'item_numbers'      => $item_number_str,
+                                        'payment_type'      => 'Wallet Payment',
+                                        'payment_currency'  => 'USD',
+                                        'payment_price'     => $payment_price,
+                                        'transaction_id'    => time(),
+                                        'status'            => '1',
+                                    ]);
 
-                            $server_flag = config('app.server_flag');
-                            if ($plan_id == 1 && $server_flag == 1) {
-                                $startingdate = Carbon::now();
-                                $expirationdate = $startingdate->addDays(29);
-                                foreach($invoice_items as $key => $invoice_item){
+                                if($payment){
+                                    $startingdate = Carbon::now();
+                                    $expirationdate = $startingdate->addDays(29);
+                                    foreach($invoice_items as $key => $invoice_item){
+                                        if($invoice_item['item_type'] == 'TFN'){
+                                            $Tfn = Tfn::where('tfn_number',$invoice_item['item_number'])->update([
+                                                    'company_id'    => $oneGoUser['company']['id'],
+                                                    'assign_by'     => $user->id,
+                                                    'activated'     => '1',
+                                                    'startingdate'  => Carbon::now(),
+                                                    'expirationdate'=> $expirationdate,
+                                                    'status'        => '1',
+                                                ]);
+                                        }else{
+                                            $Extension = Extension::where('name', $invoice_item['item_number'])->update([
+                                                    'startingdate' => Carbon::now(),
+                                                    'expirationdate'=> $expirationdate,
+                                                    'host'          => 'dynamic',
+                                                    'status'        => '1',
+                                                ]);
+                                            $RingMember = RingMember::create([
+                                                    'ring_id'   => $ring_id,
+                                                    'extension' => $invoice_item['item_number'],
+                                                ]);
+                                        } 
+                                    }
 
-                                    if($invoice_item['item_type'] == 'TFN'){
-                                        $Tfn = Tfn::where('tfn_number',$invoice_item['item_number'])->update([
-                                                'company_id'    => $oneGoUser['company']['id'],
-                                                'assign_by'     => $user->id,
-                                                'activated'     => '1',
-                                                'startingdate'  => Carbon::now(),
-                                                'expirationdate'=> $expirationdate,
-                                                'status'        => '1',
-                                            ]);
+                                    $server_flag = config('app.server_flag');
+                                    if ($server_flag == 1) {
+                                        $shell_script = config('app.shell_script');
+                                        $result = shell_exec('sudo ' . $shell_script);
+                                        Log::error('Extension File Transfer Log : ' . $result);
+                                        $this->sipReload();
+                                    }
+                                    //$item_ids['total_extension'] = count($item_ids);
+                                    $steps_result = DB::table('one_go_user_steps')
+                                        ->where('company_id', $request->company_id)
+                                        ->where('user_id', $request->user_id)
+                                        ->update([
+                                            'payment_id' => $payment->id,
+                                            'step_no' => '6',
+                                            'updated_at' => Carbon::now(),
+                                        ]);
+                                    if($steps_result){
+                                        DB::commit();
+                                        $response = $payment->toArray();
+                                        return $this->output(true, 'Payment done successfully.',  $response);
                                     }else{
-                                        $Extension = Extension::where('name', $invoice_item['item_number'])->update([
-                                                'startingdate' => Carbon::now(),
-                                                'expirationdate'=> $expirationdate,
-                                                'host'          => 'dynamic',
-                                                'status'        => '1',
-                                            ]);
-                                        $RingMember = RingMember::create([
-                                                'ring_id'   => $ring_id,
-                                                'extension' => $invoice_item['item_number'],
-                                            ]);
-                                    } 
+                                        DB::rollback();
+                                        return $this->output(false, 'Error occurred in One-Go status updating.', [], 409);
+                                    }
+                                }else{
+                                    DB::rollback();
+                                    return $this->output(false, 'Error occurred in One-Go payment saving.', [], 409);
                                 }
-
-                                $shell_script = config('app.shell_script');
-                                $result = shell_exec('sudo ' . $shell_script);
-                                Log::error('Extension File Transfer Log : ' . $result);
-                                $this->sipReload();
-                            }
-                            //$item_ids['total_extension'] = count($item_ids);
-                            $steps_result = DB::table('one_go_user_steps')
-                                ->where('company_id', $request->company_id)
-                                ->where('user_id', $request->user_id)
-                                ->update([
-                                    'payment_id' => $payment->id,
-                                    'step_no' => '6',
-                                    'updated_at' => Carbon::now(),
-                                ]);
-                            if($steps_result){
-                                DB::commit();
-                                $response = $payment->toArray();
-                                return $this->output(true, 'Payment done successfully.',  $response);
                             }else{
                                 DB::rollback();
-                                return $this->output(false, 'Error occurred in One-Go status updating.', [], 409);
+                                return $this->output(false, 'Error occurred in amount deducting!.', [], 409);
                             }
                         }else{
                             DB::commit();
-                            return $this->output(false, 'Error occurred in amount deducting!.', [], 409);
+                            return $this->output(false, 'Reseller account has insufficient balance!.', [], 409);
                         }
                     }else{
                         DB::commit();
-                        return $this->output(false, 'Reseller account has insufficient balance!.', [], 409);
+                        return $this->output(false, 'Reseller wallet account not exist!.', [], 409); 
                     }
                 }
             }else{
