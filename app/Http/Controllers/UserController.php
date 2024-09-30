@@ -717,4 +717,42 @@ class UserController extends Controller
         fclose($socket);
         return true;
     }
+
+    public function getAllResellerlist(Request $request)
+    {
+        $user = \Auth::user();
+        $params = $request->get('params', "");
+        $reseller_id = $request->get('id', null);
+        $perPageNo = isset($request->perpage) ? $request->perpage : 25;
+
+        if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
+            if ($reseller_id) {
+                $getAllReseller = User::with('reseller_wallets:user_id,balance')->where('id', $reseller_id)->where('role_id', '=', '5')->first();
+            } else {
+                if ($params !== "") {
+                    return $getAllReseller = User::select('*')->with('country:id,country_name,iso3')->with('reseller_wallets:user_id,balance')
+                        ->where('role_id', '=', '5')
+                        ->where(function ($query) use ($params) {
+                            $query->where('email', 'LIKE', "%$params%")
+                                ->orWhere('mobile', 'LIKE', "%$params%")
+                                ->orWhereHas('country', function ($query) use ($params) {
+                                    $query->where('country_name', 'like', "%{$params}%");
+                                });
+                        })
+                        ->orderBy('id', 'DESC')
+                        ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+                }
+            }
+
+            if (!is_null($getAllReseller)) {
+                $dd = $getAllReseller->toArray();
+                unset($dd['links']);
+                return $this->output(true, 'Success', $dd, 200);
+            } else {
+                return $this->output(true, 'No Record Found', []);
+            }
+        } else {
+            return $this->output(false, 'Sorry! You are not authorized.', [], 403);
+        }
+    }
 }
