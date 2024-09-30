@@ -402,7 +402,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/', [OneGoUserController::class,'getOneGoUser']);
 		Route::post('/createInvoice', [OneGoUserController::class,'createInvoice']);
 		Route::post('/oneGoPayment', [OneGoUserController::class,'createOneGoPayment']);
-		//Route::delete('/{id}', [IvrController::class,'deleteIvr']);
+		Route::delete('/{id}', [OneGoUserController::class,'deleteOneGoUser']);
 	});
 
 	Route::group(['prefix' => 'reseller-commission'], function () {

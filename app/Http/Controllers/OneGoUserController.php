@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\OneGoUser;
 use App\Models\Company;
+use App\Models\User;
 use App\Models\Cart;
 use App\Models\Tfn;
 use App\Models\RingGroup;
@@ -15,6 +16,7 @@ use App\Models\Invoice;
 use App\Models\ResellerWallet;
 use App\Models\InvoiceItems;
 use App\Models\Payments;
+use App\Models\TfnDestination;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Validator;
@@ -542,7 +544,6 @@ class OneGoUserController extends Controller
                                 'balance' => $balance,
                             ]);
                             if($reseller_res){
-
                                 $payment = Payments::create([
                                         'company_id'        => $oneGoUser['company']['id'],
                                         'invoice_id'        => $invoice_id,
@@ -556,7 +557,6 @@ class OneGoUserController extends Controller
                                         'transaction_id'    => time(),
                                         'status'            => '1',
                                     ]);
-
                                 if($payment){
                                     $startingdate = Carbon::now();
                                     $expirationdate = $startingdate->addDays(29);
@@ -582,31 +582,45 @@ class OneGoUserController extends Controller
                                                     'extension' => $invoice_item['item_number'],
                                                 ]);
                                         } 
+                                        
+                                        Cart::where('item_number',$invoice_item['item_number'])->delete();
                                     }
 
-                                    $server_flag = config('app.server_flag');
-                                    if ($server_flag == 1) {
-                                        $shell_script = config('app.shell_script');
-                                        $result = shell_exec('sudo ' . $shell_script);
-                                        Log::error('Extension File Transfer Log : ' . $result);
-                                        $this->sipReload();
-                                    }
-                                    //$item_ids['total_extension'] = count($item_ids);
-                                    $steps_result = DB::table('one_go_user_steps')
-                                        ->where('company_id', $request->company_id)
-                                        ->where('user_id', $request->user_id)
-                                        ->update([
-                                            'payment_id' => $payment->id,
-                                            'step_no' => '6',
-                                            'updated_at' => Carbon::now(),
-                                        ]);
-                                    if($steps_result){
-                                        DB::commit();
-                                        $response = $payment->toArray();
-                                        return $this->output(true, 'Payment done successfully.',  $response);
+                                    $TfnDestination = TfnDestination::create([
+                                                'company_id'    => $oneGoUser['company']['id'],
+                                                'tfn_id'        => $oneGoUser['tfn_id'],
+                                                'destination_type_id'   => '6',
+                                                'destination_id'        => $ring_id,
+                                                'priority'              => 1,
+                                            ]);
+                                    if($TfnDestination){
+                                        $server_flag = config('app.server_flag');
+                                        if ($server_flag == 1) {
+                                            $shell_script = config('app.shell_script');
+                                            $result = shell_exec('sudo ' . $shell_script);
+                                            Log::error('Extension File Transfer Log : ' . $result);
+                                            $this->sipReload();
+                                        }
+                                        //$item_ids['total_extension'] = count($item_ids);
+                                        $steps_result = DB::table('one_go_user_steps')
+                                            ->where('company_id', $request->company_id)
+                                            ->where('user_id', $request->user_id)
+                                            ->update([
+                                                'payment_id' => $payment->id,
+                                                'step_no' => '6',
+                                                'updated_at' => Carbon::now(),
+                                            ]);
+                                        if($steps_result){
+                                            DB::commit();
+                                            $response = $payment->toArray();
+                                            return $this->output(true, 'Payment done successfully.',  $response);
+                                        }else{
+                                            DB::rollback();
+                                            return $this->output(false, 'Error occurred in One-Go status updating.', [], 409);
+                                        }
                                     }else{
                                         DB::rollback();
-                                        return $this->output(false, 'Error occurred in One-Go status updating.', [], 409);
+                                        return $this->output(false, 'Error occurred in set destination for TFN.', [], 409);
                                     }
                                 }else{
                                     DB::rollback();
@@ -634,6 +648,72 @@ class OneGoUserController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Error in creating One-Go-User payment : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
+
+
+    public function deleteOneGoUser(Request $request, $id)
+    {
+        try {  
+            DB::beginTransaction();
+            $OneGoUser = OneGoUser::where('id', $id)->first();
+            if($OneGoUser){
+                
+                if(!empty($OneGoUser['invoice_id']) ){
+                    InvoiceItems::where('invoice_id', $OneGoUser['invoice_id'])->delete();
+                    Invoice::where('id',$OneGoUser['invoice_id'])->delete();
+                }
+
+                if(!empty($OneGoUser['ring_id']) ){
+                    RingMember::where('ring_id',$OneGoUser['ring_id'])->delete();
+                    RingGroup::where('id',$OneGoUser['ring_id'])->delete();
+                }
+
+                if(!empty($OneGoUser['extension_id']) ){
+                    $extensionId_arr = explode(',',$OneGoUser['extension_id']);
+                    foreach($extensionId_arr as $ext_id){
+                        Extension::findOrFail($ext_id)->delete();
+                        Cart::where('item_id',$ext_id)->delete();
+                    }
+                }
+                if(!empty($OneGoUser['tfn_id']) ){
+                    $TfnObj = Tfn::find($OneGoUser['tfn_id']);
+                    if($TfnObj->company_id == 0 && $TfnObj->assign_by == 0 && $TfnObj->activated == '0' && $TfnObj->reserved == '1'){
+                        Cart::where('item_id',$OneGoUser['tfn_id'])->delete();
+
+                        $TfnObj->reserved = '0';
+                        $TfnObj->reserveddate = NULL;
+                        $TfnObj->reservedexpirationdate = NULL;   
+                        $TfnObjRes     = $TfnObj->save();
+                        if(!$TfnObjRes){                           
+                            DB::rollBack();
+                            return $this->output(false, 'Error occurred in tfn Updating. Please try again!.', [], 200);
+                        }
+                    }
+                }
+               
+                $resdelete = $OneGoUser->delete();
+                if ($resdelete) {
+                    if(!empty($OneGoUser['user_id']) ){
+                        User::where('id',$OneGoUser['user_id'])->delete();
+                    }
+                    if(!empty($OneGoUser['company_id']) ){
+                        Company::where('id',$OneGoUser['company_id'])->delete();
+                    }
+                    DB::commit();
+                    return $this->output(true,'Success',200);
+                } else {
+                    DB::commit();
+                    return $this->output(false, 'Error occurred in One-Go-User deleting. Please try again!.', [], 209); 
+                }
+            }else{
+                DB::commit();
+                return $this->output(false,'One-Go-User not exist with us.', [], 409);
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error occurred in One-Go-User Deleting : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
