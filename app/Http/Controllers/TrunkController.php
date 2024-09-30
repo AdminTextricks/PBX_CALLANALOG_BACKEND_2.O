@@ -78,16 +78,30 @@ class TrunkController extends Controller
         $params = $request->params ?? "";
 
         $trunk_id = $request->id ?? NULL;
-        if($trunk_id){            
+        if($trunk_id){ 
             $Trunks_data = Trunk::select('*') 
                             ->where('id', $trunk_id)->get();;
         }else{
-            $Trunks_data = Trunk::select('*') 
+            if ($params != "") {
+                $Trunks_data = Trunk::select('*') 
+                            ->orWhere('name', 'LIKE', "%$params%")
+                            ->orWhere('type', 'LIKE', "%$params%")
+                            ->orWhere('prefix', 'LIKE', "%$params%")
+                            ->orderBy('id', 'DESC')
                                 ->paginate(
                                 $perPage = $perPageNo,
                                 $columns = ['*'],
                                 $pageName = 'page'
                             );
+            }else{
+                $Trunks_data = Trunk::select('*')
+                            ->orderBy('id', 'DESC')
+                                ->paginate(
+                                $perPage = $perPageNo,
+                                $columns = ['*'],
+                                $pageName = 'page'
+                            );
+            }
         }
         if ($Trunks_data->isNotEmpty()) {
             $Trunks_dd = $Trunks_data->toArray();
