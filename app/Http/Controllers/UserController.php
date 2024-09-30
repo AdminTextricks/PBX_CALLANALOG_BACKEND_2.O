@@ -734,6 +734,7 @@ class UserController extends Controller
                         ->where('role_id', '=', '5')
                         ->where(function ($query) use ($params) {
                             $query->where('email', 'LIKE', "%$params%")
+                                ->orWhere('name', 'LIKE', "%$params%")
                                 ->orWhere('mobile', 'LIKE', "%$params%")
                                 ->orWhereHas('country', function ($query) use ($params) {
                                     $query->where('country_name', 'like', "%{$params}%");
