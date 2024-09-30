@@ -92,6 +92,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	});
 
 	Route::group(['prefix' => 'user'], function () {
+		Route::get('/getallreseller', [UserController::class, 'getAllResellerlist']);
 		Route::get('reseller/active', [UserController::class, 'getActiveResellerUsers']);
 		Route::get('reseller/{id?}', [UserController::class, 'getAllResellerUsers']);
 		//Route::get('/balance', [CompanyController::class, 'getBalance']);
