@@ -699,7 +699,9 @@ class OneGoUserController extends Controller
                         User::where('id',$OneGoUser['user_id'])->delete();
                     }
                     if(!empty($OneGoUser['company_id']) ){
+                        DB::table('user_registered_servers')->where('company_id', $OneGoUser['company_id'])->delete();
                         Company::where('id',$OneGoUser['company_id'])->delete();
+                        
                     }
                     DB::commit();
                     return $this->output(true,'Success',200);
