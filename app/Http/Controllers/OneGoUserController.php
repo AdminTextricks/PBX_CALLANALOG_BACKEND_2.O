@@ -53,7 +53,9 @@ class OneGoUserController extends Controller
 			    	->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page'); 
 
 		if($data->isNotEmpty()){
-			return $this->output(true, 'Success', $data->toArray());
+            $dd = $data->toArray();
+			unset($dd['links']);
+			return $this->output(true, 'Success', $dd);
 		}else{
 			return $this->output(true, 'No Record Found', []);
 		}
