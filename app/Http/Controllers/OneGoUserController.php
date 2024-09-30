@@ -696,6 +696,7 @@ class OneGoUserController extends Controller
                 $resdelete = $OneGoUser->delete();
                 if ($resdelete) {
                     if(!empty($OneGoUser['user_id']) ){
+                        DB::table('users_roles')->where('user_id',$OneGoUser['user_id'])->delete();
                         User::where('id',$OneGoUser['user_id'])->delete();
                     }
                     if(!empty($OneGoUser['company_id']) ){
