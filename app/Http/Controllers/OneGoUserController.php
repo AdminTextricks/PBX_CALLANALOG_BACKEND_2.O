@@ -27,6 +27,8 @@ class OneGoUserController extends Controller
 {
     public function getOneGoUser(Request $request){
         $user = \Auth::user();
+        $perPageNo = isset($request->perpage) ? $request->perpage : 10;
+		$params = $request->params ?? "";
         /*
 			$data = OneGoUser::select('*')
                     ->with('parent:id,name,email')
@@ -47,7 +49,8 @@ class OneGoUserController extends Controller
                     ->with('invoice.invoice_items')
                     ->leftjoin("extensions",DB::raw("FIND_IN_SET(extensions.id,one_go_user_steps.extension_id)"),">",DB::raw('0'))
                     ->groupBy("one_go_user_steps.id")
-                    ->get(); 
+                    ->orderBy('one_go_user_steps.id', 'DESC')
+			    	->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page'); 
 
 		if($data->isNotEmpty()){
 			return $this->output(true, 'Success', $data->toArray());
