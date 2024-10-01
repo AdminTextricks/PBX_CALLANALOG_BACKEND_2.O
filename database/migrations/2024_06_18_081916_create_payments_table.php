@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('order_id')->nullable();
             $table->string('item_numbers')->nullable();
             $table->string('payment_type')->nullable();
+            $table->enum('payment_by', ['Company', 'Reseller', 'Super Admin'])->nullable();
             $table->string('payment_currency')->nullable();
             $table->string('payment_price')->nullable();
             $table->string('transaction_id');
