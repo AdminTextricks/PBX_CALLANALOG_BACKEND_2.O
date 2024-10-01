@@ -506,8 +506,8 @@ class UserController extends Controller
         $otpData = EmailVerification::where('email', $request->email)->first();
         $currentTime = time();
         $time = $otpData->created_at;
-        if ($currentTime >= $time && $time >= $currentTime - (300 + 5)) { //5 Min
-            return $this->output(false, 'Please try after some time.');
+        if ($currentTime >= $time && $time >= $currentTime - (300 + 2)) { //2 Min
+            return $this->output(false, 'Please try after 2 Minutes.');
         } else {
             $this->sendOtp($user); //OTP SEND
             return $this->output(true, 'OTP has been sent.');

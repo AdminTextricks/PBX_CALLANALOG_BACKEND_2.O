@@ -41,6 +41,7 @@ use App\Http\Controllers\VoiceMailController;
 use App\Http\Controllers\TimeGroupController;
 use App\Http\Controllers\TimeConditionController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ErrorMessageController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -466,7 +467,10 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/', [NotificationController::class, 'getAllNotifications']);
 
 	});
-	
+	# Error Messages 
+	Route::group(['prefix' => 'error-message'], function () {
+		Route::get('/hangup-cause', [ErrorMessageController::class, 'getAllHangupCauseList']);
+	});
 });
 
 Route::get('/route-cache', function() {
