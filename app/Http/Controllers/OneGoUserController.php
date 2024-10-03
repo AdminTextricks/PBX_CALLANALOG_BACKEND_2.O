@@ -53,7 +53,7 @@ class OneGoUserController extends Controller
                 ->orderBy('one_go_user_steps.id', 'DESC')
                 ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
         } else {
-            if ($user->roles->first()->slug('reseller')) {
+            if ($user->roles->first()->slug =='reseller') {
                 $data = OneGoUser::select('one_go_user_steps.*', DB::raw("GROUP_CONCAT(extensions.name) as extension_name,agent_name"))
                     ->with('parent:id,name,email')
                     ->with('user:id,name,email')
