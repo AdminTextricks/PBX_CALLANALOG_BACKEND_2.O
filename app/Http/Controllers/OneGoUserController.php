@@ -549,6 +549,11 @@ class OneGoUserController extends Controller
                                 'balance' => $balance,
                             ]);
                             if($reseller_res){
+                                if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                                    $payment_by = 'Super Admin';
+                                }else{
+                                    $payment_by = 'Reseller';
+                                }
                                 $payment = Payments::create([
                                         'company_id'        => $oneGoUser['company']['id'],
                                         'invoice_id'        => $invoice_id,
@@ -557,6 +562,7 @@ class OneGoUserController extends Controller
                                         'order_id'          => $order_id,
                                         'item_numbers'      => $item_number_str,
                                         'payment_type'      => 'Wallet Payment',
+                                        'payment_by'        => $payment_by,
                                         'payment_currency'  => 'USD',
                                         'payment_price'     => $payment_price,
                                         'transaction_id'    => time(),
