@@ -27,7 +27,7 @@ class ExtensionController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'extension_digit' => 'nullable|numeric|between:5,10',
-            'extension_number' => 'required|numeric|max:50',
+            'extension_number' => 'required|numeric|max:80',
         ], [
             'extension_number' => 'Total number of extention required.',
         ]);
