@@ -285,6 +285,11 @@ class ExtensionController extends Controller
                                     $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
                                 }
 
+                                if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                                    $payment_by = 'Super Admin';
+                                }else{
+                                    $payment_by = 'Company';
+                                }
                                 $payment = Payments::create([
                                     'company_id'        => $request->company_id,
                                     'invoice_id'        => $Invoice->id,
@@ -293,6 +298,7 @@ class ExtensionController extends Controller
                                     'order_id'          =>  $invoice_id . '-UID-' . $request->company_id,
                                     'item_numbers'      => implode(',', $purchase_item),
                                     'payment_type'      => $payment_status,
+                                    'payment_by'        => $payment_by,
                                     'payment_currency'  => 'USD',
                                     'payment_price'     => $TotalItemPrice,
                                     'stripe_charge_id'  => '',
@@ -1215,7 +1221,11 @@ class ExtensionController extends Controller
                                         'item_category' => 'Renew',
                                     ]);
                                 }
-
+                                if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                                    $payment_by = 'Super Admin';
+                                }else{
+                                    $payment_by = 'Company';
+                                }
                                 $payment = Payments::create([
                                     'company_id'        => $request->company_id,
                                     'invoice_id'        => $Invoice->id,
@@ -1224,6 +1234,7 @@ class ExtensionController extends Controller
                                     'order_id'          => $invoice_id . '-UID-' . $request->company_id,
                                     'item_numbers'      => implode(',', $purchase_item),
                                     'payment_type'      => $payment_status,
+                                    'payment_by'        => $payment_by,
                                     'payment_currency'  => 'USD',
                                     'payment_price'     => $TotalItemPrice,
                                     'stripe_charge_id'  => '',

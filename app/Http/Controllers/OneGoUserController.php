@@ -568,21 +568,27 @@ class OneGoUserController extends Controller
                             $reseller_res = ResellerWallet::where('user_id', $oneGoUser['parent_id'])->update([
                                 'balance' => $balance,
                             ]);
-                            if ($reseller_res) {
+                            if($reseller_res){
+                                if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                                    $payment_by = 'Super Admin';
+                                }else{
+                                    $payment_by = 'Reseller';
+                                }
                                 $payment = Payments::create([
-                                    'company_id'        => $oneGoUser['company']['id'],
-                                    'invoice_id'        => $invoice_id,
-                                    'ip_address'        => $ipAddress,
-                                    'invoice_number'    => $invoice_number,
-                                    'order_id'          => $order_id,
-                                    'item_numbers'      => $item_number_str,
-                                    'payment_type'      => 'Wallet Payment',
-                                    'payment_currency'  => 'USD',
-                                    'payment_price'     => $payment_price,
-                                    'transaction_id'    => time(),
-                                    'status'            => '1',
-                                ]);
-                                if ($payment) {
+                                        'company_id'        => $oneGoUser['company']['id'],
+                                        'invoice_id'        => $invoice_id,
+                                        'ip_address'        => $ipAddress,
+                                        'invoice_number'    => $invoice_number,
+                                        'order_id'          => $order_id,
+                                        'item_numbers'      => $item_number_str,
+                                        'payment_type'      => 'Wallet Payment',
+                                        'payment_by'        => $payment_by,
+                                        'payment_currency'  => 'USD',
+                                        'payment_price'     => $payment_price,
+                                        'transaction_id'    => time(),
+                                        'status'            => '1',
+                                    ]);
+                                if($payment){
                                     $startingdate = Carbon::now();
                                     $expirationdate = $startingdate->addDays(29);
                                     foreach ($invoice_items as $key => $invoice_item) {
