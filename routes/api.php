@@ -473,6 +473,12 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 	});
 });
 
+/********  Webphone API   *********/
+Route::middleware(['throttle:5,1', 'log.request.response'])->group(function () {
+	Route::post('/extension_login', [ExtensionController::class, 'extensionLogin']);
+});
+
+/********  Webphone API   *********/
 Route::get('/route-cache', function() {
 	$exitCode = Artisan::call('route:cache');
 	$exitCode = Artisan::call('route:clear');
