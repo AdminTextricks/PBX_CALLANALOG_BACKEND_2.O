@@ -128,7 +128,7 @@ class OneGoUserController extends Controller
                     }
                 } else {
                     DB::commit();
-                    return $this->output(true, 'TFN not available for this country', []);
+                    return $this->output(false, 'TFN not available for this country', []);
                 }
             } else {
                 DB::commit();
