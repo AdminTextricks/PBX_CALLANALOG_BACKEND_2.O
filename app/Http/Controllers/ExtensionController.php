@@ -1316,4 +1316,59 @@ class ExtensionController extends Controller
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
+
+
+    public function extensionLogin(Request $request)
+    {
+        $user = \Auth::user();
+        $validator = Validator::make($request->all(), [
+            'name'  => 'required|numeric',
+            'secret'=> 'required',
+        ], [
+            'name.required'     => 'Extension number is required',
+            'secret.required'   => 'Extension password is required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 400);
+        }
+        try {
+
+            $Extension = Extension::select('name','account_code', 'secret','agent_name','host','sip_temp','company_id','status')
+                    ->with('company:id,company_name,email,mobile,status')
+                    ->where('name', $request->name)->first();
+            if ($Extension) {
+                if ($Extension->status == 1) {
+                    if ((isset($Extension->company->status) && $Extension->company->status == 1)) {
+                        if ($request->secret == $Extension->secret){
+                            if ($Extension->host == 'dynamic') {
+                                if ($Extension->sip_temp == 'WEBRTC') {
+                                    //$token =  $user->createToken('Callanalog API')->plainTextToken;
+                                    $response = $Extension->toArray();
+                                    //$response['token'] = $token;
+                                    return $this->output(true, 'Login successfull', $response);
+                                }else{
+                                    return $this->output(false, 'You have configured the settings to register your extension on the softphone.', [], 423);
+                                }
+                            } else {
+                                return $this->output(false, 'Your extension has been expired. Please contact with support.', [], 423);
+                            }
+                        } else {
+                            return $this->output(false, 'Invalid password!', [], 409);
+                        }
+                    } else {
+                        return $this->output(false, 'Your company account has been suspended. Please contact with support.', [], 423);
+                    }
+                } else {
+                    return $this->output(false, 'Extension is not activated!', [], 403);
+                }
+            } else {
+                return $this->output(false, 'Extension dose not exist!', [], 404);
+            }
+
+        }catch (\Exception $e) {
+            Log::error('Error occurred in Extension login with WEBRTC : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
 }
