@@ -269,7 +269,7 @@ class TfnController extends Controller
             'tfn_destinations.destinationType:id,destination_type'
         ])
 
-            ->orderBy('id', 'DESC');
+            ->orderBy('updated_at', 'DESC');
 
         if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
             $query->withTrashed();
@@ -1756,7 +1756,7 @@ class TfnController extends Controller
     {
         $user = \Auth::user();
         try {
-            $tfnNumber = Tfn::where('country_id', $country_id)->where('company_id', '=', '0')->where('activated', '=', '0')->where('status', '=', 1)->get();
+            $tfnNumber = Tfn::where('country_id', $country_id)->where('company_id', '=', '0')->where('activated', '=', '0')->where('reserved', '=', '0')->where('status', '=', 1)->get();
             if ($tfnNumber) {
                 $response = $tfnNumber->toArray();
                 return $this->output(true, 'Success', $response, 200);
