@@ -1739,7 +1739,7 @@ class TfnController extends Controller
     {
         $user = \Auth::user();
         try {
-            $tfnNumber = Tfn::where('company_id', $company_id)->where('activated', '0')->where('status', 0)->get();
+            $tfnNumber = Tfn::where('company_id', $company_id)->where('activated', '1')->where('status', 1)->get();
             if ($tfnNumber) {
                 $response = $tfnNumber->toArray();
                 return $this->output(true, 'Success', $response, 200);
