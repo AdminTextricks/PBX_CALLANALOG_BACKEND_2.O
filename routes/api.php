@@ -275,6 +275,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/permission-by-group/{slug}', [PermissionController::class, 'getAllPermissionByGroup']);
 		Route::put('/role-permission', [PermissionController::class, 'updateRolePermissions']);
 		Route::put('/user-permission', [PermissionController::class, 'updateUserPermissions']);
+		Route::get('/getCompanyPermission', [PermissionController::class, 'getCompanyPermissionWithGroup']);
 	});
 
 	# Ring Group Manage
