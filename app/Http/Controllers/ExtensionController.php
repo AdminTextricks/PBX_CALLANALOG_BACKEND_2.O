@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Extension;
+use App\Models\ExtensionLogs;
 use App\Models\VoiceMail;
 use App\Models\Company;
 use App\Models\Cart;
@@ -287,7 +288,7 @@ class ExtensionController extends Controller
 
                                 if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
                                     $payment_by = 'Super Admin';
-                                }else{
+                                } else {
                                     $payment_by = 'Company';
                                 }
                                 $payment = Payments::create([
@@ -1223,7 +1224,7 @@ class ExtensionController extends Controller
                                 }
                                 if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
                                     $payment_by = 'Super Admin';
-                                }else{
+                                } else {
                                     $payment_by = 'Company';
                                 }
                                 $payment = Payments::create([
@@ -1295,7 +1296,7 @@ class ExtensionController extends Controller
         $user = \Auth::user();
         $validator = Validator::make($request->all(), [
             'name' => 'required|numeric',
-            'expirationdate' => 'required',
+            'expirationdate' => 'required|date_format:Y-m-d',
         ], [
             'name.required' => 'Extension Number is Required',
             'expirationdate.required' => 'Expiration Date is Required'
@@ -1311,7 +1312,30 @@ class ExtensionController extends Controller
                     return $this->output(false, 'This Number does not exist with us. Please try again!', [], 404);
                 }
                 // $dataChangeExtensions->startingdate = Carbon::now();
-                $dataChangeExtensions->expirationdate = $request->expirationdate;
+                $requestExpirationDate = \Carbon\Carbon::createFromFormat('Y-m-d', $request->expirationdate);
+                if ($dataChangeExtensions->expirationdate > $requestExpirationDate) {
+                    $dataChangeExtensions->expirationdate = $requestExpirationDate;
+                    $dataChangeExtensions->host = 'static';
+                    $dataChangeExtensions->status = 0;
+
+                    $removeExtensionFile = config('app.webrtc_template_url');
+                    $this->removeExtensionFromConfFile($dataChangeExtensions->name, $removeExtensionFile);
+
+                    $removeExtensionFile = config('app.softphone_template_url');
+                    $this->removeExtensionFromConfFile($dataChangeExtensions->name, $removeExtensionFile);
+
+                    Log::error('Multiple Remove Extension From File: ' . $removeExtensionFile);
+
+                    $server_flag = config('app.server_flag');
+                    if ($server_flag == 1) {
+                        $shell_script = config('app.shell_script');
+                        $result = shell_exec('sudo ' . $shell_script);
+                        Log::error('Extension Update File Transfer Log : ' . $result);
+                        $this->sipReload();
+                    }
+                } else {
+                    $dataChangeExtensions->expirationdate = $requestExpirationDate;
+                }
                 $dateData = $dataChangeExtensions->save();
                 if ($dateData) {
                     $response = $dataChangeExtensions->toArray();
@@ -1328,13 +1352,12 @@ class ExtensionController extends Controller
         }
     }
 
-
     public function extensionLogin(Request $request)
     {
         $user = \Auth::user();
         $validator = Validator::make($request->all(), [
             'name'  => 'required|numeric',
-            'secret'=> 'required',
+            'secret' => 'required',
         ], [
             'name.required'     => 'Extension number is required',
             'secret.required'   => 'Extension password is required'
@@ -1345,20 +1368,20 @@ class ExtensionController extends Controller
         }
         try {
 
-            $Extension = Extension::select('name','account_code', 'secret','agent_name','host','sip_temp','company_id','status')
-                    ->with('company:id,company_name,email,mobile,status')
-                    ->where('name', $request->name)->first();
+            $Extension = Extension::select('name', 'account_code', 'secret', 'agent_name', 'host', 'sip_temp', 'company_id', 'status')
+                ->with('company:id,company_name,email,mobile,status')
+                ->where('name', $request->name)->first();
             if ($Extension) {
                 if ($Extension->status == 1) {
                     if ((isset($Extension->company->status) && $Extension->company->status == 1)) {
-                        if ($request->secret == $Extension->secret){
+                        if ($request->secret == $Extension->secret) {
                             if ($Extension->host == 'dynamic') {
                                 if ($Extension->sip_temp == 'WEBRTC') {
                                     //$token =  $user->createToken('Callanalog API')->plainTextToken;
                                     $response = $Extension->toArray();
                                     //$response['token'] = $token;
                                     return $this->output(true, 'Login successfull', $response);
-                                }else{
+                                } else {
                                     return $this->output(false, 'You have configured the settings to register your extension on the softphone.', [], 423);
                                 }
                             } else {
@@ -1376,10 +1399,52 @@ class ExtensionController extends Controller
             } else {
                 return $this->output(false, 'Extension dose not exist!', [], 404);
             }
-
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             Log::error('Error occurred in Extension login with WEBRTC : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
+
+    public function getAllExtensionsLog(Request $request)
+    {
+        $user = \Auth::user();
+        $params = $request->get('params', "");
+        $log_id = $request->get('id', null);
+        $perPageNo = isset($request->perpage) ? $request->perpage : 25;
+        if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
+            if ($log_id) {
+                $getextensionlog = ExtensionLogs::with('user:id,name,email')->with('company:id,parent_id,company_name,balance')->where('id', $log_id)->first();
+            } elseif ($params !== "") {
+                $getextensionlog = ExtensionLogs::select('*')->with('user:id,name,email')->with('company:id,parent_id,company_name,email,balance')
+                    ->where(function ($query) use ($params) {
+                        $query->where('extension_ip', 'LIKE', "%$params%")
+                            ->orWhere('extension_name', 'LIKE', "%$params%")
+                            ->orWhereHas('user', function ($query) use ($params) {
+                                $query->where('name', 'like', "%{$params}%")
+                                    ->orWhere('email', 'like', "%{$params}%");
+                            })
+                            ->orWhereHas('company', function ($query) use ($params) {
+                                $query->where('company_name', 'like', "%{$params}%")
+                                    ->orWhere('email', 'like', "%{$params}%");
+                            });
+                    })
+                    ->orderBy('id', 'DESC')
+                    ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+            } else {
+                $getextensionlog = ExtensionLogs::select('*')->with('user:id,name,email')->with('company:id,parent_id,company_name,email,balance')
+                    ->orderBy('id', 'DESC')
+                    ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+            }
+
+            if (!is_null($getextensionlog)) {
+                $dd = $getextensionlog->toArray();
+                unset($dd['links']);
+                return $this->output(true, 'Success', $dd, 200);
+            } else {
+                return $this->output(true, 'No Record Found', []);
+            }
+        } else {
+            return $this->output(false, 'Sorry! You are not authorized.', [], 403);
         }
     }
 }
