@@ -267,9 +267,7 @@ class TfnController extends Controller
             'main_plans:id,name',
             'tfn_destinations:id,company_id,tfn_id,destination_type_id,destination_id,priority',
             'tfn_destinations.destinationType:id,destination_type'
-        ])
-
-            ->orderBy('updated_at', 'DESC');
+        ]);
 
         if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
             $query->withTrashed();
@@ -455,7 +453,7 @@ class TfnController extends Controller
             }
         }
 
-        $tfngetAll = $query->paginate($perPageNo);
+        $tfngetAll = $query->orderBy('updated_at', 'DESC')->paginate($perPageNo);
 
         // Load additional relationships based on destination type
         $tfngetAll->each(function ($tfn) {
