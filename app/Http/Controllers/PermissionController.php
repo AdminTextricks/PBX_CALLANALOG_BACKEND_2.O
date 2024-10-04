@@ -226,4 +226,26 @@ class PermissionController extends Controller
             return $this->output(false, 'You entered role not exist.', [], 409);
         }
     }
+
+
+
+    public function getCompanyPermissionWithGroup(Request $request)
+    {
+        $slug = $request->slug ?? NULL;
+        $role = Role::select()->where('slug',$slug)->first();
+        if ($request->user()->hasRole('admin')) {
+            $role = Role::select()->where('slug','admin')->first();
+            $userPermission =  $role->permissions()->get();     
+
+            //$Gropus = Permission::select('permission_group')->distinct()->get();
+            $Gropus =  $role->permissions()->distinct()->pluck('permission_group');
+            $response['groups'] = $Gropus->toArray();
+            $response['role_permissions'] = $userPermission->toArray();
+            
+      
+            return $this->output(true, 'Role Permissions and User permissions.', $response, 200);
+        }else{
+            return $this->output(false, 'You are not authorized to access this resource.', []);
+        }
+    }
 }
