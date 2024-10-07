@@ -230,6 +230,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 
 	# Manage Extensions
 	Route::group(['prefix' => 'extensions'], function () {	
+		Route::post('/extensionexpDateUpdate', [ExtensionController::class, 'extensionexpDateUpdate']);
 		Route::post('/multiEdit', [ExtensionController::class, 'updateExtensionsDetails']);
 		Route::get('/getSipRegistrationList', [ExtensionController::class, 'getSipRegistrationList'])->name('getSipRegistrationList');
 		Route::get('/quickView/{company_id}', [ExtensionController::class, 'getExtensionsNumberPassword']);
@@ -240,8 +241,7 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/{id?}', [ExtensionController::class, 'getAllExtensions']);
 		Route::put('/{id}', [ExtensionController::class, 'updateExtension']);	
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ExtensionController::class, 'getExtensionsByCountryIdAndCompanyId']);		
-		//Route::post('/adToCart', [ExtensionController::class, 'extensionAddToCArt']);
-		Route::post('/extensionDateChange', [ExtensionController::class, 'extensionexpDateUpdate']);	
+		//Route::post('/adToCart', [ExtensionController::class, 'extensionAddToCArt']);	
 		Route::delete('/{id}', [ExtensionController::class, 'deleteExtension']);
 		Route::delete('/', [ExtensionController::class, 'multipleDeleteExtension']);
 		Route::get('/getByCompany/{company_id}', [ExtensionController::class, 'getExtensionsByCompany']);
