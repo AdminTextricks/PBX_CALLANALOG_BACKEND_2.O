@@ -675,8 +675,6 @@ class TfnController extends Controller
         $user = \Auth::user();
 
         foreach ($chunkdata as $column) {
-            // return count($column);
-            // return $column;
             if (count($column) < 6) {
                 continue;
             }
@@ -689,11 +687,11 @@ class TfnController extends Controller
             if (is_null($column)) {
                 return ['Status' => false, 'Message' => 'No Record Found!', 'data' => [], 'code' => 404];
             }
+
             $tfn_number = trim($column[0]);
             $tfn_provider = trim($column[1]);
-            // $tfn_group_id = trim($column[2]);
             $country_id = trim($column[2]);
-            // $countryData = Country::select('*')->where('iso3', $country_id)->first();
+
             $countryData = Country::select('*')->where('country_name', $country_id)->first();
             if (is_null($countryData)) {
                 return ['Status' => false, 'Message' => 'No Country ' . $country_id . ' Record Found!', 'data' => [], 'code' => 404];
@@ -702,36 +700,28 @@ class TfnController extends Controller
             if (is_null($tfn_providerData)) {
                 return ['Status' => false, 'Message' => 'No Inbound Trunk ' . $tfn_provider . ' Record Found!', 'data' => [], 'code' => 404];
             }
-            // $tfn_group_idData = TfnGroups::select('*')->where('tfngroup_name', $tfn_group_id)->first();
-            // if (is_null($tfn_group_idData)) {
-            //     return ['Status' => false, 'Message' => 'No Tfn Group ' . $tfn_group_idData . ' Record Found!', 'data' => [], 'code' => 404];
-            // }
-            // $tfn_providerData = Trunk::select('*')->where('type', "Inbound")->where('name', $tfn_provider)->first();
-            // $tfn_group_idData = TfnGroups::select('*')->where('tfngroup_name', $tfn_group_id)->first();
-            $tfncsv = Tfn::select('*')->where('tfn_number', $countryData . $tfn_number)->first();
+            $tfncsv = Tfn::select('*')->where('tfn_number', $countryData->phone_code . $tfn_number)->first();
+            if (!is_null($tfncsv)) {
+                Log::info('Duplicate TFN found and skipped: ' . $tfn_number);
+                continue;
+            }
+            $tfncsv = new Tfn();
+            $tfncsv->tfn_number = $countryData->phone_code . trim($column[0]);
+            $tfncsv->tfn_provider = $tfn_providerData->id;
+            $tfncsv->country_id = $countryData->id;
+            $tfncsv->activated = '0';
+            $tfncsv->selling_rate = trim($column[3]);
+            $tfncsv->aleg_retail_min_duration = trim($column[4]);
+            $tfncsv->aleg_billing_block = trim($column[5]);
+            $tfncsv->status = 1;
 
-            if (is_null($tfncsv)) {
-                $tfncsv = new Tfn();
-                $tfncsv->tfn_number = $countryData->phone_code . trim($column[0]);
-                $tfncsv->tfn_provider = $tfn_providerData->id;
-                // $tfncsv->tfn_group_id = $tfn_group_idData->id;
-                $tfncsv->country_id = $countryData->id;
-                $tfncsv->activated = '0';
-                // $tfncsv->monthly_rate = trim($column[4]);
-                // $tfncsv->connection_charge = trim($column[5]);
-                $tfncsv->selling_rate = trim($column[3]);
-                $tfncsv->aleg_retail_min_duration = trim($column[4]);
-                $tfncsv->aleg_billing_block = trim($column[5]);
-                $tfncsv->status = 1;
-                $response = $tfncsv->save();
+            $response = $tfncsv->save();
 
-                if (!$response) {
-                    return ['Status' => false, 'Message' => 'Error occurred while processing TFN ' . $tfn_number, 'data' => [], 'code' => 409];
-                }
-            } else {
-                return ['Status' => false, 'Message' => 'This TFN number ' . $tfn_number . ' already exists!', 'data' => [], 'code' => 400];
+            if (!$response) {
+                return ['Status' => false, 'Message' => 'Error occurred while processing TFN ' . $tfn_number, 'data' => [], 'code' => 409];
             }
         }
+
         $sanitizedFilename = str_replace(' ', '_', $filename);
         $filePath = public_path('Tfn_uploadData/');
         if (!file_exists($filePath)) {
@@ -741,6 +731,7 @@ class TfnController extends Controller
         if (!$fileMoved) {
             return ['Status' => false, 'Message' => 'File could not be moved to the specified directory.', 'data' => [], 'code' => 500];
         }
+
         $TfnCsvData = TfnImportCsvList::create([
             'uploaded_by' => $user->id,
             'tfn_import_csv' => $sanitizedFilename,
@@ -750,9 +741,9 @@ class TfnController extends Controller
         if (!$TfnCsvData) {
             return ['Status' => false, 'Message' => 'Failed to save file information to the database.', 'data' => [], 'code' => 500];
         }
+
         return ['Status' => true, 'Message' => 'CSV Uploaded successfully', 'data' => [], 'code' => 200];
     }
-
 
 
     public function assignTfnMainOLD(Request $request)
