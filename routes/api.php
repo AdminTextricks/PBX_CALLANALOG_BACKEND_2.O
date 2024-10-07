@@ -247,7 +247,6 @@ Route::middleware(['auth:sanctum', 'log.request.response'])->group(function () {
 		Route::get('/getForBarging/{company_id?}', [ExtensionController::class, 'getExtensionsForBarging']);
 		Route::post('/renewExtensions', [ExtensionController::class, 'renewExtensions']);
 		Route::get('/extensionlog', [ExtensionController::class, 'getAllExtensionsLog']);
-		Route::post('/extensionDateChange', [ExtensionController::class, 'extensionexpDateUpdate']);
 	});
 
 	#Conf Template Manage
