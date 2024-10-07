@@ -1164,7 +1164,7 @@ class ExtensionController extends Controller
                                         if ($sip_temp == 'WEBRTC') {
                                             $addExtensionFile = config('app.webrtc_template_url');
                                         } else {
-                                            $addExtensionFile = config('app.webrtc_template_url');
+                                            $addExtensionFile = config('app.softphone_template_url');
                                         }
 
                                         $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
