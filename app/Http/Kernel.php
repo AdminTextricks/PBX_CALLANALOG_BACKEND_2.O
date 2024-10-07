@@ -70,5 +70,6 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         // Other route middleware
         'log.request.response' => \App\Http\Middleware\LogRequestResponse::class,
+        'token.expiry' => \App\Http\Middleware\TokenExpiryMiddleware::class,
     ];
 }
