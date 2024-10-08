@@ -15,7 +15,7 @@ use App\Models\ResellerPrice;
 use App\Models\RingGroup;
 use App\Models\Tfn;
 use App\Models\TfnDestination;
-use App\Models\TfnAuthentication;
+//use App\Models\TfnAuthentication;
 use App\Models\TfnGroups;
 use App\Models\TfnImportCsvList;
 use App\Models\Trunk;
@@ -1475,7 +1475,7 @@ class TfnController extends Controller
     public function getAllTfnOrByCompany(Request $request)
     {
         //dd('dsfcdsfadf');
-        $query = Tfn::select('id', 'tfn_number as name')
+        $query = Tfn::select('tfn_number as id', 'tfn_number as name')
             ->where('company_id', '<>', 0)
             ->where('company_id', '<>', '')
             ->where('company_id', '<>', null);
@@ -1543,7 +1543,7 @@ class TfnController extends Controller
             return $this->output(true, 'No Record Found', []);
         }
     }
-
+/*
     public function setTfnAuthentication(Request $request)
     {
 
@@ -1614,7 +1614,7 @@ class TfnController extends Controller
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
-
+*/
     public function ReplaceTfnNumber(Request $request)
     {
         $user = \Auth::user();
