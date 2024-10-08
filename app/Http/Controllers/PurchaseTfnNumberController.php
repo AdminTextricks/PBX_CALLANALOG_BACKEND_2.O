@@ -65,7 +65,7 @@ class PurchaseTfnNumberController extends Controller
             }
             if ($data->isNotEmpty()) {
                 $datanew = $data->toArray();
-                $datanew = ['item_price' => $item_price] + $datanew;
+                //$datanew = ['item_price' => $item_price] + $datanew;
                 unset($datanew['links']);
                 return $this->output(true, 'success', $datanew, 200);
             } else {
