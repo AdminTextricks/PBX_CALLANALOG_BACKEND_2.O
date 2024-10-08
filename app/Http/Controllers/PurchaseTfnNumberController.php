@@ -59,13 +59,9 @@ class PurchaseTfnNumberController extends Controller
                 ->where('status', 1);
 
             if ($type == 'Local') {
-                $data = $searchQry->paginate($perPageNo);
+                $data = $searchQry->get();
             } else {
-                $data = $searchQry->where('tfn_number', 'like', "%$starting_digits%")->paginate(
-                    $perPage = $perPageNo,
-                    $columns = ['*'],
-                    $pageName = 'page'
-                );
+                $data = $searchQry->where('tfn_number', 'like', "%$starting_digits%")->get();
             }
             if ($data->isNotEmpty()) {
                 $datanew = $data->toArray();
