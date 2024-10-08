@@ -64,9 +64,9 @@ class PurchaseTfnNumberController extends Controller
                 $data = $searchQry->where('tfn_number', 'like', "%$starting_digits%")->get();
             }
             if ($data->isNotEmpty()) {
-                $datanew = $data->toArray();
-                //$datanew = ['item_price' => $item_price] + $datanew;
-                unset($datanew['links']);
+                $datanew['tfn'] = $data->toArray();
+                $datanew['item_price'] = $item_price;
+                //unset($datanew['links']);
                 return $this->output(true, 'success', $datanew, 200);
             } else {
                 return $this->output(true, 'No Record Found!!', []);
