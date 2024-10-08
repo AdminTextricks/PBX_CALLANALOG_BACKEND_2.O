@@ -1475,7 +1475,7 @@ class TfnController extends Controller
     public function getAllTfnOrByCompany(Request $request)
     {
         //dd('dsfcdsfadf');
-        $query = Tfn::select('id', 'tfn_number')
+        $query = Tfn::select('id', 'tfn_number as name')
             ->where('company_id', '<>', 0)
             ->where('company_id', '<>', '')
             ->where('company_id', '<>', null);
