@@ -22,7 +22,7 @@ class TokenExpiryMiddleware
     {
         // Get the bearer token from the request
         $accessToken = $request->bearerToken();
-
+        $token = '';
         if ($accessToken) {
             // Retrieve the token from the database
             $token = PersonalAccessToken::findToken($accessToken);
