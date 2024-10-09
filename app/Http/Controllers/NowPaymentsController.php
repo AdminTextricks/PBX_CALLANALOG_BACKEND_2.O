@@ -408,6 +408,7 @@ class NowPaymentsController extends Controller
                             'added_balance'   => $added_balance,
                             'total_balance'   => $balance_total,
                             'currency'        => 'USDT',
+                            'payment_type'    => 'Crypto',
                             'recharged_by'    => 'Self'
                         ]);
                         if (!$rechargeHistory_data) {

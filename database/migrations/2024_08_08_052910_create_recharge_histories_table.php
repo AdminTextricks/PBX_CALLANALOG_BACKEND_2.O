@@ -21,6 +21,7 @@ return new class extends Migration
             $table->decimal('added_balance', total: 10, places: 2);
             $table->decimal('total_balance', total: 10, places: 2);
             $table->string('currency');
+            $table->string('payment_type');
             $table->string('recharged_by');
             $table->timestamps();
             $table->foreign('company_id')->references('id')->on('companies');

@@ -802,6 +802,7 @@ class PaymentController extends Controller
                         'added_balance'   => $charge->amount / 100,
                         'total_balance'   => $user_payment->balance + $charge->amount / 100,
                         'currency'        => 'USD',
+                        'payment_type'    => 'Card',
                         'recharged_by'    => 'Self'
                     ]);
                     if (!$rechargeHistory_data) {
