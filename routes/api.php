@@ -59,6 +59,7 @@ Route::middleware(['throttle:5,1', 'log.request.response'])->group(function () {
 	Route::post('/login', [UserController::class, 'login'])->name('login');
 	/********  Webphone API   *********/
 	Route::post('/extension_login', [ExtensionController::class, 'extensionLogin']);
+	Route::get('/getContactList', [ExtensionController::class, 'extensionContactList']);
 	/********  Webphone API   *********/
 });
 Route::post('/verifyEmail', [UserController::class, 'verifyEmailIdByOTP'])->name('verifyEmailIdByOTP');

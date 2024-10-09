@@ -1447,4 +1447,39 @@ class ExtensionController extends Controller
             return $this->output(false, 'Sorry! You are not authorized.', [], 403);
         }
     }
+
+
+    public function extensionContactList(Request $request)
+    {
+        $user = \Auth::user();
+        $validator = Validator::make($request->all(), [
+            'name'  => 'required|numeric|exists:extensions,name',
+        ]);
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 400);
+        }
+        try {
+            $Extension = Extension::select('id','company_id','name','country_id')->where('name', $request->name)->first();
+            if($Extension){
+                $Extensions = Extension::select('id','name','agent_name','country_id')
+                            ->where('company_id', $Extension->company_id)
+                            ->where('name', '!=', $request->name)
+                            ->where('host', 'dynamic')
+                            ->where('status', 1)->get();
+
+                if (!is_null($Extensions)) {
+                    $response = $Extensions->toArray(); 
+                    return $this->output(true, 'Success', $response, 200);
+                } else {
+                    return $this->output(true, 'No Record Found', []);
+                }
+            }else{
+                return $this->output(false, 'Extension is not exist!', [], 403);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error occurred in getting Extension Contact : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
 }
