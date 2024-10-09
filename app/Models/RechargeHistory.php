@@ -18,6 +18,7 @@ class RechargeHistory extends Model
         'added_balance',
         'total_balance',
         'currency',
+        'payment_type',
         'recharged_by',
     ];
 

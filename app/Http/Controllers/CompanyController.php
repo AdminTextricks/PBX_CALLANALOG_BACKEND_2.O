@@ -503,6 +503,7 @@ class CompanyController extends Controller
                         'added_balance'   => $request->amount,
                         'total_balance'   => $companydataforbalanceupdate->balance + $request->amount,
                         'currency'        => 'USD',
+                        'payment_type'    => 'Super Admin',
                         'recharged_by'    => 'Admin'
                     ]);
                     if (!$rechargeHistory_data) {
