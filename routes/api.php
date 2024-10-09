@@ -57,6 +57,9 @@ Route::post('/registration', [UserController::class, 'registration']);
 
 Route::middleware(['throttle:5,1', 'log.request.response'])->group(function () {
 	Route::post('/login', [UserController::class, 'login'])->name('login');
+	/********  Webphone API   *********/
+	Route::post('/extension_login', [ExtensionController::class, 'extensionLogin']);
+	/********  Webphone API   *********/
 });
 Route::post('/verifyEmail', [UserController::class, 'verifyEmailIdByOTP'])->name('verifyEmailIdByOTP');
 //Route::get('/user/{id?}', [UserController::class, 'getUser']);
@@ -475,12 +478,7 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 	});
 });
 
-/********  Webphone API   *********/
-Route::middleware(['throttle:5,1', 'log.request.response'])->group(function () {
-	Route::post('/extension_login', [ExtensionController::class, 'extensionLogin']);
-});
 
-/********  Webphone API   *********/
 Route::get('/route-cache', function() {
 	$exitCode = Artisan::call('route:cache');
 	$exitCode = Artisan::call('route:clear');
