@@ -1447,4 +1447,31 @@ class ExtensionController extends Controller
             return $this->output(false, 'Sorry! You are not authorized.', [], 403);
         }
     }
+
+
+    public function getAllExtensionForsuperadmintodownloadincsv(Request $request)
+    {
+        $user = \Auth::user();
+        if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
+            return $getextensions = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box',  'barge', 'voice_mails.email', 'recording', 'dial_timeout')
+                ->with(['company' => function ($query) {
+                    $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id');
+                }, 'company.user_plan' => function ($query) {
+                    $query->select('id', 'name');
+                }])
+                ->with('country:id,country_name')
+                ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
+                ->get();
+
+            if (!is_null($getextensions)) {
+                $dd = $getextensions->toArray();
+                unset($dd['links']);
+                return $this->output(true, 'Success', $dd, 200);
+            } else {
+                return $this->output(true, 'No Record Found', []);
+            }
+        } else {
+            return $this->output(false, 'Sorry! You are not authorized.', [], 403);
+        }
+    }
 }
