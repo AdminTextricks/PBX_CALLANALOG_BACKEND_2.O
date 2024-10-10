@@ -464,7 +464,10 @@ class ExtensionController extends Controller
                         ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
                         ->orWhere('name', 'like', "%$params%")
                         //->orWhere('callbackextension', 'LIKE', "%$params%")
-                        //->orWhere('agent_name', 'LIKE', "%$params%")
+                        ->orWhere('agent_name', 'LIKE', "%$params%")
+                        ->orWhere('host', 'LIKE', "%$params%")
+                        ->orWhere('sip_temp', 'LIKE', "%$params%")
+
                         ->orWhereHas('company', function ($query) use ($params) {
                             $query->where('company_name', 'like', "%{$params}%");
                         })
@@ -1485,17 +1488,42 @@ class ExtensionController extends Controller
     public function getAllExtensionForsuperadmintodownloadincsv(Request $request)
     {
         $user = \Auth::user();
+        $params = $request->params ?? "";
         if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
-            return $getextensions = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box',  'barge', 'voice_mails.email', 'recording', 'dial_timeout')
-                ->with(['company' => function ($query) {
-                    $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id');
-                }, 'company.user_plan' => function ($query) {
-                    $query->select('id', 'name');
-                }])
-                ->with('country:id,country_name')
-                ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-                ->get();
-
+            if ($params != "") {
+                $getextensions = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
+                    ->with(['company' => function ($query) {
+                        $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id');
+                    }, 'company.user_plan' => function ($query) {
+                        $query->select('id', 'name');
+                    }])
+                    ->with('country:id,country_name')
+                    ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
+                    ->orWhere('name', 'like', "%$params%")
+                    ->orWhere('agent_name', 'like', "%$params%")
+                    ->orWhere('host', 'like', "%$params%")
+                    ->orWhere('sip_temp', 'like', "%$params%")
+                    ->orWhereHas('company', function ($query) use ($params) {
+                        $query->where('company_name', 'like', "%{$params}%");
+                    })
+                    ->orWhereHas('company', function ($query) use ($params) {
+                        $query->where('email', 'like', "%{$params}%");
+                    })
+                    ->orWhereHas('country', function ($query) use ($params) {
+                        $query->where('country_name', 'like', "%{$params}%");
+                    })
+                    ->get();
+            } else {
+                $getextensions = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box',  'barge', 'voice_mails.email', 'recording', 'dial_timeout')
+                    ->with(['company' => function ($query) {
+                        $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id');
+                    }, 'company.user_plan' => function ($query) {
+                        $query->select('id', 'name');
+                    }])
+                    ->with('country:id,country_name')
+                    ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
+                    ->get();
+            }
             if (!is_null($getextensions)) {
                 $dd = $getextensions->toArray();
                 unset($dd['links']);
