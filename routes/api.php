@@ -235,6 +235,7 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 	# Manage Extensions
 	Route::group(['prefix' => 'extensions'], function () {	
 		Route::post('/extensionexpDateUpdate', [ExtensionController::class, 'extensionexpDateUpdate']);
+		Route::get('/getextensionfordownload', [ExtensionController::class, 'getAllExtensionForsuperadmintodownloadincsv']);
 		Route::post('/multiEdit', [ExtensionController::class, 'updateExtensionsDetails']);
 		Route::get('/getSipRegistrationList', [ExtensionController::class, 'getSipRegistrationList'])->name('getSipRegistrationList');
 		Route::get('/quickView/{company_id}', [ExtensionController::class, 'getExtensionsNumberPassword']);
