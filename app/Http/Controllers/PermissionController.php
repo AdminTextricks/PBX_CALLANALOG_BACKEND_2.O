@@ -202,7 +202,7 @@ class PermissionController extends Controller
         //$slug = $request->slug ?? NULL;
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|numeric|exists:users,id',
-            'permission' => 'required|string',
+            'permission' => 'nullable|string',
         ],[
             'user_id' =>  'Selected user not exist with us.'
         ]);
