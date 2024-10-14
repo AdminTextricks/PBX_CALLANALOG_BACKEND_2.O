@@ -106,7 +106,7 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 		Route::get('/{id?}', [UserController::class, 'getUser']);
 		Route::patch('/changeStatus/{id}', [UserController::class, 'changeStatus']);
 		Route::put('/{id}', [UserController::class, 'updateUser']);
-
+		Route::get('getCompanyUserslist',[UserController::class, 'getCompanyUserslist']);
 		Route::post('/liveCallHangUp', [UserController::class, 'liveCallHangUp']);
 	});
 
