@@ -108,7 +108,9 @@ class UserController extends Controller
 
     public function getAllActiveUsers(Request $request)
     {
-        $data = User::select()->where('status', 1)->get();
+        $data = User::select('id','named')
+                ->where('status', 1)
+                ->whereIn('role_id', [3,2])->get();
         if ($data->isNotEmpty()) {
             return $this->output(true, 'Success', $data->toArray());
         } else {

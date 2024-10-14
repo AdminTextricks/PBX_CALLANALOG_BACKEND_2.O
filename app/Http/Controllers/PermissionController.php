@@ -98,7 +98,9 @@ class PermissionController extends Controller
                         $userObj = User::where('id', $user->user_id)
                                     ->whereIn('role_id', [3,2])
                                     ->first();
-                        $user_permissions[] = array('id'=>$userObj->id, 'Name' => $userObj->name, 'Email' => $userObj->email, 'Permissions'=>$userObj->permissions()->get());
+                        if($userObj){
+                            $user_permissions[] = array('id'=>$userObj->id, 'Name' => $userObj->name, 'Email' => $userObj->email, 'Permissions'=>$userObj->permissions()->get());
+                        }
                     }
                 }
 
