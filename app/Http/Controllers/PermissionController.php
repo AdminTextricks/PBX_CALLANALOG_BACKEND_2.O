@@ -88,20 +88,23 @@ class PermissionController extends Controller
             }
         }else{
             $user = \Auth::user();
-            if(in_array($user->roles->first()->slug, array('super-admin', 'support','noc', 'admin'))){
+            if(in_array($user->roles->first()->slug, array('super-admin', 'admin'))){
                 $user_permissions = array();
                 //if ($request->user()->hasRole('super-admin')) {
-                if(in_array($user->roles->first()->slug, array('super-admin', 'support','noc'))){
+                if(in_array($user->roles->first()->slug, array('super-admin'))){
                     $users_permissions =  DB::table('users_permissions')
                                         ->select('user_id')->groupBy('user_id')->get()->toArray();            
-                    foreach($users_permissions as $key => $user){                
-                        $userObj = User::where('id', $user->user_id)->first();
+                    foreach($users_permissions as $key => $user){ 
+                        $userObj = User::where('id', $user->user_id)
+                                    ->whereIn('role_id', [3,2])
+                                    ->first();
                         $user_permissions[] = array('id'=>$userObj->id, 'Name' => $userObj->name, 'Email' => $userObj->email, 'Permissions'=>$userObj->permissions()->get());
                     }
                 }
 
                 if ($request->user()->hasRole('admin')) {
-                    $users =  User::where('company_id', $user->company_id)->get();
+                    $users =  User::where('company_id', $user->company_id)
+                                    ->whereIn('role_id', [6])->get();
                     foreach($users as $key => $userObj){                
                         $user_permissions[] = array('id'=>$userObj->id,'Name' => $userObj->name, 'Email' => $userObj->email, 'Permissions'=>$userObj->permissions()->get());
                     }
