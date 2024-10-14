@@ -237,11 +237,10 @@ class PermissionController extends Controller
             $role = Role::select()->where('slug','admin')->first();
             $userPermission =  $role->permissions()->get();     
 
-            //$Gropus = Permission::select('permission_group')->distinct()->get();
-            $Gropus =  $role->permissions()->distinct()->pluck('permission_group');
-            $response['groups'] = $Gropus->toArray();
-            $response['role_permissions'] = $userPermission->toArray();
-            
+            $Groups = Permission::select('permission_group')->distinct()->get();
+           // return $Groups =  $role->permissions()->distinct()->pluck('permission_group');
+            $response['groups'] = $Groups->toArray();
+            $response['role_permissions'] = $userPermission->toArray();            
       
             return $this->output(true, 'Role Permissions and User permissions.', $response, 200);
         }else{
