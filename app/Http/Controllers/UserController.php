@@ -756,4 +756,23 @@ class UserController extends Controller
             return $this->output(false, 'Sorry! You are not authorized.', [], 403);
         }
     }
+
+    public function getCompanyUserslist(Request $request)
+    {
+        $user = \Auth::user();
+        if (in_array($user->roles->first()->slug, ['admin'])) {
+            $data = User::select('id','name','email')
+                    ->where('company_id', $user->company_id)
+                    ->where('status', 1)
+                    ->where('role_id', 6)
+                    ->get();
+            if ($data->isNotEmpty()) {
+                return $this->output(true, 'Success', $data->toArray());
+            } else {
+                return $this->output(true, 'No Record Found', []);
+            }
+        }else{
+            return $this->output(false, 'Sorry! You are not authorized.', [], 403);  
+        }
+    }
 }
