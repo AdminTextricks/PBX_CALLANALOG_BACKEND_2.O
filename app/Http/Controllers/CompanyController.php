@@ -175,7 +175,7 @@ class CompanyController extends Controller
 
                 $res = $this->addNotification($AuthUser, $subject, $message, $type, $notifyUserType, $notifyUser);
                 if(!$res){
-                    Log::error('Notification not created when user role '.$user->role_id.' get all users list');
+                    Log::error('Notification not created when user role: '.$AuthUser->role_id.' create new company.');
                 }
                 /**
                  * End of Notification code
@@ -271,6 +271,7 @@ class CompanyController extends Controller
      */
     public function changeStatus(Request $request, $id)
     {
+        $AuthUser = Auth::user();
         $validator = Validator::make($request->all(), [
             'status' => 'required',
         ]);
@@ -296,6 +297,35 @@ class CompanyController extends Controller
                         return $this->output(true, 'Company and admin User status has been activated successfully.');
                     }
                 }
+
+                /**
+                 *  Notification code
+                 */
+                if ($request->status == '0') {
+                    $subject = 'Company has disabled'; 
+                    $message = 'Company '.$Company->company_name.'/'.$Company->email.' and all users has been disabled'; 
+                }
+                if ($request->status == '1') {
+                    $subject = 'Company has activated'; 
+                    $message = 'Company '.$Company->company_name.'/'.$Company->email.' has been activated'; 
+                }
+                
+                $type = 'info';
+                $notifyUserType = ['super-admin', 'support', 'noc'];
+                $notifyUser = array();
+                if($Company->parent_id > 1 ){
+                    $notifyUserType[] = 'reseller';
+                    $notifyUser['reseller'] = $Company->parent_id;
+                }
+
+                $res = $this->addNotification($AuthUser, $subject, $message, $type, $notifyUserType, $notifyUser);
+                if(!$res){
+                    Log::error('Notification not created when user role '.$AuthUser->role_id.' update company status.');
+                }
+                /**
+                 * End of Notification code
+                 */
+
                 return $this->output(true, 'Company status has been updated successfully.');
             } else {
                 return $this->output(false, 'Error occurred in company status updating. Please try again!.', [], 409);
