@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Traits\ManageNotifications;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Company;
@@ -19,6 +20,7 @@ use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
+    use ManageNotifications;
     public function __construct() {}
 
     public function getUser(Request $request)
@@ -92,7 +94,7 @@ class UserController extends Controller
         if ($data) {
             $dd = $data->toArray();
             if (is_array($dd)) {
-                unset($dd['links']);
+                unset($dd['links']);                
                 return $this->output(true, 'Success', $dd, 200);
             }
         } else {
@@ -321,6 +323,14 @@ class UserController extends Controller
                 $response     = $user->toArray();
                 $response['token'] = $token;
                 DB::commit();
+
+                $subject = 'New User Registration'; $message = 'A new user has been registered'; $type = 'info';
+                $notifyUserType = ['super-admin', 'support', 'noc'];
+                $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType);
+                if(!$res){
+                    Log::error('Notification not created when user role '.$user->role_id.' get all users list');
+                }
+
                 return $this->output(true, 'User registered successfully.', $response);
             } else {
                 DB::commit();
@@ -335,7 +345,6 @@ class UserController extends Controller
 
     public function createUser(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
             //'company_id'=> 'required|max:500|exists:companies,id',
             'company_id' => 'required_if:role_id,6|exists:companies,id',
@@ -408,6 +417,32 @@ class UserController extends Controller
                 $this->sendPassword($user, $request->password); //PASSWORD SEND
                 $response = $user->toArray();
                 DB::commit();
+
+                /**
+                 *  Notification code
+                 */
+                $subject = 'New User Created'; 
+                $message = 'User name '.$request->name.' has been Created'; 
+                $type = 'info';
+                $notifyUserType = ['super-admin', 'support', 'noc'];
+                $notifyUser = array();
+                if($request->role_id == 6){
+                    $notifyUserType[] = 'admin';
+                    $Company = Company::find($request->company_id);
+                    if($Company->parent_id > 1 ){
+                        $notifyUserType[] = 'reseller';
+                        $notifyUser['reseller'] = $Company->parent_id;
+                    }
+                    $notifyUser['admin'] = $Company->id;                    
+                }
+
+                $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                if(!$res){
+                    Log::error('Notification not created when user role '.$user->role_id.' get all users list');
+                }
+                /**
+                 * End of Notification code
+                 */
                 return $this->output(true, 'User registered successfully. Please find the login details on user email ID.', $response);
             } else {
                 DB::commit();
