@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\LOG;
 use Illuminate\Support\Facades\DB;
-use App\Notifications\ActivityNotification;
+//use App\Notifications\ActivityNotification;
 
 class NotificationController extends Controller
 {
