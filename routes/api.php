@@ -1,6 +1,7 @@
 <?php
 
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NowPaymentsController;
 use App\Http\Controllers\RechargeHistoryController;
 use Illuminate\Http\Request;
@@ -477,6 +478,14 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 	# Error Messages 
 	Route::group(['prefix' => 'error-message'], function () {
 		Route::get('/hangup-cause', [ErrorMessageController::class, 'getAllHangupCauseList']);
+	});
+
+	# Dashboard Manage
+	Route::group(['prefix' => 'dashboard'], function () {
+		Route::get('/getResellerandMaincompany', [DashboardController::class, 'getAllcompanyListforSuperAdminDashboard']);
+		Route::get('/getResellerandUser', [DashboardController::class, 'getAllResellerUserCountforSuperAdminDashboard']);
+		Route::get('/getTfnCount', [DashboardController::class, 'getAllTfnforSuperAdminDashboard']);
+		Route::get('/getExtensionCount', [DashboardController::class, 'getAllExtensionforSuperAdminDashboard']);
 	});
 });
 
