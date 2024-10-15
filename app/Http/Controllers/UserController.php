@@ -440,7 +440,7 @@ class UserController extends Controller
 
                 $res = $this->addNotification($AuthUser, $subject, $message, $type, $notifyUserType, $notifyUser);
                 if(!$res){
-                    Log::error('Notification not created when user role '.$user->role_id.' get all users list');
+                    Log::error('Notification not created when user role: '.$AuthUser->role_id.'  Create new user.');
                 }
                 /**
                  * End of Notification code
