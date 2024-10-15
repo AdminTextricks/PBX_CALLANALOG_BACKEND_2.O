@@ -345,6 +345,7 @@ class UserController extends Controller
 
     public function createUser(Request $request)
     {
+        $AuthUser = \Auth::user();
         $validator = Validator::make($request->all(), [
             //'company_id'=> 'required|max:500|exists:companies,id',
             'company_id' => 'required_if:role_id,6|exists:companies,id',
@@ -437,7 +438,7 @@ class UserController extends Controller
                     $notifyUser['admin'] = $CompanyUser->id; 
                 }
 
-                $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                $res = $this->addNotification($AuthUser, $subject, $message, $type, $notifyUserType, $notifyUser);
                 if(!$res){
                     Log::error('Notification not created when user role '.$user->role_id.' get all users list');
                 }

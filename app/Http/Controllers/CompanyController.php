@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\RechargeHistory;
 use App\Traits\ManageNotifications;
+use Auth;
 use Illuminate\Http\Request;
 
 use App\Models\Company;
@@ -27,6 +28,7 @@ class CompanyController extends Controller
 
     public  function registrationByAdminOrReseller(Request $request)
     {
+        $AuthUser = Auth::user();
         $validator = Validator::make($request->all(), [
             'parent_id'     => 'required',
             'plan_id'       => 'required',
@@ -171,7 +173,7 @@ class CompanyController extends Controller
                     $notifyUser['reseller'] = $request->parent_id;
                 }
 
-                $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                $res = $this->addNotification($AuthUser, $subject, $message, $type, $notifyUserType, $notifyUser);
                 if(!$res){
                     Log::error('Notification not created when user role '.$user->role_id.' get all users list');
                 }
