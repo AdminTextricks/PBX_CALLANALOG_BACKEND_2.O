@@ -428,7 +428,8 @@ class UserController extends Controller
                 $notifyUser = array();
                 if($request->role_id == 6){
                     $notifyUserType[] = 'admin';
-                    $CompanyUser = User::where('company_id', $request->company_id)->first();
+                    $CompanyUser = User::where('company_id', $request->company_id)
+                                    ->where('role_id', 4)->first();
                     if($CompanyUser->company->parent_id > 1 ){
                         $notifyUserType[] = 'reseller';
                         $notifyUser['reseller'] = $CompanyUser->company->parent_id;
