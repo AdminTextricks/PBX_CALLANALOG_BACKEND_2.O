@@ -428,12 +428,12 @@ class UserController extends Controller
                 $notifyUser = array();
                 if($request->role_id == 6){
                     $notifyUserType[] = 'admin';
-                    $Company = Company::find($request->company_id);
-                    if($Company->parent_id > 1 ){
+                    $CompanyUser = User::where('company_id', $request->company_id)->first();
+                    if($CompanyUser->company->parent_id > 1 ){
                         $notifyUserType[] = 'reseller';
-                        $notifyUser['reseller'] = $Company->parent_id;
+                        $notifyUser['reseller'] = $CompanyUser->company->parent_id;
                     }
-                    $notifyUser['admin'] = $Company->id;                    
+                    $notifyUser['admin'] = $CompanyUser->id; 
                 }
 
                 $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
