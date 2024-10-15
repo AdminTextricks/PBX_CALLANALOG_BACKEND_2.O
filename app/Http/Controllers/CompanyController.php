@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RechargeHistory;
+use App\Traits\ManageNotifications;
 use Illuminate\Http\Request;
 
 use App\Models\Company;
@@ -19,6 +20,7 @@ use Illuminate\Validation\Rules\Password;
 
 class CompanyController extends Controller
 {
+    use ManageNotifications;
     public function __construct()
     {
     }
@@ -154,6 +156,30 @@ class CompanyController extends Controller
                 $response     = $user->toArray();
                 //$response['token'] = $token;
                 DB::commit();
+
+
+                /**
+                 *  Notification code
+                 */
+                $subject = 'New Company Created'; 
+                $message = 'Company name '.$request->company_name.'/'.$request->email.' has been Created'; 
+                $type = 'info';
+                $notifyUserType = ['super-admin', 'support', 'noc'];
+                $notifyUser = array();
+                if($request->parent_id > 1 ){
+                    $notifyUserType[] = 'reseller';
+                    $notifyUser['reseller'] = $request->parent_id;
+                }
+
+                $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                if(!$res){
+                    Log::error('Notification not created when user role '.$user->role_id.' get all users list');
+                }
+                /**
+                 * End of Notification code
+                 */
+
+
                 return $this->output(true, 'User registered successfully.', $response);
             } else {
                 DB::commit();
