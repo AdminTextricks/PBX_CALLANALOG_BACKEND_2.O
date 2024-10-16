@@ -20,6 +20,7 @@ use App\Models\TfnGroups;
 use App\Models\TfnImportCsvList;
 use App\Models\Trunk;
 use App\Models\User;
+use App\Traits\ManageNotifications;
 use Auth;
 use Illuminate\Auth\Events\Validated;
 use Validator;
@@ -36,6 +37,7 @@ use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 
 class TfnController extends Controller
 {
+    use ManageNotifications;
     public function addAdminTfns(Request $request)
     {
         $user = \Auth::user();
