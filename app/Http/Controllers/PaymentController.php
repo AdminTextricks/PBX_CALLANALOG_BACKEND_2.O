@@ -15,6 +15,7 @@ use App\Models\ResellerRechargeHistories;
 use App\Models\ResellerWallet;
 use App\Models\State;
 use App\Models\Tfn;
+use App\Models\User;
 use Exception;
 use Validator;
 use Illuminate\Http\Request;
@@ -317,6 +318,34 @@ class PaymentController extends Controller
                         $finalizedInvoice = $stripe->invoices->finalizeInvoice($invoiceStripe->id);
                         $paidInvoice = $stripe->invoices->pay($finalizedInvoice->id);
                         DB::commit();
+
+                        /**
+                         *  Notification code
+                         */
+                        $subject = 'Card Payment'; 
+                        $message = 'A new payment has been done by company '.$user->company->company_name .'/'.$user->company->email; 
+                        $type = 'info';
+                        $notifyUserType = ['super-admin', 'support', 'noc'];
+                        $notifyUser = array();
+                        if($user->role_id == 6){
+                            $notifyUserType[] = 'admin';
+                            $CompanyUser = User::where('company_id', $user->company_id)
+                                            ->where('role_id', 4)->first();
+                            if($CompanyUser->company->parent_id > 1 ){
+                                $notifyUserType[] = 'reseller';
+                                $notifyUser['reseller'] = $CompanyUser->company->parent_id;
+                            }
+                            $notifyUser['admin'] = $CompanyUser->id; 
+                        }
+
+                        $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                        if(!$res){
+                            Log::error('Notification not created when user role: '.$user->role_id.'  Create new user.');
+                        }
+                        /**
+                         * End of Notification code
+                         */
+
                         return $this->output(true, 'Payment successfully.', ['payment' => $payment->toArray()], 200);
                     } else {
                         DB::rollBack();
