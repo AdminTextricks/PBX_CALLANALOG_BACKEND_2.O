@@ -218,8 +218,14 @@ class TfnController extends Controller
                     $notifyUserType = ['super-admin', 'support', 'noc'];
                     $notifyUser = array();
                     if($AuthUser->role_id == 6){
+                        $CompanyUser = User::where('company_id', $AuthUser->company_id)
+                                    ->where('role_id', 4)->first();
                         $notifyUserType[] = 'admin';
-                        $notifyUser['admin'] = $AuthUser->company_id;
+                        $notifyUser['admin'] = $CompanyUser->id;
+                        if($CompanyUser->company->parent_id > 1 ){
+                            $notifyUserType[] = 'reseller';
+                            $notifyUser['reseller'] = $CompanyUser->company->parent_id;
+                        }
                     }
                     if($AuthUser->role_id == 4 ){
                         $Company = Company::where('id', $AuthUser->company_id)->first();
