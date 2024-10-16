@@ -134,21 +134,24 @@ class DashboardController extends Controller
                     ->select(
                         DB::raw('COUNT(*) AS total'),
                         DB::raw("SUM(CASE WHEN extensions.host IS NULL AND extensions.status = 0 AND carts.item_type = 'Extension' THEN 1 ELSE 0 END) AS cart"),
-                        DB::raw("SUM(CASE WHEN extensions.host = 'static' AND extensions.status = 0 THEN 1 ELSE 0 END) AS Expired")
+                        DB::raw("SUM(CASE WHEN extensions.host = 'static' AND extensions.status = 0 THEN 1 ELSE 0 END) AS Expired"),
+                        DB::raw("SUM(CASE WHEN extensions.host = 'dynamic' AND extensions.status = 1 THEN 1 ELSE 0 END) AS Active")
                     )
                     ->first();
 
                 if ($extensionCounts->total > 0) {
                     $percentCartExtensionCounts = number_format(($extensionCounts->cart / $extensionCounts->total) * 100, decimals: 2) . '%';
                     $percentExpiredExtensionCounts = number_format(($extensionCounts->Expired / $extensionCounts->total) * 100, 2) . '%';
-
+                    $percentActiveExtensionCounts = number_format(($extensionCounts->Active / $extensionCounts->total) * 100, 2) . '%';
 
                     return response()->json([
                         'total' => $extensionCounts->total,
+                        'active' => $extensionCounts->Active,
                         'cart' => $extensionCounts->cart,
                         'expired' => $extensionCounts->Expired,
                         'percentage_cart' => $percentCartExtensionCounts,
                         'percentage_expired' => $percentExpiredExtensionCounts,
+                        'percentage_active' => $percentActiveExtensionCounts,
                     ]);
                 } else {
                     return $this->output(true, 'No Record Found', []);
