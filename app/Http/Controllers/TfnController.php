@@ -180,7 +180,7 @@ class TfnController extends Controller
 
     public function deleteTfn(Request $request, $id)
     {
-        return $AuthUser = Auth::user();
+        $AuthUser = Auth::user();
         $validator = Validator::make($request->all(), [
             'is_delete' => 'required',
         ]);
