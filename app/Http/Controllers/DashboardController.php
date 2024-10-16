@@ -88,8 +88,8 @@ class DashboardController extends Controller
                         DB::raw('COUNT(*) AS total'),
                         DB::raw("SUM(CASE WHEN tfns.reserved = '1' AND tfns.company_id = 0 AND carts.item_type = 'TFN' THEN 1 ELSE 0 END) AS reserved"),
                         DB::raw("SUM(CASE WHEN tfns.reserved = '0' AND tfns.company_id = 0 THEN 1 ELSE 0 END) AS free"),
-                        DB::raw("SUM(CASE WHEN tfns.reserved = '1' AND tfns.company_id != 0 THEN 1 ELSE 0 END) AS Purchase"),
-                        DB::raw("SUM(CASE WHEN tfns.reserved = '1' AND tfns.company_id != 0 AND tfns.status = 1 THEN 1 ELSE 0 END) AS Expired")
+                        DB::raw("SUM(CASE WHEN tfns.reserved = '1' AND tfns.company_id > 0 AND tfns.activated = '1' THEN 1 ELSE 0 END) AS Purchase"),
+                        DB::raw("SUM(CASE WHEN tfns.reserved = '1' AND tfns.company_id > 0 AND tfns.activated = '0' AND tfns.status = 1 THEN 1 ELSE 0 END) AS Expired")
                     )
                     ->first();
 
