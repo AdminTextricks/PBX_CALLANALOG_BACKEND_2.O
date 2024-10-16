@@ -101,15 +101,15 @@ class DashboardController extends Controller
 
 
                     return response()->json([
-                        'total_tfn' => $tfnCounts->total,
-                        'cart_tfn' => $tfnCounts->reserved,
-                        'free_tfn' => $tfnCounts->free,
-                        'active_tfn' => $tfnCounts->Purchase,
-                        'expired_tfn' => $tfnCounts->Expired,
-                        'percentage_cart_tfn' => $percentReservedTfnCounts,
-                        'percentage_free_tfn' => $percentFreeTfnCounts,
-                        'percentage_active_tfn' => $percentPurchaseTfnCounts,
-                        'percentage_expired_tfn' => $percentExpiredTfnCounts,
+                        'total' => $tfnCounts->total,
+                        'cart' => $tfnCounts->reserved,
+                        'free' => $tfnCounts->free,
+                        'active' => $tfnCounts->Purchase,
+                        'expired' => $tfnCounts->Expired,
+                        'percentage_cart' => $percentReservedTfnCounts,
+                        'percentage_free' => $percentFreeTfnCounts,
+                        'percentage_active' => $percentPurchaseTfnCounts,
+                        'percentage_expired' => $percentExpiredTfnCounts,
                     ]);
                 } else {
                     return $this->output(true, 'No Record Found', []);
@@ -144,11 +144,11 @@ class DashboardController extends Controller
 
 
                     return response()->json([
-                        'total_extension' => $extensionCounts->total,
-                        'cart_extension' => $extensionCounts->cart,
-                        'expired_extension' => $extensionCounts->Expired,
-                        'percentage_cart_extension' => $percentCartExtensionCounts,
-                        'percentage_expired_extension' => $percentExpiredExtensionCounts,
+                        'total' => $extensionCounts->total,
+                        'cart' => $extensionCounts->cart,
+                        'expired' => $extensionCounts->Expired,
+                        'percentage_cart' => $percentCartExtensionCounts,
+                        'percentage_expired' => $percentExpiredExtensionCounts,
                     ]);
                 } else {
                     return $this->output(true, 'No Record Found', []);
