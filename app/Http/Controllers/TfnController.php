@@ -20,6 +20,7 @@ use App\Models\TfnGroups;
 use App\Models\TfnImportCsvList;
 use App\Models\Trunk;
 use App\Models\User;
+use Auth;
 use Illuminate\Auth\Events\Validated;
 use Validator;
 use Mail;
@@ -179,6 +180,7 @@ class TfnController extends Controller
 
     public function deleteTfn(Request $request, $id)
     {
+        return $AuthUser = Auth::user();
         $validator = Validator::make($request->all(), [
             'is_delete' => 'required',
         ]);
@@ -198,10 +200,42 @@ class TfnController extends Controller
                 }
                 if ($tfn_result) {
                     if ($request->is_delete == '1') {
-                        return $this->output(true, 'TFN has been deleted successfully.');
+                        $subject = 'TFN Deleted'; 
+                        $message = 'TFN '.$tfn->tfn_number.' has been deleted by ' .$AuthUser->name. '.';
+                        $resReturn = 'TFN has been deleted successfully.';
                     } else {
-                        return $this->output(true, 'TFN has been restore successfully.',);
+                        $subject = 'TFN Restore.'; 
+                        $message = 'TFN '.$tfn->tfn_number.' has been restoreby by ' .$AuthUser->name. '.'; 
+                        $resReturn =  'TFN has been restore successfully.';
                     }
+
+                    /**
+                     *  Notification code
+                     */
+                    $type = 'info';
+                    $notifyUserType = ['super-admin', 'support', 'noc'];
+                    $notifyUser = array();
+                    if($AuthUser->role_id == 6){
+                        $notifyUserType[] = 'admin';
+                        $notifyUser['admin'] = $AuthUser->company_id;
+                    }
+                    if($AuthUser->role_id == 4 ){
+                        $Company = Company::where('id', $AuthUser->company_id)->first();
+                        if($Company->parent_id > 1){
+                            $notifyUserType[] = 'reseller';
+                            $notifyUser['reseller'] = $Company->parent_id;
+                        }                        
+                    }
+
+                    $res = $this->addNotification($AuthUser, $subject, $message, $type, $notifyUserType, $notifyUser);
+                    if(!$res){
+                        Log::error('Notification not created when user role '.$AuthUser->role_id.' update company status.');
+                    }
+                    /**
+                     * End of Notification code
+                     */
+
+                    return $this->output(true, $resReturn);
                 } else {
                     return $this->output(false, 'Error occurred in TFN deleting. Please try again!.', [], 209);
                 }
