@@ -16,6 +16,7 @@ use App\Models\ResellerWallet;
 use App\Models\State;
 use App\Models\Tfn;
 use App\Models\User;
+use App\Traits\ManageNotifications;
 use Exception;
 use Validator;
 use Illuminate\Http\Request;
@@ -32,6 +33,7 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
+    use ManageNotifications;
     public function PayNow(Request $request)
     {
         $user = \Auth::user();
