@@ -324,11 +324,13 @@ class UserController extends Controller
                 $response['token'] = $token;
                 DB::commit();
 
-                $subject = 'New User Registration'; $message = 'A new user has been registered'; $type = 'info';
+                $subject = 'Company Registration'; 
+                $message = 'A new company has been registered: '.$request->company_name.' / '. $request->email; 
+                $type = 'info';
                 $notifyUserType = ['super-admin', 'support', 'noc'];
                 $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType);
                 if(!$res){
-                    Log::error('Notification not created when user role '.$user->role_id.' get all users list');
+                    Log::error('Notification not created when user role '.$user->role_id.' in company registration');
                 }
 
                 return $this->output(true, 'User registered successfully.', $response);
@@ -423,7 +425,7 @@ class UserController extends Controller
                  *  Notification code
                  */
                 $subject = 'New User Created'; 
-                $message = 'User name '.$request->name.' has been Created'; 
+                $message = 'User name: '.$request->name.' has been Created'; 
                 $type = 'info';
                 $notifyUserType = ['super-admin', 'support', 'noc'];
                 $notifyUser = array();
@@ -431,10 +433,10 @@ class UserController extends Controller
                     $notifyUserType[] = 'admin';
                     $CompanyUser = User::where('company_id', $request->company_id)
                                     ->where('role_id', 4)->first();
-                    if($CompanyUser->company->parent_id > 1 ){
+                    /* if($CompanyUser->company->parent_id > 1 ){
                         $notifyUserType[] = 'reseller';
                         $notifyUser['reseller'] = $CompanyUser->company->parent_id;
-                    }
+                    } */
                     $notifyUser['admin'] = $CompanyUser->id; 
                 }
 

@@ -13,18 +13,22 @@ use App\Models\RechargeHistory;
 use App\Models\ResellerRechargeHistories;
 use App\Models\State;
 use App\Models\Tfn;
+use App\Models\User;
 use App\Services\NowPaymentsService;
+use App\Traits\ManageNotifications;
 use Carbon\Carbon;
 use Validator;
 use Mail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Http\Request;
 
 class NowPaymentsController extends Controller
 {
+    use ManageNotifications;
     protected $nowPaymentsService;
 
     public function __construct(NowPaymentsService $nowPaymentsService)
@@ -277,6 +281,41 @@ class NowPaymentsController extends Controller
                     DB::commit();
                     $response['crypto_payment_status'] = $NowPaymentData['payment_status'];
                     $response['payment'] = $payment->toArray();
+
+
+                    /**
+                     *  Notification code
+                     */
+                    $subject = 'Crypto Payment'; 
+                    $message = 'A new payment has been done by company: '.$user->company->company_name .' / '.$user->company->email; 
+                    $type = 'info';
+                    $notifyUserType = ['super-admin', 'support', 'noc'];
+                    $notifyUser = array();
+                    if($user->role_id == 6){
+                        $message = 'A new payment for Add to Wallet has been done by user: '.$user->name .' / '.$user->email; 
+                        $notifyUserType[] = 'admin';
+                        $CompanyUser = User::where('company_id', $user->company_id)
+                                        ->where('role_id', 4)->first();
+                        if($CompanyUser->company->parent_id > 1 ){
+                            $notifyUserType[] = 'reseller';
+                            $notifyUser['reseller'] = $CompanyUser->company->parent_id;
+                        }
+                        $notifyUser['admin'] = $CompanyUser->id; 
+                    }
+
+                    if($user->role_id == 4 && $user->company->parent_id > 1){                        
+                        $notifyUserType[] = 'reseller';
+                        $notifyUser['reseller'] = $user->company->parent_id;
+                    }
+
+                    $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                    if(!$res){
+                        Log::error('Notification not created when user role: '.$user->role_id.' in CheckPaymentStatus method.');
+                    }
+                    /**
+                     * End of Notification code
+                     */
+
                     return $this->output(true, 'Payment successfully.', $response, 200);
                 }
             } else {
@@ -444,6 +483,39 @@ class NowPaymentsController extends Controller
                     DB::commit();
                     $response['payment'] = $payment->toArray();
                     $response['crypto_payment_status'] = $NowPaymentData['payment_status'];
+
+                    /**
+                     *  Notification code
+                     */
+                    $subject = 'Crypto Payment'; 
+                    $message = 'A new payment for Add to Wallet has been done by company: '.$user->company->company_name .' / '.$user->company->email; 
+                    $type = 'info';
+                    $notifyUserType = ['super-admin', 'support', 'noc'];
+                    $notifyUser = array();
+                    if($user->role_id == 6){
+                        $message = 'A new payment for Add to Wallet has been done by user: '.$user->name .' / '.$user->email; 
+                        $notifyUserType[] = 'admin';
+                        $CompanyUser = User::where('company_id', $user->company_id)
+                                        ->where('role_id', 4)->first();
+                        if($CompanyUser->company->parent_id > 1 ){
+                            $notifyUserType[] = 'reseller';
+                            $notifyUser['reseller'] = $CompanyUser->company->parent_id;
+                        }
+                        $notifyUser['admin'] = $CompanyUser->id; 
+                    }
+
+                    if($user->role_id == 4 && $user->company->parent_id > 1){                        
+                        $notifyUserType[] = 'reseller';
+                        $notifyUser['reseller'] = $user->company->parent_id;
+                    }
+
+                    $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                    if(!$res){
+                        Log::error('Notification not created when user role: '.$user->role_id.' in nowPaymentsWalletcheckPaymentsStatus method.');
+                    }
+                    /**
+                     * End of Notification code
+                     */
                     return $this->output(true, 'Amount Credit in Wallet.', $response, 200);
                 }
             } else {
@@ -605,6 +677,21 @@ class NowPaymentsController extends Controller
                     $response['payment'] = $payment->toArray();
                     $response['crypto_payment_status'] = $NowPaymentData['payment_status'];
                     DB::commit();
+                    /**
+                     *  Notification code
+                     */
+                    $subject = 'Crypto Payment'; 
+                    $message = 'A payment for Add to Wallet has been done by reseller: '.$user->name .'/'.$user->email; 
+                    $type = 'info';
+                    $notifyUserType = ['super-admin', 'support', 'noc'];
+                    $notifyUser = array();
+                    $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                    if(!$res){
+                        Log::error('Notification not created when user role: '.$user->role_id.' inReselletnowPaymentsWalletcheckPaymentsStatus method.');
+                    }
+                    /**
+                     * End of Notification code
+                     */
                     return $this->output(true, 'Amount Credit in Wallet.', $response, 200);
                 }
             } else {
