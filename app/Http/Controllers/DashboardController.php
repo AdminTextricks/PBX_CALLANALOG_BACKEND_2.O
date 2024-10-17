@@ -164,4 +164,55 @@ class DashboardController extends Controller
             return $this->output(false, 'Unauthorized action.', [], 403);
         }
     }
+
+    public function getALLTfnExtensionPriceforlastSevendays()
+    {
+        $user = \Auth::user();
+        if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
+            try {
+                $invoiceAndinvoiceItemsCounts = DB::table('invoices')
+                    ->leftJoin('invoice_items', 'invoices.id', '=', 'invoice_items.invoice_id')
+                    ->select(
+                        DB::raw('COUNT(*) AS total'),
+                        DB::raw("SUM(invoice_items.item_price) AS totalprice"),
+                        DB::raw("SUM(CASE WHEN invoice_items.item_type = 'Extension' THEN 1 ELSE 0 END) AS extension"),
+                        DB::raw("SUM(CASE WHEN invoice_items.item_type = 'TFN' THEN 1 ELSE 0 END) AS tfn"),
+                        DB::raw("SUM(CASE WHEN invoice_items.item_type = 'Extension' THEN invoice_items.item_price ELSE 0 END) AS extensionprice"),
+                        DB::raw("SUM(CASE WHEN invoice_items.item_type = 'TFN' THEN invoice_items.item_price ELSE 0 END) AS tfnprice"),
+
+                    )
+                    ->where('invoices.updated_at', '>=', DB::raw('DATE_SUB(NOW(), INTERVAL 200 DAY)'))
+                    ->first();
+
+
+                if ($invoiceAndinvoiceItemsCounts->total > 0) {
+                    $percentNumberofextension = number_format(($invoiceAndinvoiceItemsCounts->extension / $invoiceAndinvoiceItemsCounts->total) * 100, decimals: 2) . '%';
+                    $percentNumberoftfn = number_format(($invoiceAndinvoiceItemsCounts->tfn / $invoiceAndinvoiceItemsCounts->total) * 100, 2) . '%';
+                    $percentNumberofextensionprice = number_format(($invoiceAndinvoiceItemsCounts->extensionprice / $invoiceAndinvoiceItemsCounts->totalprice) * 100, 2) . '%';
+                    $percentNumberoftfnprice = number_format(($invoiceAndinvoiceItemsCounts->tfnprice / $invoiceAndinvoiceItemsCounts->totalprice) * 100, 2) . '%';
+
+
+                    return response()->json([
+                        'total_number_of_items' => $invoiceAndinvoiceItemsCounts->total,
+                        'total_price' => $invoiceAndinvoiceItemsCounts->total,
+                        'number_of_extension' => $invoiceAndinvoiceItemsCounts->extension,
+                        'number_of_tfn' => $invoiceAndinvoiceItemsCounts->tfn,
+                        'number_of_extensionprice' => $invoiceAndinvoiceItemsCounts->extensionprice,
+                        'number_of_tfnprice' => $invoiceAndinvoiceItemsCounts->tfnprice,
+                        'percentage_number_of_extension' => $percentNumberofextension,
+                        'percentage_number_of_tfn' => $percentNumberoftfn,
+                        'percentage_number_of_extensionprice' => $percentNumberofextensionprice,
+                        'percentage_number_of_tfnprice' => $percentNumberoftfnprice,
+                    ]);
+                } else {
+                    return $this->output(true, 'No Record Found', []);
+                }
+            } catch (\Exception $e) {
+                Log::error('Error fetching user counts: ' . $e->getMessage());
+                return $this->output(false, 'An error occurred while fetching data.', [], 500);
+            }
+        } else {
+            return $this->output(false, 'Unauthorized action.', [], 403);
+        }
+    }
 }
