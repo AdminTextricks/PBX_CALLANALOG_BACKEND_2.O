@@ -7,13 +7,16 @@ use App\Models\RechargeHistory;
 use App\Models\ResellerRechargeHistories;
 use App\Models\ResellerWallet;
 use App\Models\User;
+use App\Traits\ManageNotifications;
 use Str;
 use Carbon\Carbon;
 use Validator;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 class RechargeHistoryController extends Controller
 {
+    use ManageNotifications;
     public function RechargeHistoryForSuperAdmin(Request $request)
     {
         $user  = \Auth::user();
@@ -145,6 +148,27 @@ class RechargeHistoryController extends Controller
                         $resellerwellat->balance += $request->amount;
                         $resuserBalance = $resellerwellat->save();
                         if ($resuserBalance) {
+
+                            /**
+                             *  Notification code
+                             */
+                            $subject = 'Add Balance'; 
+                            $message = 'Wallet balance added by: '.$user->name .' ('.$user->roles->first()->slug.') to Reseller '.$userdataforbalanceupdate->name.' / '.$userdataforbalanceupdate->email;
+                            $type = 'info';
+                            $notifyUserType = ['super-admin', 'support', 'noc'];
+                            $notifyUser = array();
+
+                            $notifyUserType[] = 'reseller';
+                            $notifyUser['reseller'] = $userdataforbalanceupdate->id; 
+                            
+                            $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                            if(!$res){
+                                Log::error('Notification not created when user role: '.$user->role_id.' in AddbalanceForResellerBySuperAdmin method.');
+                            }
+                            /**
+                             * End of Notification code
+                             */
+
                             return $this->output(true, 'Amount Added successfully!', $rechargeHistory_data, 200);
                         } else {
                             return $this->output(false, 'Error occurred While adding Amount. Please try again!.', [], 200);
