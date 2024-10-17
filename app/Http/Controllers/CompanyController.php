@@ -570,6 +570,31 @@ class CompanyController extends Controller
                         $companydataforbalanceupdate->balance += $request->amount;
                         $resCompanyBalance = $companydataforbalanceupdate->save();
                         if ($resCompanyBalance) {
+
+                            /**
+                             *  Notification code
+                             */
+                            $subject = 'Add Balance'; 
+                            $message = 'Wallet balance added by: '.$user->name .' ('.$user->roles->first()->slug.') to Company '.$companydataforbalanceupdate->company_name.' / '.$companydataforbalanceupdate->email;
+                            $type = 'info';
+                            $notifyUserType = ['super-admin', 'support', 'noc'];
+                            $notifyUser = array();
+                            $CompanyUser = User::where('company_id', $request->company_id)
+                                        ->where('role_id', 4)->first();
+                                                
+                            $notifyUserType[] = 'admin';
+                            $notifyUser['admin'] = $CompanyUser->id; 
+                            
+
+                            $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                            if(!$res){
+                                Log::error('Notification not created when user role: '.$user->role_id.' in AddbalanceForCompanyBySuperAdmin method.');
+                            }
+                            /**
+                             * End of Notification code
+                             */
+
+
                             return $this->output(true, 'Amount Added successfully!', $resCompanyBalance, 200);
                         } else {
                             return $this->output(false, 'Error occurred While adding Amount. Please try again!.', [], 200);
