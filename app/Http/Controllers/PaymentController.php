@@ -325,11 +325,12 @@ class PaymentController extends Controller
                          *  Notification code
                          */
                         $subject = 'Card Payment'; 
-                        $message = 'A new payment has been done by company '.$user->company->company_name .'/'.$user->company->email; 
+                        $message = 'A new payment has been done by company: '.$user->company->company_name .' / '.$user->company->email; 
                         $type = 'info';
                         $notifyUserType = ['super-admin', 'support', 'noc'];
                         $notifyUser = array();
                         if($user->role_id == 6){
+                            $message = 'A new payment has been done by user: '.$user->name .' / '.$user->email; 
                             $notifyUserType[] = 'admin';
                             $CompanyUser = User::where('company_id', $user->company_id)
                                             ->where('role_id', 4)->first();
@@ -342,7 +343,7 @@ class PaymentController extends Controller
 
                         $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
                         if(!$res){
-                            Log::error('Notification not created when user role: '.$user->role_id.'  Create new user.');
+                            Log::error('Notification not created when user role: '.$user->role_id.'  Create new payment payNow method.');
                         }
                         /**
                          * End of Notification code
@@ -861,6 +862,30 @@ class PaymentController extends Controller
                 // Finalize and Pay the Invoice
                 $finalizedInvoice = $stripe->invoices->finalizeInvoice($invoiceStripe->id);
                 $paidInvoice = $stripe->invoices->pay($finalizedInvoice->id);
+
+                /**
+                 *  Notification code
+                 */
+                $subject = 'Card Payment'; 
+                $message = 'A payment for Add to Wallet has been done by company: '.$user->company->company_name .' / '.$user->company->email; 
+                $type = 'info';
+                $notifyUserType = ['super-admin', 'support', 'noc'];
+                $notifyUser = array();
+                if($user->role_id == 6){
+                    $message = 'A payment for Add to Wallet has been done by user: '.$user->name .' / '.$user->email; 
+                    $notifyUserType[] = 'admin';
+                    $CompanyUser = User::where('company_id', $user->company_id)
+                                    ->where('role_id', 4)->first();
+                    $notifyUser['admin'] = $CompanyUser->id; 
+                }
+
+                $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                if(!$res){
+                    Log::error('Notification not created when user role: '.$user->role_id.'  in addToWallet method.');
+                }
+                /**
+                 * End of Notification code
+                 */
                 return $this->output(true, 'Payment Added To Wallet successfully.', $response, 200);
             } else {
                 DB::rollback();
@@ -1276,6 +1301,35 @@ class PaymentController extends Controller
                 }
 
                 $response['payment'] = $payment->toArray();
+
+                /**
+                 *  Notification code
+                 */
+                $subject = 'Wallet Payment'; 
+                $message = 'A new payment has been done by company: '.$user->company->company_name .' / '.$user->company->email; 
+                $type = 'info';
+                $notifyUserType = ['super-admin', 'support', 'noc'];
+                $notifyUser = array();
+                if($user->role_id == 6){
+                    $message = 'A new payment has been done by user: '.$user->name .' / '.$user->email;
+                    $notifyUserType[] = 'admin';
+                    $CompanyUser = User::where('company_id', $user->company_id)
+                                    ->where('role_id', 4)->first();
+                    if($CompanyUser->company->parent_id > 1 ){
+                        $notifyUserType[] = 'reseller';
+                        $notifyUser['reseller'] = $CompanyUser->company->parent_id;
+                    }
+                    $notifyUser['admin'] = $CompanyUser->id; 
+                }
+
+                $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                if(!$res){
+                    Log::error('Notification not created when user role: '.$user->role_id.'  in paymentWithWallet method.');
+                }
+                /**
+                 * End of Notification code
+                 */
+
                 return $this->output(true, 'Payment successfully.', $response, 200);
             } else {
                 return $this->output(false, 'You have insufficient balance in your Wallet. Please choose Pay Now Option.', null, 400);
@@ -1403,6 +1457,25 @@ class PaymentController extends Controller
                 // Finalize and Pay the Invoice
                 $finalizedInvoice = $stripe->invoices->finalizeInvoice($invoiceStripe->id);
                 $paidInvoice = $stripe->invoices->pay($finalizedInvoice->id);
+
+
+                /**
+                 *  Notification code
+                 */
+                $subject = 'Card Payment'; 
+                $message = 'A payment for Add to Wallet has been done by reseller: '.$user->name .' / '.$user->email; 
+                $type = 'info';
+                $notifyUserType = ['super-admin', 'support', 'noc'];
+                $notifyUser = array();
+                $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                if(!$res){
+                    Log::error('Notification not created when user role: '.$user->role_id.' in resellerAddtoWallet method.');
+                }
+                /**
+                 * End of Notification code
+                 */
+
+
                 return $this->output(true, 'Payment Added To Wallet successfully.', $response, 200);
             } else {
                 DB::rollback();

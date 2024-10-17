@@ -164,7 +164,7 @@ class CompanyController extends Controller
                  *  Notification code
                  */
                 $subject = 'New Company Created'; 
-                $message = 'Company name '.$request->company_name.'/'.$request->email.' has been Created'; 
+                $message = 'Company name '.$request->company_name.' / '.$request->email.' has been Created'; 
                 $type = 'info';
                 $notifyUserType = ['super-admin', 'support', 'noc'];
                 $notifyUser = array();
@@ -175,7 +175,7 @@ class CompanyController extends Controller
 
                 $res = $this->addNotification($AuthUser, $subject, $message, $type, $notifyUserType, $notifyUser);
                 if(!$res){
-                    Log::error('Notification not created when user role: '.$AuthUser->role_id.' create new company.');
+                    Log::error('Notification not created when user role: '.$AuthUser->role_id.' in registrationByAdminOrReseller method.');
                 }
                 /**
                  * End of Notification code
@@ -303,11 +303,11 @@ class CompanyController extends Controller
                  */
                 if ($request->status == '0') {
                     $subject = 'Company has disabled'; 
-                    $message = 'Company '.$Company->company_name.'/'.$Company->email.' and all users has been disabled'; 
+                    $message = 'Company '.$Company->company_name.' / '.$Company->email.' and all users has been disabled'; 
                 }
                 if ($request->status == '1') {
                     $subject = 'Company has activated'; 
-                    $message = 'Company '.$Company->company_name.'/'.$Company->email.' has been activated'; 
+                    $message = 'Company '.$Company->company_name.' / '.$Company->email.' has been activated'; 
                 }
                 
                 $type = 'info';
@@ -320,7 +320,7 @@ class CompanyController extends Controller
 
                 $res = $this->addNotification($AuthUser, $subject, $message, $type, $notifyUserType, $notifyUser);
                 if(!$res){
-                    Log::error('Notification not created when user role '.$AuthUser->role_id.' update company status.');
+                    Log::error('Notification not created when user role '.$AuthUser->role_id.' in update company status.');
                 }
                 /**
                  * End of Notification code
