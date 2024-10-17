@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Company;
+use App\Models\ConfTemplate;
 use App\Models\Country;
 use App\Models\Extension;
 use App\Models\Invoice;
@@ -226,6 +227,24 @@ class NowPaymentsController extends Controller
                                 } else {
                                     $newDate = date('Y-m-d H:i:s', strtotime('+30 days'));
                                     $startDate = date('Y-m-d H:i:s');
+                                    // In Expired case we need to Update web or softphone template to webrtc_template_url or softphone_template_url 
+                                    $webrtc_template_url = config('app.webrtc_template_url');
+                                    $softphone_template_url = config('app.softphone_template_url');
+                                    if ($numbers_list->sip_temp == 'WEBRTC') {
+                                        $addExtensionFile = $webrtc_template_url;
+                                    } else {
+                                        $addExtensionFile = $softphone_template_url;
+                                    }
+                                    $ConfTemplate = ConfTemplate::select()->where('template_id', $numbers_list->sip_temp)->first();
+                                    $this->addExtensionInConfFile($numbers_list->name, $addExtensionFile, $numbers_list->secret, $user->company->account_code, $ConfTemplate->template_contents);
+                                    $server_flag = config('app.server_flag');
+                                    if ($server_flag == 1) {
+                                        $shell_script = config('app.shell_script');
+                                        $result = shell_exec('sudo ' . $shell_script);
+                                        // Log::error('Extension Update File Transfer Log : ' . $result);
+                                        $this->sipReload();
+                                    }
+                                    //// End Template transfer code
                                 }
                                 $numbers_list->update([
                                     'company_id'  => $numbers_list->company_id,
@@ -236,6 +255,20 @@ class NowPaymentsController extends Controller
                                     'status' => 1,
                                 ]);
                             } else {
+
+                                // In Creating or Purchase case we need to Write web or softphone template to webrtc_template_url or softphone_template_url 
+                                $webrtc_template_url = config('app.webrtc_template_url');
+                                $addExtensionFile = $webrtc_template_url;
+                                $ConfTemplate = ConfTemplate::select()->where('template_id', 'WEBRTC')->first();
+                                $this->addExtensionInConfFile($numbers_list->name, $addExtensionFile, $numbers_list->secret, $user->company->account_code, $ConfTemplate->template_contents);
+                                $server_flag = config('app.server_flag');
+                                if ($server_flag == 1) {
+                                    $shell_script = config('app.shell_script');
+                                    $result = shell_exec('sudo ' . $shell_script);
+                                    // Log::error('Extension Update File Transfer Log : ' . $result);
+                                    $this->sipReload();
+                                }
+                                //// End Template transfer code
                                 $value = "Purchase";
                                 $numbers_list->update([
                                     'company_id' => $user->company->id,
@@ -286,31 +319,31 @@ class NowPaymentsController extends Controller
                     /**
                      *  Notification code
                      */
-                    $subject = 'Crypto Payment'; 
-                    $message = 'A new payment has been done by company: '.$user->company->company_name .' / '.$user->company->email; 
+                    $subject = 'Crypto Payment';
+                    $message = 'A new payment has been done by company: ' . $user->company->company_name . ' / ' . $user->company->email;
                     $type = 'info';
                     $notifyUserType = ['super-admin', 'support', 'noc'];
                     $notifyUser = array();
-                    if($user->role_id == 6){
-                        $message = 'A new payment for Add to Wallet has been done by user: '.$user->name .' / '.$user->email; 
+                    if ($user->role_id == 6) {
+                        $message = 'A new payment for Add to Wallet has been done by user: ' . $user->name . ' / ' . $user->email;
                         $notifyUserType[] = 'admin';
                         $CompanyUser = User::where('company_id', $user->company_id)
-                                        ->where('role_id', 4)->first();
-                        if($CompanyUser->company->parent_id > 1 ){
+                            ->where('role_id', 4)->first();
+                        if ($CompanyUser->company->parent_id > 1) {
                             $notifyUserType[] = 'reseller';
                             $notifyUser['reseller'] = $CompanyUser->company->parent_id;
                         }
-                        $notifyUser['admin'] = $CompanyUser->id; 
+                        $notifyUser['admin'] = $CompanyUser->id;
                     }
 
-                    if($user->role_id == 4 && $user->company->parent_id > 1){                        
+                    if ($user->role_id == 4 && $user->company->parent_id > 1) {
                         $notifyUserType[] = 'reseller';
                         $notifyUser['reseller'] = $user->company->parent_id;
                     }
 
                     $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
-                    if(!$res){
-                        Log::error('Notification not created when user role: '.$user->role_id.' in CheckPaymentStatus method.');
+                    if (!$res) {
+                        Log::error('Notification not created when user role: ' . $user->role_id . ' in CheckPaymentStatus method.');
                     }
                     /**
                      * End of Notification code
@@ -487,31 +520,31 @@ class NowPaymentsController extends Controller
                     /**
                      *  Notification code
                      */
-                    $subject = 'Crypto Payment'; 
-                    $message = 'A new payment for Add to Wallet has been done by company: '.$user->company->company_name .' / '.$user->company->email; 
+                    $subject = 'Crypto Payment';
+                    $message = 'A new payment for Add to Wallet has been done by company: ' . $user->company->company_name . ' / ' . $user->company->email;
                     $type = 'info';
                     $notifyUserType = ['super-admin', 'support', 'noc'];
                     $notifyUser = array();
-                    if($user->role_id == 6){
-                        $message = 'A new payment for Add to Wallet has been done by user: '.$user->name .' / '.$user->email; 
+                    if ($user->role_id == 6) {
+                        $message = 'A new payment for Add to Wallet has been done by user: ' . $user->name . ' / ' . $user->email;
                         $notifyUserType[] = 'admin';
                         $CompanyUser = User::where('company_id', $user->company_id)
-                                        ->where('role_id', 4)->first();
-                        if($CompanyUser->company->parent_id > 1 ){
+                            ->where('role_id', 4)->first();
+                        if ($CompanyUser->company->parent_id > 1) {
                             $notifyUserType[] = 'reseller';
                             $notifyUser['reseller'] = $CompanyUser->company->parent_id;
                         }
-                        $notifyUser['admin'] = $CompanyUser->id; 
+                        $notifyUser['admin'] = $CompanyUser->id;
                     }
 
-                    if($user->role_id == 4 && $user->company->parent_id > 1){                        
+                    if ($user->role_id == 4 && $user->company->parent_id > 1) {
                         $notifyUserType[] = 'reseller';
                         $notifyUser['reseller'] = $user->company->parent_id;
                     }
 
                     $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
-                    if(!$res){
-                        Log::error('Notification not created when user role: '.$user->role_id.' in nowPaymentsWalletcheckPaymentsStatus method.');
+                    if (!$res) {
+                        Log::error('Notification not created when user role: ' . $user->role_id . ' in nowPaymentsWalletcheckPaymentsStatus method.');
                     }
                     /**
                      * End of Notification code
@@ -680,14 +713,14 @@ class NowPaymentsController extends Controller
                     /**
                      *  Notification code
                      */
-                    $subject = 'Crypto Payment'; 
-                    $message = 'A payment for Add to Wallet has been done by reseller: '.$user->name .'/'.$user->email; 
+                    $subject = 'Crypto Payment';
+                    $message = 'A payment for Add to Wallet has been done by reseller: ' . $user->name . '/' . $user->email;
                     $type = 'info';
                     $notifyUserType = ['super-admin', 'support', 'noc'];
                     $notifyUser = array();
                     $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
-                    if(!$res){
-                        Log::error('Notification not created when user role: '.$user->role_id.' inReselletnowPaymentsWalletcheckPaymentsStatus method.');
+                    if (!$res) {
+                        Log::error('Notification not created when user role: ' . $user->role_id . ' inReselletnowPaymentsWalletcheckPaymentsStatus method.');
                     }
                     /**
                      * End of Notification code
