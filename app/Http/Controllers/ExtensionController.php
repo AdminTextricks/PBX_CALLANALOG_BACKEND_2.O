@@ -482,7 +482,7 @@ class ExtensionController extends Controller
                 if ($options == 1) {
                     $data->where('extensions.host', '=', NULL)->where('extensions.status', '=', '0');
                 } elseif ($options == 2) {
-                    $data->where('extensions.host', '=', 'dynamic')->where('extensions.status', '=', '1')->whereBetween('expirationdate', [Carbon::now(), Carbon::now()->addDays(3)]);
+                    $data->where('extensions.host', '=', 'dynamic')->where('extensions.status', '=', '1')->whereBetween('extensions.expirationdate', [Carbon::now(), Carbon::now()->addDays(3)]);
                 } elseif ($options == 3) {
                     $data->where('extensions.host', '=', 'static')->where('extensions.status', '=', '0')->where('extensions.expirationdate', '<', Carbon::now());
                 }
@@ -512,7 +512,7 @@ class ExtensionController extends Controller
                 if ($options == 1) {
                     $data->where('extensions.host', '=', NULL)->where('extensions.status', '=', '0');
                 } elseif ($options == 2) {
-                    $data->where('extensions.host', '=', 'dynamic')->where('extensions.status', '=', '1')->whereBetween('expirationdate', [Carbon::now(), Carbon::now()->addDays(3)]);
+                    $data->where('extensions.host', '=', 'dynamic')->where('extensions.status', '=', '1')->whereBetween('extensions.expirationdate', [Carbon::now(), Carbon::now()->addDays(3)]);
                 } elseif ($options == 3) {
                     $data->where('extensions.host', '=', 'static')->where('extensions.status', '=', '0')->where('extensions.expirationdate', '<', Carbon::now());
                 }
