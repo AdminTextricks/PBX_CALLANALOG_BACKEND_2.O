@@ -487,6 +487,8 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 		Route::get('/getTfnCount', [DashboardController::class, 'getAllTfnforSuperAdminDashboard']);
 		Route::get('/getExtensionCount', [DashboardController::class, 'getAllExtensionforSuperAdminDashboard']);
 		Route::get('/get-invoice-tfn-extension-price', [DashboardController::class, 'getALLTfnExtensionPriceforlastSevendays']);
+		Route::get('/cdrReports/{dayCount}', [DashboardController::class, 'getCdrReports']);
+		
 	});
 });
 

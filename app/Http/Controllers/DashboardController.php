@@ -192,17 +192,10 @@ class DashboardController extends Controller
                     $percentNumberoftfnprice = number_format(($invoiceAndinvoiceItemsCounts->tfnprice / $invoiceAndinvoiceItemsCounts->totalprice) * 100, 2) . '%';
 
 
-                    return response()->json([
-                        'total_number_of_items' => $invoiceAndinvoiceItemsCounts->total,
-                        'total_price' => $invoiceAndinvoiceItemsCounts->totalprice,
-                        'number_of_extension' => $invoiceAndinvoiceItemsCounts->extension,
-                        'number_of_tfn' => $invoiceAndinvoiceItemsCounts->tfn,
+                    return response()->json([ 
+                        'total_price' => $invoiceAndinvoiceItemsCounts->totalprice,  
                         'number_of_extensionprice' => $invoiceAndinvoiceItemsCounts->extensionprice,
                         'number_of_tfnprice' => $invoiceAndinvoiceItemsCounts->tfnprice,
-                        'percentage_number_of_extension' => $percentNumberofextension,
-                        'percentage_number_of_tfn' => $percentNumberoftfn,
-                        'percentage_number_of_extensionprice' => $percentNumberofextensionprice,
-                        'percentage_number_of_tfnprice' => $percentNumberoftfnprice,
                     ]);
                 } else {
                     return $this->output(true, 'No Record Found', []);
@@ -213,6 +206,47 @@ class DashboardController extends Controller
             }
         } else {
             return $this->output(false, 'Unauthorized action.', [], 403);
+        }
+    }
+
+
+    public function getCdrReports(Request $request, $dayCount)
+    {
+        $user = \Auth::user();
+        try { 
+            if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
+
+                $cdrCounts = DB::table('cdrs')
+                ->select(
+                    DB::raw('COUNT(*) AS total'),
+                    DB::raw("SUM(CASE WHEN cdrs.disposition= 'ANSWER' THEN 1 ELSE 0 END)  AS answer"),
+                    DB::raw("SUM(CASE WHEN cdrs.disposition = 'BUSY' THEN 1 ELSE 0 END) as busy"),
+                    DB::raw("SUM(CASE WHEN cdrs.disposition = 'CANCEL' THEN 1 ELSE 0 END)  as cancel"),
+                    DB::raw("SUM(CASE WHEN cdrs.disposition = 'CHANUNAVAIL' THEN 1 ELSE 0 END)  as chanunavail"),
+                    DB::raw("SUM(CASE WHEN cdrs.disposition = 'NOANSWER' THEN 1 ELSE 0 END)  as noanswer")
+                )
+                ->where('call_date', '>=',  DB::raw('DATE_SUB(NOW(), INTERVAL '.$dayCount.' DAY)'))
+                ->first();
+
+                if ($cdrCounts->total > 0) { 
+                    return response()->json([
+                        'total' => $cdrCounts->total,
+                        'answer' => $cdrCounts->answer,
+                        'busy' => $cdrCounts->busy,
+                        'cancel' => $cdrCounts->cancel,
+                        'chanunavail' => $cdrCounts->chanunavail,
+                        'noanswer' => $cdrCounts->noanswer,
+                    ]);
+                } else {
+                    return $this->output(true, 'No Record Found', []);
+                }
+            }else{
+
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error occurred in getting CDR Reposrts for deshboard : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
 }
