@@ -194,7 +194,7 @@ class DashboardController extends Controller
 
                     return response()->json([
                         'total_number_of_items' => $invoiceAndinvoiceItemsCounts->total,
-                        'total_price' => $invoiceAndinvoiceItemsCounts->total,
+                        'total_price' => $invoiceAndinvoiceItemsCounts->totalprice,
                         'number_of_extension' => $invoiceAndinvoiceItemsCounts->extension,
                         'number_of_tfn' => $invoiceAndinvoiceItemsCounts->tfn,
                         'number_of_extensionprice' => $invoiceAndinvoiceItemsCounts->extensionprice,
