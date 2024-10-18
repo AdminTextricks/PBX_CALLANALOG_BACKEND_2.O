@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+
 class NotificationRecipients extends Model
 {
     use HasFactory;
@@ -17,4 +18,9 @@ class NotificationRecipients extends Model
         'is_read',
         'read_at',
     ];
+
+    public function notification()
+    {
+        return $this->belongsTo(Notification::class, 'notification_id');
+    }
 }
