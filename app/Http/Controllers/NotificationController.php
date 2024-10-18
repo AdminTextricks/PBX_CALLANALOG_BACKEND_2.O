@@ -78,6 +78,30 @@ class NotificationController extends Controller
 		} else {
 			return $this->output(true, 'No Record Found', []);
 		}
+    }
 
+    public function updateMarkAsRead(Request $request, $id)
+    {
+        
+        $validator = Validator::make($request->all(), [
+            'status' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+        $NotificationRecipients = NotificationRecipients::find($id);
+        if (is_null($NotificationRecipients)) {
+            return $this->output(false, 'This Notification not exist with us. Please try again!.', [], 200);
+        } else {
+            $NotificationRecipients->read_at = Carbon::now();
+            $NotificationRecipients->is_read = 1;
+            $NotificationRecipientsRes = $NotificationRecipients->save();
+            if ($NotificationRecipientsRes) {
+                $resMessage = 'Notification as marked read successfully.';
+                return $this->output(true, $resMessage);
+            }else{
+                return $this->output(false, 'Error occurred in Notification as marked read updating. Please try again!.', [], 409);
+            }
+        }
     }
 }
