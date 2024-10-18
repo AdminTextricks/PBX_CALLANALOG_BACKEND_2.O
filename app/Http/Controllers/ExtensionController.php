@@ -1589,18 +1589,18 @@ class ExtensionController extends Controller
     {
         $user = \Auth::user();
         $params = $request->params ?? "";
+        $options = $request->get('options', null);
+        $getextensions = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
+            ->with(['company' => function ($query) {
+                $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id');
+            }, 'company.user_plan' => function ($query) {
+                $query->select('id', 'name');
+            }])
+            ->with('country:id,country_name')
+            ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox');
         if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
             if ($params != "") {
-                $getextensions = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
-                    ->with(['company' => function ($query) {
-                        $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id');
-                    }, 'company.user_plan' => function ($query) {
-                        $query->select('id', 'name');
-                    }])
-                    ->with('country:id,country_name')
-                    ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-                    ->orWhere('name', 'like', "%$params%")
-                    ->orWhere('callbackextension', 'LIKE', "%$params%")
+                $getextensions->orWhere('name', 'like', "%$params%")
                     ->orWhere('agent_name', 'like', "%$params%")
                     ->orWhere('host', 'like', "%$params%")
                     ->orWhere('sip_temp', 'like', "%$params%")
@@ -1612,21 +1612,22 @@ class ExtensionController extends Controller
                     })
                     ->orWhereHas('country', function ($query) use ($params) {
                         $query->where('country_name', 'like', "%{$params}%");
-                    })
-                    ->get();
+                    });
+            } elseif ($options != "") {
+                if ($options == 1) {
+                    $getextensions->where('extensions.host', '=', NULL)->where('extensions.status', '=', '0');
+                } elseif ($options == 2) {
+                    $getextensions->where('extensions.host', '=', 'dynamic')->where('extensions.status', '=', '1')->whereBetween('expirationdate', [Carbon::now(), Carbon::now()->addDays(3)]);
+                } elseif ($options == 3) {
+                    $getextensions->where('extensions.host', '=', 'static')->where('extensions.status', '=', '0')->where('extensions.expirationdate', '<', Carbon::now());
+                }
             } else {
-                $getextensions = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box',  'barge', 'voice_mails.email', 'recording', 'dial_timeout')
-                    ->with(['company' => function ($query) {
-                        $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id');
-                    }, 'company.user_plan' => function ($query) {
-                        $query->select('id', 'name');
-                    }])
-                    ->with('country:id,country_name')
-                    ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')
-                    ->get();
+                $getextensions;
             }
-            if (!is_null($getextensions)) {
-                $dd = $getextensions->toArray();
+
+            $data_extensioncsv = $getextensions->get();
+            if (!is_null($data_extensioncsv)) {
+                $dd = $data_extensioncsv->toArray();
                 unset($dd['links']);
                 return $this->output(true, 'Success', $dd, 200);
             } else {
