@@ -16,4 +16,8 @@ class Notification extends Model
         'created_by',
         'ip_address',
     ];
+    public function notificationRecipients()
+    {
+        return $this->hasMany(NotificationRecipients::class);
+    }
 }
