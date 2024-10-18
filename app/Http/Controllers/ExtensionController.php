@@ -436,6 +436,106 @@ class ExtensionController extends Controller
         $perPageNo = isset($request->perpage) ? $request->perpage : 25;
         $params = $request->params ?? "";
         $user = \Auth::user();
+        $options = $request->get('options', null);
+        $data_id = Extension::select()
+            //->with('company:id,company_name,email,mobile,balance')
+            ->with(['company' => function ($query) {
+                $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id'); // select specific fields from company
+            }, 'company.user_plan' => function ($query) {
+                $query->select('id', 'name'); // select specific fields from user_plan
+            }])
+            ->with('country:id,country_name');
+
+        $data = Extension::select('extensions.id', 'extensions.country_id', 'extensions.company_id', 'callbackextension', 'agent_name', 'name', 'host', 'expirationdate', 'status', 'secret', 'sip_temp', 'callerid', 'callgroup', 'extensions.mailbox as mail_box', 'voice_mails.mailbox', 'barge', 'voice_mails.email', 'recording', 'dial_timeout')
+            //->with('company:id,company_name,email,mobile,balance')
+            ->with(['company' => function ($query) {
+                $query->select('id', 'company_name', 'email', 'mobile', 'balance', 'plan_id'); // select specific fields from company
+            }, 'company.user_plan' => function ($query) {
+                $query->select('id', 'name'); // select specific fields from user_plan
+            }])
+            ->with('country:id,country_name')
+            ->leftJoin('voice_mails', 'extensions.name', '=', 'voice_mails.mailbox')->orderBy('extensions.updated_at', 'DESC');
+
+        if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+            $Extension_id = $request->id ?? NULL;
+            if ($Extension_id) {
+                $data_id->where('id', $Extension_id)->get();
+            } elseif ($params != "") {
+                $data->orWhere('name', 'like', "%$params%")
+                    //->orWhere('callbackextension', 'LIKE', "%$params%")
+                    //->orWhere('agent_name', 'LIKE', "%$params%")
+                    ->orWhere('agent_name', 'like', "%$params%")
+                    ->orWhere('host', 'like', "%$params%")
+                    ->orWhere('sip_temp', 'like', "%$params%")
+                    ->orWhereHas('company', function ($query) use ($params) {
+                        $query->where('company_name', 'like', "%{$params}%");
+                    })
+                    ->orWhereHas('company', function ($query) use ($params) {
+                        $query->where('email', 'like', "%{$params}%");
+                    })
+                    ->orWhereHas('country', function ($query) use ($params) {
+                        $query->where('country_name', 'like', "%{$params}%");
+                    })
+                    ->orderBy('id', 'DESC')
+                    ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+            } elseif ($options != "") {
+                if ($options == 1) {
+                    $data->where('extensions.host', '=', NULL)->where('extensions.status', '=', '0');
+                } elseif ($options == 2) {
+                    $data->where('extensions.host', '=', 'dynamic')->where('extensions.status', '=', '1')->whereBetween('expirationdate', [Carbon::now(), Carbon::now()->addDays(3)]);
+                } elseif ($options == 3) {
+                    $data->where('extensions.host', '=', 'static')->where('extensions.status', '=', '0')->where('extensions.expirationdate', '<', Carbon::now());
+                }
+            } else {
+                $data;
+            }
+        } else {
+            $Extension_id = $request->id ?? NULL;
+            if ($Extension_id) {
+                $data_id->where('id', $Extension_id)
+                    ->where('extensions.company_id', '=', $user->company_id)
+                    ->orderBy('id', 'DESC')
+                    ->get();
+            } elseif ($params != "") {
+                //DB::enableQueryLog();
+                $data->where('extensions.company_id', '=', $user->company_id)
+                    ->where(function ($query) use ($params) {
+                        $query->where('name', 'like', "%{$params}%")
+                            ->orWhereHas('country', function ($query) use ($params) {
+                                $query->where('country_name', 'like', "%{$params}%");
+                            });
+                    })
+                    ->orderBy('id', 'DESC')
+                    ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
+                //dd(DB::getQueryLog());
+            } elseif ($options != "") {
+                if ($options == 1) {
+                    $data->where('extensions.host', '=', NULL)->where('extensions.status', '=', '0');
+                } elseif ($options == 2) {
+                    $data->where('extensions.host', '=', 'dynamic')->where('extensions.status', '=', '1')->whereBetween('expirationdate', [Carbon::now(), Carbon::now()->addDays(3)]);
+                } elseif ($options == 3) {
+                    $data->where('extensions.host', '=', 'static')->where('extensions.status', '=', '0')->where('extensions.expirationdate', '<', Carbon::now());
+                }
+            } else {
+                $data->where('extensions.company_id', '=', $user->company_id);
+            }
+        }
+        $data_extension = $data->paginate($perPageNo);
+        if ($data_extension->isNotEmpty()) {
+            $dd = $data_extension->toArray();
+            unset($dd['links']);
+            return $this->output(true, 'Success', $dd, 200);
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
+    }
+
+
+    public function getAllExtensionsOLD(Request $request)
+    {
+        $perPageNo = isset($request->perpage) ? $request->perpage : 25;
+        $params = $request->params ?? "";
+        $user = \Auth::user();
         //echo $user->company_id;
         //if ($request->user()->hasRole('super-admin')) {
         if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
