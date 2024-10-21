@@ -80,9 +80,9 @@ class DashboardController extends Controller
     public function getAllTfnforSuperAdminDashboard(Request $request)
     {
         $user = \Auth::user();
-        if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
+        //if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
             try {
-                $tfnCounts = DB::table('tfns')
+                $query = DB::table('tfns')
                     ->leftJoin('carts', 'tfns.id', '=', 'carts.item_id')
                     ->select(
                         DB::raw('COUNT(*) AS total'),
@@ -90,8 +90,11 @@ class DashboardController extends Controller
                         DB::raw("SUM(CASE WHEN tfns.reserved = '0' AND tfns.company_id = 0 THEN 1 ELSE 0 END) AS free"),
                         DB::raw("SUM(CASE WHEN tfns.reserved = '1' AND tfns.company_id > 0 AND tfns.activated = '1' THEN 1 ELSE 0 END) AS Purchase"),
                         DB::raw("SUM(CASE WHEN tfns.reserved = '1' AND tfns.company_id > 0 AND tfns.activated = '0' AND tfns.status = 1 THEN 1 ELSE 0 END) AS Expired")
-                    )
-                    ->first();
+                    );
+                    if (in_array($user->roles->first()->slug, ['admin', 'user'])) {
+                        $query->where('company_id', $user->company_id);
+                    }
+                    $tfnCounts = $query->first();
 
                 if ($tfnCounts->total > 0) {
                     $percentReservedTfnCounts = number_format(($tfnCounts->reserved / $tfnCounts->total) * 100, 2) . '%';
@@ -118,9 +121,9 @@ class DashboardController extends Controller
                 Log::error('Error fetching user counts: ' . $e->getMessage());
                 return $this->output(false, 'An error occurred while fetching data.', [], 500);
             }
-        } else {
+       /*  } else {
             return $this->output(false, 'Unauthorized action.', [], 403);
-        }
+        } */
     }
 
 
