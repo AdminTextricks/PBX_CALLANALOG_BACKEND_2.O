@@ -214,7 +214,7 @@ class DashboardController extends Controller
     {
         $user = \Auth::user();
         try { 
-            if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
+            
 
                 /* $cdrCounts = DB::table('cdrs')
                 ->select(
@@ -237,7 +237,10 @@ class DashboardController extends Controller
                         DB::raw("SUM(CASE WHEN cdrs.disposition = 'NOANSWER' THEN 1 ELSE 0 END) AS noanswer")
                     )
                     ->where('call_date', '>=', DB::raw('DATE_SUB(NOW(), INTERVAL ' . $dayCount . ' DAY)'));
-                
+                    if (in_array($user->roles->first()->slug, ['admin', 'user'])) {
+                        $query->where('company_id', $user->company_id);
+                    }
+
                     if ($dayCount == 1) {
                         // If dayCount is 1, group by hour
                         $query->groupBy(DB::raw('HOUR(call_date)'))
@@ -262,9 +265,7 @@ class DashboardController extends Controller
                 } else {
                     return $this->output(true, 'No Record Found', []);
                 } */
-            }else{
-
-            }
+            
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Error occurred in getting CDR Reposrts for deshboard : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
