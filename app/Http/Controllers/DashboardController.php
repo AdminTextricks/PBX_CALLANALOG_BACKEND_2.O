@@ -216,7 +216,7 @@ class DashboardController extends Controller
         try { 
             if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
 
-                $cdrCounts = DB::table('cdrs')
+                /* $cdrCounts = DB::table('cdrs')
                 ->select(
                     DB::raw('COUNT(*) AS total'),
                     DB::raw("SUM(CASE WHEN cdrs.disposition= 'ANSWER' THEN 1 ELSE 0 END)  AS answer"),
@@ -226,9 +226,31 @@ class DashboardController extends Controller
                     DB::raw("SUM(CASE WHEN cdrs.disposition = 'NOANSWER' THEN 1 ELSE 0 END)  as noanswer")
                 )
                 ->where('call_date', '>=',  DB::raw('DATE_SUB(NOW(), INTERVAL '.$dayCount.' DAY)'))
-                ->first();
-
-                if ($cdrCounts->total > 0) { 
+                ->first(); */
+                $query = DB::table('cdrs')
+                    ->select(
+                        DB::raw('COUNT(*) AS total'),
+                        DB::raw("SUM(CASE WHEN cdrs.disposition = 'ANSWER' THEN 1 ELSE 0 END) AS answer"),
+                        DB::raw("SUM(CASE WHEN cdrs.disposition = 'BUSY' THEN 1 ELSE 0 END) AS busy"),
+                        DB::raw("SUM(CASE WHEN cdrs.disposition = 'CANCEL' THEN 1 ELSE 0 END) AS cancel"),
+                        DB::raw("SUM(CASE WHEN cdrs.disposition = 'CHANUNAVAIL' THEN 1 ELSE 0 END) AS chanunavail"),
+                        DB::raw("SUM(CASE WHEN cdrs.disposition = 'NOANSWER' THEN 1 ELSE 0 END) AS noanswer")
+                    )
+                    ->where('call_date', '>=', DB::raw('DATE_SUB(NOW(), INTERVAL ' . $dayCount . ' DAY)'));
+                
+                    if ($dayCount == 1) {
+                        // If dayCount is 1, group by hour
+                        $query->groupBy(DB::raw('HOUR(call_date)'))
+                            ->selectRaw('HOUR(call_date) as time_interval');
+                    } else {
+                        // If dayCount is 7 or 30, group by day
+                        $query->groupBy(DB::raw('DATE(call_date)'))
+                            ->selectRaw('DATE(call_date) as time_interval');
+                    }
+                
+                return $cdrCounts = $query->get();
+            
+                /* if ($cdrCounts->total > 0) { 
                     return response()->json([
                         'total' => $cdrCounts->total,
                         'answer' => $cdrCounts->answer,
@@ -239,7 +261,7 @@ class DashboardController extends Controller
                     ]);
                 } else {
                     return $this->output(true, 'No Record Found', []);
-                }
+                } */
             }else{
 
             }
