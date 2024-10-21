@@ -92,7 +92,7 @@ class DashboardController extends Controller
                         DB::raw("SUM(CASE WHEN tfns.reserved = '1' AND tfns.company_id > 0 AND tfns.activated = '0' AND tfns.status = 1 THEN 1 ELSE 0 END) AS Expired")
                     );
                     if (in_array($user->roles->first()->slug, ['admin', 'user'])) {
-                        $query->where('company_id', $user->company_id);
+                        $query->where('tfns.company_id', $user->company_id);
                     }
                     $tfnCounts = $query->first();
 
