@@ -130,17 +130,20 @@ class DashboardController extends Controller
     public function getAllExtensionforSuperAdminDashboard(Request $request)
     {
         $user = \Auth::user();
-        if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
+        //if (in_array($user->roles->first()->slug, ['super-admin', 'support', 'noc'])) {
             try {
-                $extensionCounts = DB::table('extensions')
+                $query = DB::table('extensions')
                     ->leftJoin('carts', 'extensions.id', '=', 'carts.item_id')
                     ->select(
                         DB::raw('COUNT(*) AS total'),
                         DB::raw("SUM(CASE WHEN extensions.host IS NULL AND extensions.status = 0 AND carts.item_type = 'Extension' THEN 1 ELSE 0 END) AS cart"),
                         DB::raw("SUM(CASE WHEN extensions.host = 'static' AND extensions.status = 0 THEN 1 ELSE 0 END) AS Expired"),
                         DB::raw("SUM(CASE WHEN extensions.host = 'dynamic' AND extensions.status = 1 THEN 1 ELSE 0 END) AS Active")
-                    )
-                    ->first();
+                    );
+                    if (in_array($user->roles->first()->slug, ['admin', 'user'])) {
+                        $query->where('extensions.company_id', $user->company_id);
+                    }
+                    $extensionCounts = $query->first();
 
                 if ($extensionCounts->total > 0) {
                     $percentCartExtensionCounts = number_format(($extensionCounts->cart / $extensionCounts->total) * 100, decimals: 2) . '%';
@@ -163,9 +166,9 @@ class DashboardController extends Controller
                 Log::error('Error fetching user counts: ' . $e->getMessage());
                 return $this->output(false, 'An error occurred while fetching data.', [], 500);
             }
-        } else {
+        /* } else {
             return $this->output(false, 'Unauthorized action.', [], 403);
-        }
+        } */
     }
 
     public function getALLTfnExtensionPriceforlastSevendays()
