@@ -272,4 +272,25 @@ class DashboardController extends Controller
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
+
+
+    public function getCompanyUserCount(Request $request)
+    {
+        $user = \Auth::user();
+        if (in_array($user->roles->first()->slug, ['admin'])) {
+            $data = 
+            $totalUsers = DB::table('users')
+                        ->where('company_id', $user->company_id)
+                        ->where('role_id', 6)
+                        ->count();            
+            if ($data) {
+                return $this->output(true, 'Success', $totalUsers);
+            } else {
+                return $this->output(true, 'No Record Found', []);
+            }
+        }else{
+            return $this->output(false, 'Sorry! You are not authorized.', [], 403);  
+        }
+    }
+    
 }
