@@ -104,4 +104,39 @@ class NotificationController extends Controller
             }
         }
     }
+
+
+    public function updateMultipleMarkAsRead(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'id'    => 'required|array',
+                'id.*'   => 'required|exists:notification_recipients,id',
+            ]);
+            if ($validator->fails()) {
+                return $this->output(false, $validator->errors()->first(), [], 409);
+            }
+            $input = $request->all();
+            $notificationsId = $input['id'];
+            if(is_array($notificationsId)){				
+                $resUpdated = NotificationRecipients::whereIn('id', $notificationsId)
+                            ->update([
+                                'read_at'   => Carbon::now(),
+                                'is_read'   => 1,
+                            ]);
+                if($resUpdated){
+                    return $this->output(true, 'Success');
+                }else{
+                    return $this->output(false, 'Error');
+                }
+            }else{
+                return $this->output(false, 'Wrong Request fromat.',[], 409);
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error in Notification Marked as read : ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            //return $this->output(false, $e->getMessage());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }	
+    }
 }

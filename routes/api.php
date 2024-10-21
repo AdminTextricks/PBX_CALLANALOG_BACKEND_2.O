@@ -474,6 +474,7 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 	Route::group(['prefix' => 'notifications'], function () {
 		Route::get('/', [NotificationController::class, 'getAllNotifications']);
 		Route::put('/{id}', [NotificationController::class, 'updateMarkAsRead']);
+		Route::post('/multiMarkAsRead', [NotificationController::class, 'updateMultipleMarkAsRead']);
 	});
 	# Error Messages 
 	Route::group(['prefix' => 'error-message'], function () {
