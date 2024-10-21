@@ -93,8 +93,7 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 		Route::get('/activeReseller/{reseller_id}', [CompanyController::class, 'getAllActiveCompanyOfReseller']);
 		Route::post('/add-to-wallet', [CompanyController::class, 'AddbalanceForCompanyBySuperAdmin']);
 		Route::get('/resellersCompany/{reseller_id}/{plan_id}', [CompanyController::class, 'getAllActiveCompanyOfResellersByPlanId']);
-		Route::post('/reseller-add-to-wallet', [RechargeHistoryController::class, 'AddbalanceForResellerBySuperAdmin']);		
-		
+		Route::post('/reseller-add-to-wallet', [RechargeHistoryController::class, 'AddbalanceForResellerBySuperAdmin']);
 	});
 
 	Route::group(['prefix' => 'user'], function () {
@@ -107,7 +106,7 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 		Route::get('/{id?}', [UserController::class, 'getUser']);
 		Route::patch('/changeStatus/{id}', [UserController::class, 'changeStatus']);
 		Route::put('/{id}', [UserController::class, 'updateUser']);
-		Route::get('getCompanyUserslist',[UserController::class, 'getCompanyUserslist']);
+		Route::get('getCompanyUserslist', [UserController::class, 'getCompanyUserslist']);
 		Route::post('/liveCallHangUp', [UserController::class, 'liveCallHangUp']);
 	});
 
@@ -186,9 +185,9 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 	});
 
 	# Tfn Number 
-	Route::group(['prefix' => 'tfn'], function () {	
+	Route::group(['prefix' => 'tfn'], function () {
 		Route::post('/tfn-date-change', [TfnController::class, 'tfnexpDateUpdate']);
-		Route::get('/getAllTfnOrByCompany', [TfnController::class, 'getAllTfnOrByCompany']);	
+		Route::get('/getAllTfnOrByCompany', [TfnController::class, 'getAllTfnOrByCompany']);
 		Route::get('/csv-list', [TfnController::class, 'getALLCsvUploadedList']);
 		Route::post('/replace-tfn', [TfnController::class, 'ReplaceTfnNumber']);
 		Route::get('/get-tfn-by-company/{company_id?}', [TfnController::class, 'getALLTfnNumberofCompany']);
@@ -209,7 +208,6 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 		Route::delete('/{id}', [TfnController::class, 'deleteTfn']);
 		Route::post('/{id}', [TfnController::class, 'removeTfnfromTable']);
 		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [TfnController::class, 'getAllActiveTFNByCompanyAndCountry']);
-		
 	});
 
 	#Block number
@@ -234,7 +232,7 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 	});
 
 	# Manage Extensions
-	Route::group(['prefix' => 'extensions'], function () {	
+	Route::group(['prefix' => 'extensions'], function () {
 		Route::post('/extensionexpDateUpdate', [ExtensionController::class, 'extensionexpDateUpdate']);
 		Route::get('/getextensionfordownload', [ExtensionController::class, 'getAllExtensionForsuperadmintodownloadincsv']);
 		Route::post('/multiEdit', [ExtensionController::class, 'updateExtensionsDetails']);
@@ -245,8 +243,8 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 		Route::post('/generate', [ExtensionController::class, 'generateExtensions']);
 		Route::get('/generatePassword', [ExtensionController::class, 'generateStrongPassword']);
 		Route::get('/{id?}', [ExtensionController::class, 'getAllExtensions']);
-		Route::put('/{id}', [ExtensionController::class, 'updateExtension']);	
-		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ExtensionController::class, 'getExtensionsByCountryIdAndCompanyId']);		
+		Route::put('/{id}', [ExtensionController::class, 'updateExtension']);
+		Route::get('/getByCountryAndCompany/{country_id}/{company_id}', [ExtensionController::class, 'getExtensionsByCountryIdAndCompanyId']);
 		//Route::post('/adToCart', [ExtensionController::class, 'extensionAddToCArt']);	
 		Route::delete('/{id}', [ExtensionController::class, 'deleteExtension']);
 		Route::delete('/', [ExtensionController::class, 'multipleDeleteExtension']);
@@ -389,21 +387,20 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 	});
 
 	#IVR Options Manage
-	Route::group(['prefix'=> 'ivr-options'], function () {
-		Route::post('/', [IvrOptionController::class,'addIvrOption']);
-		Route::put('/{id}', [IvrOptionController::class,'editIvrOption']);
-		Route::delete('/{id}', [IvrOptionController::class,'removeIvrOption']);	
-		Route::get('/{ivr_id}', [IvrOptionController::class,'getIvrOptions']);		
-	
+	Route::group(['prefix' => 'ivr-options'], function () {
+		Route::post('/', [IvrOptionController::class, 'addIvrOption']);
+		Route::put('/{id}', [IvrOptionController::class, 'editIvrOption']);
+		Route::delete('/{id}', [IvrOptionController::class, 'removeIvrOption']);
+		Route::get('/{ivr_id}', [IvrOptionController::class, 'getIvrOptions']);
 	});
 
 	#CDR 
 	Route::group(['prefix' => 'cdr-report'], function () {
 		Route::get('/getCdrFilterList', [CdrController::class, 'getCdrFilterList']);
 		Route::get('/{company_id?}', [CdrController::class, 'getAllCdrList']);
-		
+
 		//Route::get('/inboundCdr/{company_id?}', [CdrController::class, 'getAllCdrList']);
-		Route::get('/outboundCdr/{company_id?}', [CdrController::class, 'getAllCallList']);		
+		Route::get('/outboundCdr/{company_id?}', [CdrController::class, 'getAllCallList']);
 	});
 
 	#One Go User
@@ -412,10 +409,10 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 		Route::post('/reserveTFN', [OneGoUserController::class, 'reserveTFN']);
 		Route::post('/createExtensions', [OneGoUserController::class, 'createExtensions']);
 		Route::post('/addRingGroup', [OneGoUserController::class, 'addRingGroup']);
-		Route::get('/', [OneGoUserController::class,'getOneGoUser']);
-		Route::post('/createInvoice', [OneGoUserController::class,'createInvoice']);
-		Route::post('/oneGoPayment', [OneGoUserController::class,'createOneGoPayment']);
-		Route::delete('/{id}', [OneGoUserController::class,'deleteOneGoUser']);
+		Route::get('/', [OneGoUserController::class, 'getOneGoUser']);
+		Route::post('/createInvoice', [OneGoUserController::class, 'createInvoice']);
+		Route::post('/oneGoPayment', [OneGoUserController::class, 'createOneGoPayment']);
+		Route::delete('/{id}', [OneGoUserController::class, 'deleteOneGoUser']);
 	});
 
 	Route::group(['prefix' => 'reseller-commission'], function () {
@@ -428,7 +425,7 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 	Route::group(['prefix' => 'reseller-call-commission'], function () {
 		Route::post('/', [ResellerCallCommissionController::class, 'addResellerCallCommission']);
 		Route::get('/{id?}', [ResellerCallCommissionController::class, 'getAllResellerCallCommission']);
-		Route::patch('/changeStatus/{id}', [ResellerCallCommissionController::class, 'changeResellerCallCommissionStatus']);		
+		Route::patch('/changeStatus/{id}', [ResellerCallCommissionController::class, 'changeResellerCallCommissionStatus']);
 		Route::put('/{id}', [ResellerCallCommissionController::class, 'updateResellerCallCommission']);
 		Route::delete('/{id}', [ResellerCallCommissionController::class, 'deleteResellerCallCommission']);
 	});
@@ -446,13 +443,13 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 
 	# TFN authentication Manage 
 	Route::group(['prefix' => 'tfn-auth'], function () {
-		Route::post('/', [TfnController::class, 'setTfnAuthentication']);		
+		Route::post('/', [TfnController::class, 'setTfnAuthentication']);
 		Route::get('/{tfn_id}', [TfnController::class, 'getTfnAuthentication']);
 	});
 
 	# Time Group Manage 
 	Route::group(['prefix' => 'time-group'], function () {
-		Route::post('/', [TimeGroupController::class, 'addTimeGroup']);		
+		Route::post('/', [TimeGroupController::class, 'addTimeGroup']);
 		Route::get('/getByCompany/{company_id}', [TimeGroupController::class, 'getTimeGroupByCompany']);
 		Route::get('/{id?}', [TimeGroupController::class, 'getAllTimeGroup']);
 		Route::put('/{id}', [TimeGroupController::class, 'updateTimeGroup']);
@@ -461,11 +458,11 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 
 	# Time Conditions Manage 
 	Route::group(['prefix' => 'time-condition'], function () {
-		Route::post('/', [TimeConditionController::class, 'addTimeCondition']);		
+		Route::post('/', [TimeConditionController::class, 'addTimeCondition']);
 		Route::get('/active', [TimeConditionController::class, 'getAllActiveTimeCondition']);
 		//Route::get('/getByCompany/{company_id}/{country_id}', [TimeConditionController::class, 'getTimeConditionByCompanyAndCountry']);
 		Route::get('/{id?}', [TimeConditionController::class, 'getAllTimeCondition']);
-		Route::patch('/changeStatus/{id}', [TimeConditionController::class, 'changeTimeConditionStatus']);		
+		Route::patch('/changeStatus/{id}', [TimeConditionController::class, 'changeTimeConditionStatus']);
 		Route::put('/{id}', [TimeConditionController::class, 'updateTimeCondition']);
 		Route::delete('/{id}', [TimeConditionController::class, 'deleteTimeCondition']);
 	});
@@ -490,24 +487,30 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 		Route::get('/get-invoice-tfn-extension-price', [DashboardController::class, 'getALLTfnExtensionPriceforlastSevendays']);
 		Route::get('/cdrReports/{dayCount}', [DashboardController::class, 'getCdrReports']);
 		Route::get('/companyUserCount', [DashboardController::class, 'getCompanyUserCount']);
+
+		/// Reseller Dashboard Section 
+		Route::get('/get-reseller-company', [DashboardController::class, 'getAllcompanyListforResellerDashboard']);
+		Route::get('/get-reseller-calls-commissions', [DashboardController::class, 'getAllcompanyCallCommissionListforResellerDashboard']);
+		Route::get('/get-reseller-items-commissions', [DashboardController::class, 'getAllcompanyItemsCommissionListforResellerDashboard']);
+		Route::get('/get-reseller-graph-commissions', [DashboardController::class, 'getResellerGraphCommissionDashboard']);
 	});
 });
 
 
-Route::get('/route-cache', function() {
+Route::get('/route-cache', function () {
 	$exitCode = Artisan::call('route:cache');
 	$exitCode = Artisan::call('route:clear');
 	return 'Routes cache cleared';
 });
-Route::get('/config-cache', function() {
+Route::get('/config-cache', function () {
 	$exitCode = Artisan::call('config:cache');
 	return 'Config cache cleared';
 });
-Route::get('/clear-cache', function() {
+Route::get('/clear-cache', function () {
 	$exitCode = Artisan::call('cache:clear');
 	return 'Application cache cleared';
 });
-Route::get('/optimize', function() {
+Route::get('/optimize', function () {
 	$exitCode = Artisan::call('optimize');
 	return 'Application optimize';
 });
