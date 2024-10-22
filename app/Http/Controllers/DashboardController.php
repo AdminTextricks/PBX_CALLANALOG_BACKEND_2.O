@@ -403,7 +403,7 @@ class DashboardController extends Controller
                         //DB::raw('COUNT(id) AS total'),
                         DB::raw("SUM(commission_amount) AS items_commission_amount")  
                     )
-                    ->where('created_at', '>=', DB::raw('DATE_SUB(NOW(), INTERVAL ' . $options . 'DAY)'))
+                    ->where('created_at', '>=', DB::raw('DATE_SUB(NOW(), INTERVAL ' . $options . ' DAY)'))
                     ->where('reseller_id', '=', $user->id);
                
                 $query->groupBy(DB::raw('DATE(created_at)'))
