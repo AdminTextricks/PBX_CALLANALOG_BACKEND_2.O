@@ -421,7 +421,7 @@ class DashboardController extends Controller
                 $query->groupBy(DB::raw('DATE(reseller_commission_of_items.created_at)'))
                 ->selectRaw('DATE(reseller_commission_of_items.created_at) as time_interval');
                 
-                $resellerCountsItemsCalls = $query->first();
+                return $resellerCountsItemsCalls = $query->first();
 
                 if ($resellerCountsItemsCalls->total > 0) {
                     return response()->json([
