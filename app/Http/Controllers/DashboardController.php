@@ -408,7 +408,7 @@ class DashboardController extends Controller
                
                 $query->groupBy(DB::raw('DATE(created_at)'))
                         ->selectRaw('DATE(created_at) as time_interval');
-                $resellerItemsCommission = $query->first();
+                $resellerItemsCommission = $query->get();
                 /**
                  * Call commision start.
                  */
@@ -422,7 +422,7 @@ class DashboardController extends Controller
                
                 $query->groupBy(DB::raw('DATE(created_at)'))
                         ->selectRaw('DATE(created_at) as time_interval');
-                $resellerCallsCommission = $query->first();
+                $resellerCallsCommission = $query->get();
                 
                 return response()->json([
                     'resellerItemsCommission' => $resellerItemsCommission,
