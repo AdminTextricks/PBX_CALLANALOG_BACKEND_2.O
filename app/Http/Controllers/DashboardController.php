@@ -393,10 +393,10 @@ class DashboardController extends Controller
     }
 
 
-    public function getResellerGraphCommissionDashboard(Request $request)
+    public function getResellerGraphCommissionDashboard(Request $request, $options)
     {
         $user = \Auth::user();
-        $options = $request->options ?? NULL;
+        $options = $request->options ?? 7;
 
         if ($user->roles->first()->slug == 'reseller') {
             try {
@@ -411,15 +411,12 @@ class DashboardController extends Controller
                 $query = DB::table('reseller_commission_of_items')
                     ->leftJoin('reseller_commission_of_calls', 'reseller_commission_of_items.reseller_id', '=', 'reseller_commission_of_calls.reseller_id')
                     ->select(
-                        DB::raw('COUNT(*) AS total'),
-                        DB::raw("SUM(reseller_commission_of_items.commission_amount) AS Items_commission_amount"),
-                        DB::raw("SUM(reseller_commission_of_calls.commission_amount) AS Calls_commission_amount")
+                        DB::raw('COUNT(reseller_commission_of_items.id) AS total'),
+                        DB::raw("COALESCE(SUM(reseller_commission_of_items.commission_amount), 0) AS Items_commission_amount"),
+                        DB::raw("COALESCE(SUM(reseller_commission_of_calls.commission_amount), 0) AS Calls_commission_amount")
                     )->where('reseller_commission_of_items.reseller_id', '=', $user->id);
-
-                // Apply date filter if $startDate is set
                 if ($startDate) {
-                    $query->where('reseller_commission_of_items.created_at', '>=', $startDate)
-                        ->where('reseller_commission_of_calls.created_at', '>=', $startDate);
+                    $query->where('reseller_commission_of_items.created_at', '>=', $startDate);
                 }
 
                 $resellerCountsItemsCalls = $query->first();

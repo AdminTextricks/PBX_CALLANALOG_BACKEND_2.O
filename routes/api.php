@@ -492,7 +492,7 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 		Route::get('/get-reseller-company', [DashboardController::class, 'getAllcompanyListforResellerDashboard']);
 		Route::get('/get-reseller-calls-commissions', [DashboardController::class, 'getAllcompanyCallCommissionListforResellerDashboard']);
 		Route::get('/get-reseller-items-commissions', [DashboardController::class, 'getAllcompanyItemsCommissionListforResellerDashboard']);
-		Route::get('/get-reseller-graph-commissions', [DashboardController::class, 'getResellerGraphCommissionDashboard']);
+		Route::get('/get-reseller-graph-commissions{options}', [DashboardController::class, 'getResellerGraphCommissionDashboard']);
 	});
 });
 
