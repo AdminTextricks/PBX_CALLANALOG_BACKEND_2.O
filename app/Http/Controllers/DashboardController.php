@@ -412,16 +412,16 @@ class DashboardController extends Controller
                     //->leftJoin('reseller_commission_of_calls', 'reseller_commission_of_items.reseller_id', '=', 'reseller_commission_of_calls.reseller_id')
                     ->select(
                         //DB::raw('COUNT(reseller_commission_of_items.id) AS total'),
-                        DB::raw("COALESCE(SUM(reseller_commission_of_items.commission_amount), 0) AS Items_commission_amount"),
+                        DB::raw("SUM(reseller_commission_of_items.commission_amount) AS Items_commission_amount"),
                         //DB::raw("COALESCE(SUM(reseller_commission_of_calls.commission_amount), 0) AS Calls_commission_amount")
                     )
                     ->where('created_at', '>=', DB::raw('DATE_SUB(NOW(), INTERVAL ' . $options . ' DAY)'))
-                    ->where('reseller_commission_of_items.reseller_id', '=', $user->id);
+                    ->where('reseller_id', '=', $user->id);
                 /* if ($startDate) {
                     $query->where('reseller_commission_of_items.created_at', '>=', $startDate);
                 } */
-               $query->groupBy(DB::raw('DATE(reseller_commission_of_items.created_at)'))
-                        ->selectRaw('DATE(reseller_commission_of_items.created_at) as time_interval');
+               $query->groupBy(DB::raw('DATE(created_at)'))
+                        ->selectRaw('DATE(created_at) as time_interval');
                 
                 return $resellerCountsItemsCalls = $query->first();
 
