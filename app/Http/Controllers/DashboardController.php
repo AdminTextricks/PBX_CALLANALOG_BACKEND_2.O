@@ -224,7 +224,7 @@ class DashboardController extends Controller
         try {
             // If $dayCount is 1, we generate hourly data, otherwise, we generate daily data.
             if ($dayCount == 1) {
-                $query = DB::table('cdrs')
+               /* $query = DB::table('cdrs')
                 ->select(
                     DB::raw('COUNT(*) AS total'),
                     DB::raw("SUM(CASE WHEN cdrs.disposition = 'ANSWER' THEN 1 ELSE 0 END) AS answer"),
@@ -241,7 +241,7 @@ class DashboardController extends Controller
             $query->groupBy(DB::raw('HOUR(call_date)'))
                     ->selectRaw('HOUR(call_date) as time_interval');
             $cdrCounts = $query->get();
-            /*
+            */
                 // Generate hours for the current day (0 to 23)
                 $cdrCounts = DB::table(DB::raw("(SELECT 0 AS hour UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL 
                         SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL 
@@ -269,7 +269,7 @@ class DashboardController extends Controller
                     ->groupBy('hours.hour')
                     ->orderBy('hours.hour', 'ASC')
                     ->get();
-                */
+                
             } else {
                 // Generate days for the given $dayCount interval
                 $cdrCounts = DB::table(DB::raw('(SELECT CURDATE() - INTERVAL seq DAY as date FROM seq_0_to_99 WHERE seq <= ' . $dayCount . ') AS dates'))
