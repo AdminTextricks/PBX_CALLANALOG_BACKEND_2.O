@@ -398,7 +398,22 @@ class DashboardController extends Controller
         $user = \Auth::user();
         if ($user->roles->first()->slug == 'reseller') {
             try {
-                $query = DB::table('reseller_commission_of_items')                   
+                $days = $options; // assuming $options contains the number of days
+               return $resellerItemsCommission = DB::table(DB::raw('(SELECT CURDATE() - INTERVAL seq DAY as date FROM seq_0_to_99 WHERE seq <= ' . $days . ') AS dates'))
+                ->leftJoin('reseller_commission_of_items as rci', function($join) use ($user) {
+                    $join->on(DB::raw('DATE(rci.created_at)'), '=', 'dates.date')
+                         ->where('rci.reseller_id', '=', $user->id);
+                })
+                ->select(
+                    'dates.date as time_interval',
+                    DB::raw('COALESCE(SUM(rci.commission_amount), 0) as items_commission_amount')
+                )
+                ->groupBy('dates.date')
+                ->orderBy('dates.date', 'ASC')
+                ->get();
+
+
+               /* $query = DB::table('reseller_commission_of_items')                   
                     ->select(
                         //DB::raw('COUNT(id) AS total'),
                         DB::raw("SUM(commission_amount) AS items_commission_amount")  
@@ -412,7 +427,7 @@ class DashboardController extends Controller
                 /**
                  * Call commision start.
                  */
-                $query = DB::table('reseller_commission_of_calls')                   
+               /* $query = DB::table('reseller_commission_of_calls')                   
                     ->select(
                         //DB::raw('COUNT(id) AS total'),
                         DB::raw("SUM(commission_amount) AS call_commission_amount")  
@@ -427,7 +442,7 @@ class DashboardController extends Controller
                 return response()->json([
                     'resellerItemsCommission' => $resellerItemsCommission,
                     'resellerCallsCommission' => $resellerCallsCommission,
-                ]);
+                ]);*/
 
             } catch (\Exception $e) {
                 Log::error('Error fetching reseller item commission data: ' . $e->getMessage());
