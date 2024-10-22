@@ -222,13 +222,28 @@ class DashboardController extends Controller
     {
         $user = \Auth::user();
         try {
-          //  $dayCount = $dayCount; // The number of days
-          DB::enableQueryLog();
             // If $dayCount is 1, we generate hourly data, otherwise, we generate daily data.
             if ($dayCount == 1) {
-
+                $query = DB::table('cdrs')
+                ->select(
+                    DB::raw('COUNT(*) AS total'),
+                    DB::raw("SUM(CASE WHEN cdrs.disposition = 'ANSWER' THEN 1 ELSE 0 END) AS answer"),
+                    DB::raw("SUM(CASE WHEN cdrs.disposition = 'BUSY' THEN 1 ELSE 0 END) AS busy"),
+                    DB::raw("SUM(CASE WHEN cdrs.disposition = 'CANCEL' THEN 1 ELSE 0 END) AS cancel"),
+                    DB::raw("SUM(CASE WHEN cdrs.disposition = 'CHANUNAVAIL' THEN 1 ELSE 0 END) AS chanunavail"),
+                    DB::raw("SUM(CASE WHEN cdrs.disposition = 'NOANSWER' THEN 1 ELSE 0 END) AS noanswer"),
+                    DB::raw("COALESCE(SUM(CASE WHEN cdrs.disposition = 'UNAVAILABLE' THEN 1 ELSE 0 END), 0) AS unavailable")
+                )
+                ->where('call_date', '>=', DB::raw('DATE_SUB(NOW(), INTERVAL ' . $dayCount . ' DAY)'));
+            if (in_array($user->roles->first()->slug, ['admin', 'user'])) {
+                $query->where('company_id', $user->company_id);
+            }
+            $query->groupBy(DB::raw('HOUR(call_date)'))
+                    ->selectRaw('HOUR(call_date) as time_interval');
+            $cdrCounts = $query->get();
+            /*
                 // Generate hours for the current day (0 to 23)
-                return $cdrCounts = DB::table(DB::raw("(SELECT 0 AS hour UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL 
+                $cdrCounts = DB::table(DB::raw("(SELECT 0 AS hour UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL 
                         SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL 
                         SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL 
                         SELECT 13 UNION ALL SELECT 14 UNION ALL SELECT 15 UNION ALL SELECT 16 UNION ALL 
@@ -254,60 +269,7 @@ class DashboardController extends Controller
                     ->groupBy('hours.hour')
                     ->orderBy('hours.hour', 'ASC')
                     ->get();
-                
-                    
-
-                // Generate hours for the current day (0 to 23)
-               /*  $cdrCounts = DB::table(DB::raw("(SELECT 0 AS hour UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL 
-                        SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL 
-                        SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL 
-                        SELECT 13 UNION ALL SELECT 14 UNION ALL SELECT 15 UNION ALL SELECT 16 UNION ALL 
-                        SELECT 17 UNION ALL SELECT 18 UNION ALL SELECT 19 UNION ALL SELECT 20 UNION ALL 
-                        SELECT 21 UNION ALL SELECT 22 UNION ALL SELECT 23) AS hours"))
-                    ->leftJoin('cdrs', function($join) use ($user) {
-                        $join->on(DB::raw('HOUR(cdrs.call_date)'), '=', 'hours.hour');
-                        if (in_array($user->roles->first()->slug, ['admin', 'user'])) {
-                            $join->where('cdrs.company_id', '=', $user->company_id);
-                        }
-                    })
-                    ->where(DB::raw('DATE(cdrs.call_date)'), '=', DB::raw('CURDATE()')) // Only today's data
-                    ->select(
-                        'hours.hour as time_interval',
-                        DB::raw('COALESCE(COUNT(cdrs.id), 0) AS total'),
-                        DB::raw("COALESCE(SUM(CASE WHEN cdrs.disposition = 'ANSWER' THEN 1 ELSE 0 END), 0) AS answer"),
-                        DB::raw("COALESCE(SUM(CASE WHEN cdrs.disposition = 'BUSY' THEN 1 ELSE 0 END), 0) AS busy"),
-                        DB::raw("COALESCE(SUM(CASE WHEN cdrs.disposition = 'CANCEL' THEN 1 ELSE 0 END), 0) AS cancel"),
-                        DB::raw("COALESCE(SUM(CASE WHEN cdrs.disposition = 'CHANUNAVAIL' THEN 1 ELSE 0 END), 0) AS chanunavail"),
-                        DB::raw("COALESCE(SUM(CASE WHEN cdrs.disposition = 'NOANSWER' THEN 1 ELSE 0 END), 0) AS noanswer")
-                    )
-                    ->groupBy('hours.hour')
-                    ->orderBy('hours.hour', 'ASC')
-                    ->get();
-                return  $cdrCounts->sqlDBRow(); */
-                /*
-                $cdrCounts = DB::table(DB::raw('(SELECT HOUR(TIMEDIFF(NOW(), INTERVAL seq HOUR)) as time_interval FROM seq_0_to_23 WHERE seq <= 23) AS hours'))
-                    ->leftJoin('cdrs', function($join) use ($user) {
-                        $join->on(DB::raw('HOUR(cdrs.call_date)'), '=', 'hours.time_interval');
-                        
-                        // Apply filtering by company if needed
-                        if (in_array($user->roles->first()->slug, ['admin', 'user'])) {
-                            $join->where('cdrs.company_id', '=', $user->company_id);
-                        }
-                    })
-                    ->where(DB::raw('DATE(cdrs.call_date)'), '=', DB::raw('CURDATE()')) // Limit to today's date
-                    ->select(
-                        'hours.time_interval',
-                        DB::raw('COALESCE(COUNT(cdrs.id), 0) AS total'),
-                        DB::raw("COALESCE(SUM(CASE WHEN cdrs.disposition = 'ANSWER' THEN 1 ELSE 0 END), 0) AS answer"),
-                        DB::raw("COALESCE(SUM(CASE WHEN cdrs.disposition = 'BUSY' THEN 1 ELSE 0 END), 0) AS busy"),
-                        DB::raw("COALESCE(SUM(CASE WHEN cdrs.disposition = 'CANCEL' THEN 1 ELSE 0 END), 0) AS cancel"),
-                        DB::raw("COALESCE(SUM(CASE WHEN cdrs.disposition = 'CHANUNAVAIL' THEN 1 ELSE 0 END), 0) AS chanunavail"),
-                        DB::raw("COALESCE(SUM(CASE WHEN cdrs.disposition = 'NOANSWER' THEN 1 ELSE 0 END), 0) AS noanswer")
-                    )
-                    ->groupBy('hours.time_interval')
-                    ->orderBy('hours.time_interval', 'ASC')
-                    ->get();
-                    */
+                */
             } else {
                 // Generate days for the given $dayCount interval
                 $cdrCounts = DB::table(DB::raw('(SELECT CURDATE() - INTERVAL seq DAY as date FROM seq_0_to_99 WHERE seq <= ' . $dayCount . ') AS dates'))
