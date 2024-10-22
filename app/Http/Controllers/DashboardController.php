@@ -396,48 +396,41 @@ class DashboardController extends Controller
     public function getResellerGraphCommissionDashboard(Request $request, $options)
     {
         $user = \Auth::user();
-        //$options = $request->options ?? 7;
-
         if ($user->roles->first()->slug == 'reseller') {
             try {
-                $startDate = null;
-                $endDate = Carbon::now();
-                /* if ($options == 7) {
-                    $startDate = Carbon::now()->subDays(7);
-                } elseif ($options == 30) {
-                    $startDate = Carbon::now()->subDays(30);
-                } */
-
-                $query = DB::table('reseller_commission_of_items')
-                    ->leftJoin('reseller_commission_of_calls', 'reseller_commission_of_items.reseller_id', '=', 'reseller_commission_of_calls.reseller_id')
+                $query = DB::table('reseller_commission_of_items')                   
                     ->select(
-                        //DB::raw('COUNT(reseller_commission_of_items.id) AS total'),
-                        DB::raw("SUM(reseller_commission_of_items.commission_amount) AS Items_commission_amount"),
-                        DB::raw("COALESCE(SUM(reseller_commission_of_calls.commission_amount), 0) AS Calls_commission_amount")
+                        //DB::raw('COUNT(id) AS total'),
+                        DB::raw("SUM(commission_amount) AS items_commission_amount")  
                     )
-                    ->where('reseller_commission_of_items.created_at', '>=', DB::raw('DATE_SUB(NOW(), INTERVAL ' . $options . ' DAY)'))
-                    ->where('reseller_commission_of_items.reseller_id', '=', $user->id);
-                /* if ($startDate) {
-                    $query->where('reseller_commission_of_items.created_at', '>=', $startDate);
-                } */
-               $query->groupBy(DB::raw('DATE(reseller_commission_of_items.created_at)'))
-                        ->selectRaw('DATE(reseller_commission_of_items.created_at) as time_interval');
+                    ->where('created_at', '>=', DB::raw('DATE_SUB(NOW(), INTERVAL ' . $options . 'DAY)'))
+                    ->where('reseller_id', '=', $user->id);
+               
+                $query->groupBy(DB::raw('DATE(created_at)'))
+                        ->selectRaw('DATE(created_at) as time_interval');
+                $resellerItemsCommission = $query->first();
+                /**
+                 * Call commision start.
+                 */
+                $query = DB::table('reseller_commission_of_calls')                   
+                    ->select(
+                        //DB::raw('COUNT(id) AS total'),
+                        DB::raw("SUM(commission_amount) AS call_commission_amount")  
+                    )
+                    ->where('created_at', '>=', DB::raw('DATE_SUB(NOW(), INTERVAL ' . $options . ' DAY)'))
+                    ->where('reseller_id', '=', $user->id);
+               
+                $query->groupBy(DB::raw('DATE(created_at)'))
+                        ->selectRaw('DATE(created_at) as time_interval');
+                $resellerCallsCommission = $query->first();
                 
-                return $resellerCountsItemsCalls = $query->get();
+                return response()->json([
+                    'resellerItemsCommission' => $resellerItemsCommission,
+                    'resellerCallsCommission' => $resellerCallsCommission,
+                ]);
 
-                if ($resellerCountsItemsCalls->total > 0) {
-                    return response()->json([
-                        'Calls_commission_amount' => $resellerCountsItemsCalls->Calls_commission_amount,
-                        'Items_commission_amount' => $resellerCountsItemsCalls->Items_commission_amount,
-                    ]);
-                } else {
-                    return response()->json([
-                        'Calls_commission_amount' => 0,
-                        'Items_commission_amount' => 0,
-                    ]);
-                }
             } catch (\Exception $e) {
-                Log::error('Error fetching reseller commission data: ' . $e->getMessage());
+                Log::error('Error fetching reseller item commission data: ' . $e->getMessage());
                 return $this->output(false, 'An error occurred while fetching data.', [], 500);
             }
         } else {
