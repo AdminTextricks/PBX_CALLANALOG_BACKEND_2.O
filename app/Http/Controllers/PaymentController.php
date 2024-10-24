@@ -322,10 +322,10 @@ class PaymentController extends Controller
                     //     DB::commit();
                     // } else {
                     //     DB::rollback();
-                    //     return $this->output(false, 'Payment failed. Please Try Again.', null, 400);
+                    //    return $this->output(false, 'Failed to send email.', 400);
                     // }
                     DB::commit();
-                    return $this->output(true, 'Payment successfully.', ['payment' => $payment->toArray()], 200);
+
 
                     /**
                      *  Notification code
@@ -354,10 +354,10 @@ class PaymentController extends Controller
                     /**
                      * End of Notification code
                      */
-
+                    return $this->output(true, 'Payment successfully.', ['payment' => $payment->toArray()], 200);
                 } else {
                     DB::rollBack();
-                    return $this->output(false, 'Failed to send email.', 400);
+                    return $this->output(false, 'Payment failed. Please Try Again.', null, 400);
                 }
             } catch (\Stripe\Exception\CardException $e) {
                 return $this->output(false, 'Payment failed. ' . $e->getMessage(), null, 400);
