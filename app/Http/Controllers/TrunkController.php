@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Trunk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\LOG;
 use Validator;
 
 class TrunkController extends Controller
@@ -242,7 +243,7 @@ class TrunkController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollback();
-            //return $this->output(false, $e->getMessage());
+            Log::error('Error occurred in removing Trunk: ' . $e->getMessage() .' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
             return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
