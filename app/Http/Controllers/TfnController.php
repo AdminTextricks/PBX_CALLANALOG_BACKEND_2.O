@@ -202,12 +202,12 @@ class TfnController extends Controller
                 }
                 if ($tfn_result) {
                     if ($request->is_delete == '1') {
-                        $subject = 'TFN Deleted'; 
-                        $message = 'TFN '.$tfn->tfn_number.' has been deleted by ' .$AuthUser->name. '.';
+                        $subject = 'TFN Deleted';
+                        $message = 'TFN ' . $tfn->tfn_number . ' has been deleted by ' . $AuthUser->name . '.';
                         $resReturn = 'TFN has been deleted successfully.';
                     } else {
-                        $subject = 'TFN Restore.'; 
-                        $message = 'TFN '.$tfn->tfn_number.' has been restoreby by ' .$AuthUser->name. '.'; 
+                        $subject = 'TFN Restore.';
+                        $message = 'TFN ' . $tfn->tfn_number . ' has been restoreby by ' . $AuthUser->name . '.';
                         $resReturn =  'TFN has been restore successfully.';
                     }
 
@@ -217,27 +217,27 @@ class TfnController extends Controller
                     $type = 'info';
                     $notifyUserType = ['super-admin', 'support', 'noc'];
                     $notifyUser = array();
-                    if($AuthUser->role_id == 6){
+                    if ($AuthUser->role_id == 6) {
                         $CompanyUser = User::where('company_id', $AuthUser->company_id)
-                                    ->where('role_id', 4)->first();
+                            ->where('role_id', 4)->first();
                         $notifyUserType[] = 'admin';
                         $notifyUser['admin'] = $CompanyUser->id;
-                        if($CompanyUser->company->parent_id > 1 ){
+                        if ($CompanyUser->company->parent_id > 1) {
                             $notifyUserType[] = 'reseller';
                             $notifyUser['reseller'] = $CompanyUser->company->parent_id;
                         }
                     }
-                    if($AuthUser->role_id == 4 ){
+                    if ($AuthUser->role_id == 4) {
                         $Company = Company::where('id', $AuthUser->company_id)->first();
-                        if($Company->parent_id > 1){
+                        if ($Company->parent_id > 1) {
                             $notifyUserType[] = 'reseller';
                             $notifyUser['reseller'] = $Company->parent_id;
-                        }                        
+                        }
                     }
 
                     $res = $this->addNotification($AuthUser, $subject, $message, $type, $notifyUserType, $notifyUser);
-                    if(!$res){
-                        Log::error('Notification not created when user role '.$AuthUser->role_id.' update company status.');
+                    if (!$res) {
+                        Log::error('Notification not created when user role ' . $AuthUser->role_id . ' update company status.');
                     }
                     /**
                      * End of Notification code
@@ -264,7 +264,7 @@ class TfnController extends Controller
             DB::beginTransaction();
             $removedTfn = RemovedTfn::where('tfn_number', $tfnnumbermove->tfn_number)->first();
             $cartTfn = Cart::where('item_number', $tfnnumbermove->tfn_number)->first();
-            
+
             RemovedTfn::create([
                 'tfn_number' => $tfnnumbermove->tfn_number,
                 'country_id' => $tfnnumbermove->country_id,
@@ -482,7 +482,9 @@ class TfnController extends Controller
                 } elseif ($options == 3) {
                     $query->where('company_id', '=', 0)->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
                 } elseif ($options == 4) {
-                    $query->whereBetween('expirationdate', [Carbon::now(), Carbon::now()->addDays(3)]);
+                    $query->where('reserved', '=', '1')->where(function ($subQuery) {
+                        $subQuery->whereDate('expirationdate', Carbon::today())->orWhereBetween('expirationdate', [Carbon::tomorrow(), Carbon::now()->addDays(3)]);
+                    });
                 }
             }
         }
@@ -1577,7 +1579,7 @@ class TfnController extends Controller
             return $this->output(true, 'No Record Found', []);
         }
     }
-/*
+    /*
     public function setTfnAuthentication(Request $request)
     {
 
