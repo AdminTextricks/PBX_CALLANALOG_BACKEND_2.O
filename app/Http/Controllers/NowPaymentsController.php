@@ -80,7 +80,7 @@ class NowPaymentsController extends Controller
                 $price_currency = 'usd';
                 $price_amount = $request->payment_price;
                 $orderId = $request->invoice_number . '-UID-' . $user->id;
-                $pay_currency = 'usddtrc20';
+                $pay_currency = 'usdttrc20';
                 $paymentAPI = $this->nowPaymentsService->createPayment($price_currency, $price_amount, $orderId, $pay_currency, $user->company->email);
                 if ($paymentAPI) {
                     $paymentId = $paymentAPI['payment_id'];
@@ -385,7 +385,7 @@ class NowPaymentsController extends Controller
             $price_currency = 'usd';
             $price_amount = $request->amount;
             $orderId = $invoice_id . '-UID-' . $user->id;
-            $pay_currency = 'usddtrc20';
+            $pay_currency = 'usdttrc20';
             $paymentAPIW = $this->nowPaymentsService->createPayment($price_currency, $price_amount, $orderId, $pay_currency, $user->company->email);
             if (is_null($paymentAPIW)) {
                 DB::rollback();
@@ -638,7 +638,7 @@ class NowPaymentsController extends Controller
             $price_currency = 'usd';
             $price_amount = $request->amount;
             $orderId = rand(0, 99999);
-            $pay_currency = 'usddtrc20';
+            $pay_currency = 'usdttrc20';
             $paymentAPIW = $this->nowPaymentsService->createPayment($price_currency, $price_amount, $orderId, $pay_currency, $user->email);
             if (is_null($paymentAPIW)) {
                 DB::rollback();
