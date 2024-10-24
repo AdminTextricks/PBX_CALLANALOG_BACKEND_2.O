@@ -1820,6 +1820,8 @@ class TfnController extends Controller
                     $dataChangeTfns->status = 0;
                 } else {
                     $dataChangeTfns->expirationdate = $requestExpirationDate;
+                    $dataChangeTfns->activated = '1';
+                    $dataChangeTfns->status = 0;
                 }
                 $dateData = $dataChangeTfns->save();
                 if ($dateData) {
