@@ -457,48 +457,70 @@ class DashboardController extends Controller
     public function getResellerGraphCommissionDashboard(Request $request, $options)
     {
         $user = \Auth::user();
-        //$options = $request->options ?? 7;
-
         if ($user->roles->first()->slug == 'reseller') {
             try {
-                $startDate = null;
-                $endDate = Carbon::now();
-                /* if ($options == 7) {
-                    $startDate = Carbon::now()->subDays(7);
-                } elseif ($options == 30) {
-                    $startDate = Carbon::now()->subDays(30);
-                } */
+                $days = $options; // assuming $options contains the number of days
+                $resellerItemsCommission = DB::table(DB::raw('(SELECT CURDATE() - INTERVAL seq DAY as date FROM seq_0_to_99 WHERE seq <= ' . $days . ') AS dates'))
+                ->leftJoin('reseller_commission_of_items as rci', function($join) use ($user) {
+                    $join->on(DB::raw('DATE(rci.created_at)'), '=', 'dates.date')
+                         ->where('rci.reseller_id', '=', $user->id);
+                })
+                ->select(
+                    'dates.date as time_interval',
+                    DB::raw('COALESCE(SUM(rci.commission_amount), 0) as items_commission_amount')
+                )
+                ->groupBy('dates.date')
+                ->orderBy('dates.date', 'ASC')
+                ->get();
+                /**
+                 * Call commision start.
+                 */
+                $resellerCallsCommission = DB::table(DB::raw('(SELECT CURDATE() - INTERVAL seq DAY as date FROM seq_0_to_99 WHERE seq <= ' . $days . ') AS dates'))
+                ->leftJoin('reseller_commission_of_calls as rcc', function($join) use ($user) {
+                    $join->on(DB::raw('DATE(rcc.created_at)'), '=', 'dates.date')
+                         ->where('rcc.reseller_id', '=', $user->id);
+                })
+                ->select(
+                    'dates.date as time_interval',
+                    DB::raw('COALESCE(SUM(rcc.commission_amount), 0) as calls_commission_amount')
+                )
+                ->groupBy('dates.date')
+                ->orderBy('dates.date', 'ASC')
+                ->get();
 
-                $query = DB::table('reseller_commission_of_items')
-                    //->leftJoin('reseller_commission_of_calls', 'reseller_commission_of_items.reseller_id', '=', 'reseller_commission_of_calls.reseller_id')
+               /* $query = DB::table('reseller_commission_of_items')                   
                     ->select(
-                        //DB::raw('COUNT(reseller_commission_of_items.id) AS total'),
-                        DB::raw("SUM(reseller_commission_of_items.commission_amount) AS Items_commission_amount"),
-                        //DB::raw("COALESCE(SUM(reseller_commission_of_calls.commission_amount), 0) AS Calls_commission_amount")
+                        //DB::raw('COUNT(id) AS total'),
+                        DB::raw("SUM(commission_amount) AS items_commission_amount")  
                     )
                     ->where('created_at', '>=', DB::raw('DATE_SUB(NOW(), INTERVAL ' . $options . ' DAY)'))
                     ->where('reseller_id', '=', $user->id);
-                /* if ($startDate) {
-                    $query->where('reseller_commission_of_items.created_at', '>=', $startDate);
-                } */
+               
                 $query->groupBy(DB::raw('DATE(created_at)'))
-                    ->selectRaw('DATE(created_at) as time_interval');
+                        ->selectRaw('DATE(created_at) as time_interval');
+                $resellerItemsCommission = $query->get();
+                /**
+                 * Call commision start.
+                 */
+               /* $query = DB::table('reseller_commission_of_calls')                   
+                    ->select(
+                        //DB::raw('COUNT(id) AS total'),
+                        DB::raw("SUM(commission_amount) AS calls_commission_amount")  
+                    )
+                    ->where('created_at', '>=', DB::raw('DATE_SUB(NOW(), INTERVAL ' . $options . ' DAY)'))
+                    ->where('reseller_id', '=', $user->id);
+               
+                $query->groupBy(DB::raw('DATE(created_at)'))
+                        ->selectRaw('DATE(created_at) as time_interval');
+                $resellerCallsCommission = $query->get();
+                */
+                return response()->json([
+                    'resellerItemsCommission' => $resellerItemsCommission,
+                    'resellerCallsCommission' => $resellerCallsCommission,
+                ]);
 
-                return $resellerCountsItemsCalls = $query->get();
-
-                /* if ($resellerCountsItemsCalls->total > 0) {
-                    return response()->json([
-                        'Calls_commission_amount' => $resellerCountsItemsCalls->Calls_commission_amount,
-                        'Items_commission_amount' => $resellerCountsItemsCalls->Items_commission_amount,
-                    ]);
-                } else {
-                    return response()->json([
-                        'Calls_commission_amount' => 0,
-                        'Items_commission_amount' => 0,
-                    ]);
-                } */
             } catch (\Exception $e) {
-                Log::error('Error fetching reseller commission data: ' . $e->getMessage());
+                Log::error('Error fetching reseller item commission data: ' . $e->getMessage());
                 return $this->output(false, 'An error occurred while fetching data.', [], 500);
             }
         } else {
