@@ -79,7 +79,9 @@ class NowPaymentsController extends Controller
             try {
                 $price_currency = 'usd';
                 $price_amount = $request->payment_price;
-                $orderId = $request->invoice_number . '-UID-' . $user->id;
+                $updatedInvoiceNumber = str_replace('#', '', $request->invoice_number);
+                $orderId = $updatedInvoiceNumber  . 'UID' . $user->id;
+
                 $pay_currency = 'usdttrc20';
                 $paymentAPI = $this->nowPaymentsService->createPayment($price_currency, $price_amount, $orderId, $pay_currency, $user->company->email);
                 if ($paymentAPI) {
@@ -382,9 +384,10 @@ class NowPaymentsController extends Controller
             } else {
                 $invoice_id = "#INV/" . date('Y') . "/W00" . ($invoicetable_id + 1);
             }
+            $updatedInvoiceNumber = str_replace('#', '', $invoice_id);
             $price_currency = 'usd';
             $price_amount = $request->amount;
-            $orderId = $invoice_id . '-UID-' . $user->id;
+            $orderId = $updatedInvoiceNumber . 'UID' . $user->id;
             $pay_currency = 'usdttrc20';
             $paymentAPIW = $this->nowPaymentsService->createPayment($price_currency, $price_amount, $orderId, $pay_currency, $user->company->email);
             if (is_null($paymentAPIW)) {
