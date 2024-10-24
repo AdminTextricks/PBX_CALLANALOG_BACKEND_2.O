@@ -303,12 +303,12 @@ class NowPaymentsController extends Controller
                                 $this->ResellerCommissionCalculate($user, $invoice_items, $payment->invoice_id, $payment->payment_price);
                             }
 
-                            $mailsend = $this->pdfmailSend($user, $itemNumbers, $NowPaymentData['price_amount'], $payment->invoice_id, $invoice_update->invoice_number, $itemTypes);
-                            if ($mailsend) {
-                                DB::commit();
-                            } else {
-                                DB::rollBack();
-                            }
+                            // $mailsend = $this->pdfmailSend($user, $itemNumbers, $NowPaymentData['price_amount'], $payment->invoice_id, $invoice_update->invoice_number, $itemTypes);
+                            // if ($mailsend) {
+                            //     DB::commit();
+                            // } else {
+                            //     DB::rollBack();
+                            // }
                         }
                     }
                     DB::commit();
@@ -506,12 +506,12 @@ class NowPaymentsController extends Controller
                         $item_number = $NowPaymentData['price_amount'];
                         $item_numbers[] = $item_number;
                         $itemTpyes[] = 'Wallet Payment';
-                        $mailsend = $this->pdfmailSend($user, $item_numbers, $total_aamount, $invoice_update->id, $invoice_update->invoice_id, $itemTpyes);
-                        if ($mailsend) {
-                            DB::commit();
-                        } else {
-                            DB::rollBack();
-                        }
+                        // $mailsend = $this->pdfmailSend($user, $item_numbers, $total_aamount, $invoice_update->id, $invoice_update->invoice_id, $itemTpyes);
+                        // if ($mailsend) {
+                        //     DB::commit();
+                        // } else {
+                        //     DB::rollBack();
+                        // }
                     }
                     DB::commit();
                     $response['payment'] = $payment->toArray();

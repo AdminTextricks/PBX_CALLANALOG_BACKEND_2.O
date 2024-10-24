@@ -315,48 +315,49 @@ class PaymentController extends Controller
                     if ($user->company->parent_id > 1) {
                         $this->ResellerCommissionCalculate($user, $request->items, $request->invoice_id, $request->payment_price);
                     }
-                    $mailsend = $this->pdfmailSend($user, $itemNumbers, $charge->amount / 100, $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
-                    if ($mailsend) {
-                        $finalizedInvoice = $stripe->invoices->finalizeInvoice($invoiceStripe->id);
-                        $paidInvoice = $stripe->invoices->pay($finalizedInvoice->id);
-                        DB::commit();
+                    // $mailsend = $this->pdfmailSend($user, $itemNumbers, $charge->amount / 100, $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
+                    // if ($mailsend) {
+                    //     $finalizedInvoice = $stripe->invoices->finalizeInvoice($invoiceStripe->id);
+                    //     $paidInvoice = $stripe->invoices->pay($finalizedInvoice->id);
+                    //     DB::commit();
+                    // } else {
+                    //     DB::rollback();
+                    //     return $this->output(false, 'Payment failed. Please Try Again.', null, 400);
+                    // }
+                    DB::commit();
+                    return $this->output(true, 'Payment successfully.', ['payment' => $payment->toArray()], 200);
 
-                        /**
-                         *  Notification code
-                         */
-                        $subject = 'Card Payment'; 
-                        $message = 'A new payment has been done by company: '.$user->company->company_name .' / '.$user->company->email; 
-                        $type = 'info';
-                        $notifyUserType = ['super-admin', 'support', 'noc'];
-                        $notifyUser = array();
-                        if($user->role_id == 6){
-                            $message = 'A new payment has been done by user: '.$user->name .' / '.$user->email; 
-                            $notifyUserType[] = 'admin';
-                            $CompanyUser = User::where('company_id', $user->company_id)
-                                            ->where('role_id', 4)->first();
-                            if($CompanyUser->company->parent_id > 1 ){
-                                $notifyUserType[] = 'reseller';
-                                $notifyUser['reseller'] = $CompanyUser->company->parent_id;
-                            }
-                            $notifyUser['admin'] = $CompanyUser->id; 
+                    /**
+                     *  Notification code
+                     */
+                    $subject = 'Card Payment';
+                    $message = 'A new payment has been done by company: ' . $user->company->company_name . ' / ' . $user->company->email;
+                    $type = 'info';
+                    $notifyUserType = ['super-admin', 'support', 'noc'];
+                    $notifyUser = array();
+                    if ($user->role_id == 6) {
+                        $message = 'A new payment has been done by user: ' . $user->name . ' / ' . $user->email;
+                        $notifyUserType[] = 'admin';
+                        $CompanyUser = User::where('company_id', $user->company_id)
+                            ->where('role_id', 4)->first();
+                        if ($CompanyUser->company->parent_id > 1) {
+                            $notifyUserType[] = 'reseller';
+                            $notifyUser['reseller'] = $CompanyUser->company->parent_id;
                         }
-
-                        $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
-                        if(!$res){
-                            Log::error('Notification not created when user role: '.$user->role_id.'  Create new payment payNow method.');
-                        }
-                        /**
-                         * End of Notification code
-                         */
-
-                        return $this->output(true, 'Payment successfully.', ['payment' => $payment->toArray()], 200);
-                    } else {
-                        DB::rollBack();
-                        return $this->output(false, 'Failed to send email.', 400);
+                        $notifyUser['admin'] = $CompanyUser->id;
                     }
+
+                    $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
+                    if (!$res) {
+                        Log::error('Notification not created when user role: ' . $user->role_id . '  Create new payment payNow method.');
+                    }
+                    /**
+                     * End of Notification code
+                     */
+
                 } else {
-                    DB::rollback();
-                    return $this->output(false, 'Payment failed. Please Try Again.', null, 400);
+                    DB::rollBack();
+                    return $this->output(false, 'Failed to send email.', 400);
                 }
             } catch (\Stripe\Exception\CardException $e) {
                 return $this->output(false, 'Payment failed. ' . $e->getMessage(), null, 400);
@@ -854,7 +855,7 @@ class PaymentController extends Controller
                     $price_mail = $charge->amount / 100;
                     $item_numbers[] = $price_mail;
                     $itemTpyes[] = 'Wallet Payment';
-                    $this->pdfmailSend($user, $item_numbers, $price_mail, $createinvoice->id, $createinvoice->invoice_id, $itemTpyes);
+                    // $this->pdfmailSend($user, $item_numbers, $price_mail, $createinvoice->id, $createinvoice->invoice_id, $itemTpyes);
                     $invoice_result = $invoice_update->save();
                 }
                 $response = $payment->toArray();
@@ -866,22 +867,22 @@ class PaymentController extends Controller
                 /**
                  *  Notification code
                  */
-                $subject = 'Card Payment'; 
-                $message = 'A payment for Add to Wallet has been done by company: '.$user->company->company_name .' / '.$user->company->email; 
+                $subject = 'Card Payment';
+                $message = 'A payment for Add to Wallet has been done by company: ' . $user->company->company_name . ' / ' . $user->company->email;
                 $type = 'info';
                 $notifyUserType = ['super-admin', 'support', 'noc'];
                 $notifyUser = array();
-                if($user->role_id == 6){
-                    $message = 'A payment for Add to Wallet has been done by user: '.$user->name .' / '.$user->email; 
+                if ($user->role_id == 6) {
+                    $message = 'A payment for Add to Wallet has been done by user: ' . $user->name . ' / ' . $user->email;
                     $notifyUserType[] = 'admin';
                     $CompanyUser = User::where('company_id', $user->company_id)
-                                    ->where('role_id', 4)->first();
-                    $notifyUser['admin'] = $CompanyUser->id; 
+                        ->where('role_id', 4)->first();
+                    $notifyUser['admin'] = $CompanyUser->id;
                 }
 
                 $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
-                if(!$res){
-                    Log::error('Notification not created when user role: '.$user->role_id.'  in addToWallet method.');
+                if (!$res) {
+                    Log::error('Notification not created when user role: ' . $user->role_id . '  in addToWallet method.');
                 }
                 /**
                  * End of Notification code
@@ -1183,11 +1184,11 @@ class PaymentController extends Controller
                                 'status' => 1,
                             ]);
                         }
-                         $insert_tfn_histories = $this->TfnHistories($user->company->id, $user->id, $numbers_list_tfn->tfn_number,  $value, $value);
-                            if (!$insert_tfn_histories['Status'] == 'true') {
-                                DB::rollback();
-                                return $this->output(false, 'Oops Somthing went wrong!!. Failed to insert data into Tfns History Table.', 400);
-                            }
+                        $insert_tfn_histories = $this->TfnHistories($user->company->id, $user->id, $numbers_list_tfn->tfn_number,  $value, $value);
+                        if (!$insert_tfn_histories['Status'] == 'true') {
+                            DB::rollback();
+                            return $this->output(false, 'Oops Somthing went wrong!!. Failed to insert data into Tfns History Table.', 400);
+                        }
                     } else {
                         $numbers_list = Extension::where('name', $itemNumber)->first();
                         if ($numbers_list && $numbers_list->expirationdate != NULL) {
@@ -1290,41 +1291,41 @@ class PaymentController extends Controller
                             $this->ResellerCommissionCalculate($user, $request->items, $request->invoice_id, $request->payment_price);
                         }
 
-                        $mailsend = $this->pdfmailSend($user, $itemNumbers, $price_mail, $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
-                        if ($mailsend) {
-                            DB::commit();
-                        } else {
-                            DB::rollBack();
-                            return $this->output(false, 'Failed to send mail.', 500);
-                        }
+                        // $mailsend = $this->pdfmailSend($user, $itemNumbers, $price_mail, $request->invoice_id, $invoice_update->invoice_number, $itemTypes);
+                        // if ($mailsend) {
+                        //     DB::commit();
+                        // } else {
+                        //     DB::rollBack();
+                        //     return $this->output(false, 'Failed to send mail.', 500);
+                        // }
                     }
                 }
-
+                DB::commit();
                 $response['payment'] = $payment->toArray();
 
                 /**
                  *  Notification code
                  */
-                $subject = 'Wallet Payment'; 
-                $message = 'A new payment has been done by company: '.$user->company->company_name .' / '.$user->company->email; 
+                $subject = 'Wallet Payment';
+                $message = 'A new payment has been done by company: ' . $user->company->company_name . ' / ' . $user->company->email;
                 $type = 'info';
                 $notifyUserType = ['super-admin', 'support', 'noc'];
                 $notifyUser = array();
-                if($user->role_id == 6){
-                    $message = 'A new payment has been done by user: '.$user->name .' / '.$user->email;
+                if ($user->role_id == 6) {
+                    $message = 'A new payment has been done by user: ' . $user->name . ' / ' . $user->email;
                     $notifyUserType[] = 'admin';
                     $CompanyUser = User::where('company_id', $user->company_id)
-                                    ->where('role_id', 4)->first();
-                    if($CompanyUser->company->parent_id > 1 ){
+                        ->where('role_id', 4)->first();
+                    if ($CompanyUser->company->parent_id > 1) {
                         $notifyUserType[] = 'reseller';
                         $notifyUser['reseller'] = $CompanyUser->company->parent_id;
                     }
-                    $notifyUser['admin'] = $CompanyUser->id; 
+                    $notifyUser['admin'] = $CompanyUser->id;
                 }
 
                 $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
-                if(!$res){
-                    Log::error('Notification not created when user role: '.$user->role_id.'  in paymentWithWallet method.');
+                if (!$res) {
+                    Log::error('Notification not created when user role: ' . $user->role_id . '  in paymentWithWallet method.');
                 }
                 /**
                  * End of Notification code
@@ -1462,14 +1463,14 @@ class PaymentController extends Controller
                 /**
                  *  Notification code
                  */
-                $subject = 'Card Payment'; 
-                $message = 'A payment for Add to Wallet has been done by reseller: '.$user->name .' / '.$user->email; 
+                $subject = 'Card Payment';
+                $message = 'A payment for Add to Wallet has been done by reseller: ' . $user->name . ' / ' . $user->email;
                 $type = 'info';
                 $notifyUserType = ['super-admin', 'support', 'noc'];
                 $notifyUser = array();
                 $res = $this->addNotification($user, $subject, $message, $type, $notifyUserType, $notifyUser);
-                if(!$res){
-                    Log::error('Notification not created when user role: '.$user->role_id.' in resellerAddtoWallet method.');
+                if (!$res) {
+                    Log::error('Notification not created when user role: ' . $user->role_id . ' in resellerAddtoWallet method.');
                 }
                 /**
                  * End of Notification code

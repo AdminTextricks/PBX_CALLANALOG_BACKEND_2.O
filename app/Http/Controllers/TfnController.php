@@ -1065,7 +1065,7 @@ class TfnController extends Controller
                 'status' => 1,
             ]);
 
-            $this->pdfmailSend($company, $request->tfn_number, $total_price, $createInvoices->id, $createInvoices->invoice_id, $item_types);
+            // $this->pdfmailSend($company, $request->tfn_number, $total_price, $createInvoices->id, $createInvoices->invoice_id, $item_types);
 
             DB::commit();
             return $this->output(true, 'TFN numbers assigned successfully.', null, 200);
@@ -1266,7 +1266,7 @@ class TfnController extends Controller
                 'status' => 1,
             ]);
 
-            $this->pdfmailSend($company, $request->tfn_number, $total_price, $createInvoices->id, $createInvoices->invoice_id, $item_types);
+            // $this->pdfmailSend($company, $request->tfn_number, $total_price, $createInvoices->id, $createInvoices->invoice_id, $item_types);
 
             DB::commit();
             return $this->output(true, 'TFN numbers have been successfully renewed..', null, 200);
