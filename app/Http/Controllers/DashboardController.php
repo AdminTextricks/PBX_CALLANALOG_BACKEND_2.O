@@ -486,7 +486,7 @@ class DashboardController extends Controller
 
                 return $resellerCountsItemsCalls = $query->get();
 
-                if ($resellerCountsItemsCalls->total > 0) {
+                /* if ($resellerCountsItemsCalls->total > 0) {
                     return response()->json([
                         'Calls_commission_amount' => $resellerCountsItemsCalls->Calls_commission_amount,
                         'Items_commission_amount' => $resellerCountsItemsCalls->Items_commission_amount,
@@ -496,7 +496,7 @@ class DashboardController extends Controller
                         'Calls_commission_amount' => 0,
                         'Items_commission_amount' => 0,
                     ]);
-                }
+                } */
             } catch (\Exception $e) {
                 Log::error('Error fetching reseller commission data: ' . $e->getMessage());
                 return $this->output(false, 'An error occurred while fetching data.', [], 500);
