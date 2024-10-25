@@ -16,6 +16,7 @@ use App\Models\Invoice;
 use App\Models\ResellerWallet;
 use App\Models\InvoiceItems;
 use App\Models\Payments;
+use App\Models\ResellerPaymentHistories;
 use App\Models\TfnDestination;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -589,6 +590,18 @@ class OneGoUserController extends Controller
                                         'status'            => '1',
                                     ]);
                                 if($payment){
+
+                                    ResellerPaymentHistories::create([
+                                        'user_id'       => $oneGoUser['parent_id'],
+                                        'company_id'    => $oneGoUser['company']['id'],
+                                        'currency'      => 'USD',
+                                        'amount'        => $payment_price,
+                                        'item_numbers'  => $item_number_str,
+                                        'payment_type'  => 'Wallet Payment',
+                                        'payment_by'    => $payment_by,
+                                        'status'        => '1',
+                                    ]);
+
                                     $startingdate = Carbon::now();
                                     $expirationdate = $startingdate->addDays(29);
                                     foreach ($invoice_items as $key => $invoice_item) {
