@@ -43,6 +43,8 @@ use App\Http\Controllers\TimeGroupController;
 use App\Http\Controllers\TimeConditionController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ErrorMessageController;
+use App\Http\Controllers\ResellerPaymentHistoryController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -428,6 +430,11 @@ Route::middleware(['auth:sanctum', 'token.expiry', 'log.request.response'])->gro
 		Route::patch('/changeStatus/{id}', [ResellerCallCommissionController::class, 'changeResellerCallCommissionStatus']);
 		Route::put('/{id}', [ResellerCallCommissionController::class, 'updateResellerCallCommission']);
 		Route::delete('/{id}', [ResellerCallCommissionController::class, 'deleteResellerCallCommission']);
+	});
+
+	# Reseller Payment History
+	Route::group(['prefix' => 'reseller-payment-history'], function () {
+		Route::get('/', [ResellerPaymentHistoryController::class, 'getAllResellerPaymentHistory']);
 	});
 
 	# Voice Mail Manage 
