@@ -17,7 +17,9 @@ return new class extends Migration
             $table->unsignedBigInteger('company_id');
             $table->string('currency');
             $table->decimal('amount', total: 10, places: 2);
-            $table->string('item_numbers', 1000);
+            $table->text('item_numbers')->nullable();
+            $table->string('payment_type', 256)->nullable();
+            $table->string('payment_by', 256)->nullable();
             $table->tinyInteger('status');
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users');
