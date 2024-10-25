@@ -15,6 +15,8 @@ class ResellerPaymentHistories extends Model
         'currency',
         'amount',
         'item_numbers',
+        'payment_type',
+        'payment_by',
         'status',
     ];
 }
