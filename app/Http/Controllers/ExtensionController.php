@@ -1397,7 +1397,9 @@ class ExtensionController extends Controller
 
     public function extensionexpDateUpdate(Request $request)
     {
-        $user = \Auth::user();
+        return $user = \Auth::user();
+        return $user->company_id;
+                return $Company = Company::where('id', $user->company_id)->first();
         $validator = Validator::make($request->all(), [
             'name' => 'required|numeric',
             'expirationdate' => 'required|date_format:Y-m-d',
@@ -1411,8 +1413,7 @@ class ExtensionController extends Controller
         }
         try {
             if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
-                return $user->company_id;
-                return $Company = Company::where('id', $user->company_id)->first();
+                
 
                 $dataChangeExtensions = Extension::where('name', $request->name)->first();
                 if (is_null($dataChangeExtensions)) {
