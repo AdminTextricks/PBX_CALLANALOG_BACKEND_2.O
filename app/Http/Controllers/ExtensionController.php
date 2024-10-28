@@ -1415,9 +1415,33 @@ class ExtensionController extends Controller
                 if (is_null($dataChangeExtensions)) {
                     return $this->output(false, 'This Number does not exist with us. Please try again!', [], 404);
                 }
-                // $dataChangeExtensions->startingdate = Carbon::now();
+                $currentDate = Carbon::today(); // Only the date part, time set to 00:00:00
                 $requestExpirationDate = \Carbon\Carbon::createFromFormat('Y-m-d', $request->expirationdate);
-                if ($dataChangeExtensions->expirationdate > $requestExpirationDate) {
+
+                if ($requestExpirationDate->greaterThanOrEqualTo($currentDate) && $dataChangeExtensions->expirationdate >= $currentDate) { 
+                    $dataChangeExtensions->expirationdate = $requestExpirationDate;
+                }else{
+                    $dataChangeExtensions->expirationdate = $requestExpirationDate;
+                    $dataChangeExtensions->host = 'static';
+                    $dataChangeExtensions->status = 0;
+
+                    $removeExtensionFile = config('app.webrtc_template_url');
+                    $this->removeExtensionFromConfFile($dataChangeExtensions->name, $removeExtensionFile);
+
+                    $removeExtensionFile = config('app.softphone_template_url');
+                    $this->removeExtensionFromConfFile($dataChangeExtensions->name, $removeExtensionFile);
+
+                    Log::error('Multiple Remove Extension From File: ' . $removeExtensionFile);
+
+                    $server_flag = config('app.server_flag');
+                    if ($server_flag == 1) {
+                        $shell_script = config('app.shell_script');
+                        $result = shell_exec('sudo ' . $shell_script);
+                        Log::error('Extension Update File Transfer Log : ' . $result);
+                        $this->sipReload();
+                    }
+                }
+                /* if ($dataChangeExtensions->expirationdate > $requestExpirationDate) {
                     $dataChangeExtensions->expirationdate = $requestExpirationDate;
                     $dataChangeExtensions->host = 'static';
                     $dataChangeExtensions->status = 0;
@@ -1439,7 +1463,7 @@ class ExtensionController extends Controller
                     }
                 } else {
                     $dataChangeExtensions->expirationdate = $requestExpirationDate;
-                }
+                } */
                 $dateData = $dataChangeExtensions->save();
                 if ($dateData) {
                     $response = $dataChangeExtensions->toArray();
