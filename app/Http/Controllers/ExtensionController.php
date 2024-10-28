@@ -509,6 +509,7 @@ class ExtensionController extends Controller
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
                 //dd(DB::getQueryLog());
             } elseif ($options != "") {
+                $data->where('extensions.company_id', '=', $user->company_id);
                 if ($options == 1) {
                     $data->where('extensions.host', '=', NULL)->where('extensions.status', '=', '0');
                 } elseif ($options == 2) {
