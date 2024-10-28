@@ -1814,15 +1814,16 @@ class TfnController extends Controller
                 if (is_null($dataChangeTfns)) {
                     return $this->output(false, 'This Number does not exist with us. Please try again!', [], 404);
                 }
-                // $dataChangeTfns->startingdate = Carbon::now();
+                $currentDate = Carbon::now();
                 $requestExpirationDate =  \Carbon\Carbon::createFromFormat('Y-m-d', $request->expirationdate);
-                if ($dataChangeTfns->expirationdate > $requestExpirationDate) {
-                    $dataChangeTfns->expirationdate = $requestExpirationDate;
-                    $dataChangeTfns->activated = '0';
-                    $dataChangeTfns->status = 0;
-                } else {
+
+                if ($requestExpirationDate >= $currentDate) {
                     $dataChangeTfns->expirationdate = $requestExpirationDate;
                     $dataChangeTfns->activated = '1';
+                    $dataChangeTfns->status = 1;
+                } else {
+                    $dataChangeTfns->expirationdate = $requestExpirationDate;
+                    $dataChangeTfns->activated = '0';
                     $dataChangeTfns->status = 0;
                 }
                 $dateData = $dataChangeTfns->save();
