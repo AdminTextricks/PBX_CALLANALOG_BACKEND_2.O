@@ -1397,7 +1397,7 @@ class ExtensionController extends Controller
 
     public function extensionexpDateUpdate(Request $request)
     {
-        $user = \Auth::user();
+        return $user = \Auth::user();
         $validator = Validator::make($request->all(), [
             'name' => 'required|numeric',
             'expirationdate' => 'required|date_format:Y-m-d',
