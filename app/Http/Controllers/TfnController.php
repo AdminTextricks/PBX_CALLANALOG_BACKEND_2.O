@@ -480,7 +480,7 @@ class TfnController extends Controller
                 } elseif ($options == 2) {
                     $query->where('company_id', '>', 0)->where('reserved', '=', '1')->where('activated', '=', '1')->where('status', '=', 1);
                 } elseif ($options == 3) {
-                    $query->where('company_id', '=', 0)->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
+                    $query->where('company_id', '!=', 0)->where('reserved', '=', '1')->where('activated', '=', '0')->where('status', '=', 1);
                 } elseif ($options == 4) {
                     $query->where('reserved', '=', '1')->where(function ($subQuery) {
                         $subQuery->whereDate('expirationdate', Carbon::today())->orWhereBetween('expirationdate', [Carbon::tomorrow(), Carbon::now()->addDays(3)]);
