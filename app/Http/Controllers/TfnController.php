@@ -1810,7 +1810,7 @@ class TfnController extends Controller
         }
         try {
             if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
-                $dataChangeTfns = Tfn::where('tfn_number', $request->tfn_number)->first();
+               return  $dataChangeTfns = Tfn::where('tfn_number', $request->tfn_number)->first();
                 if (is_null($dataChangeTfns)) {
                     return $this->output(false, 'This Number does not exist with us. Please try again!', [], 404);
                 }
