@@ -1810,25 +1810,36 @@ class TfnController extends Controller
         }
         try {
             if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
-               return  $dataChangeTfns = Tfn::where('tfn_number', $request->tfn_number)->first();
+                $dataChangeTfns = Tfn::where('tfn_number', $request->tfn_number)->first();
                 if (is_null($dataChangeTfns)) {
                     return $this->output(false, 'This Number does not exist with us. Please try again!', [], 404);
                 }
                 $currentDate = Carbon::now();
                 $requestExpirationDate =  \Carbon\Carbon::createFromFormat('Y-m-d', $request->expirationdate);
-
+                $updateTfn = array();
                 if ($requestExpirationDate >= $currentDate) {
-                    $dataChangeTfns->expirationdate = $requestExpirationDate;
+                    $updateTfn = [
+                            'expirationdate' => $requestExpirationDate,
+                            'activated' => '1',
+                            'status' => 1,
+                        ];
+                    /* $dataChangeTfns->expirationdate = $requestExpirationDate;
                     $dataChangeTfns->activated = '1';
-                    $dataChangeTfns->status = 1;
+                    $dataChangeTfns->status = 1; */
                 } else {
-                    $dataChangeTfns->expirationdate = $requestExpirationDate;
+                    $updateTfn = [
+                            'expirationdate' => $requestExpirationDate,
+                            'activated' => '0',
+                            'status' => 0,
+                        ];
+                    /* $dataChangeTfns->expirationdate = $requestExpirationDate;
                     $dataChangeTfns->activated = '0';
-                    $dataChangeTfns->status = 0;
+                    $dataChangeTfns->status = 0; */
                 }
-                $dateData = $dataChangeTfns->save();
+                $dateData = Tfn::where('tfn_number', $request->tfn_number)->update($updateTfn);
+                //$dateData = $dataChangeTfns->save();
                 if ($dateData) {
-                    $response = $dataChangeTfns->toArray();
+                    $response = Tfn::where('tfn_number', $request->tfn_number)->first()->toArray();
                     return $this->output(true, "Tfn Date update Successfully!.", $response, 200);
                 } else {
                     return $this->output(false, "Somthing went wrong. While Tfn Date update", [], 400);
