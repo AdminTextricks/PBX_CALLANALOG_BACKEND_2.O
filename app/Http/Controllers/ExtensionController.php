@@ -1417,9 +1417,30 @@ class ExtensionController extends Controller
                 }
                 $currentDate = Carbon::today(); // Only the date part, time set to 00:00:00
                 $requestExpirationDate = \Carbon\Carbon::createFromFormat('Y-m-d', $request->expirationdate);
+                $sip_temp = $dataChangeExtensions->sip_temp;
 
-                if ($requestExpirationDate->greaterThanOrEqualTo($currentDate) && $dataChangeExtensions->expirationdate >= $currentDate) { 
+                if ($requestExpirationDate->greaterThanOrEqualTo($currentDate)) 
+                { 
                     $dataChangeExtensions->expirationdate = $requestExpirationDate;
+                    $dataChangeExtensions->expirationdate = $requestExpirationDate;
+                    $dataChangeExtensions->host = 'dynamic';
+                    $dataChangeExtensions->status = 1;
+                    if ($sip_temp == 'WEBRTC') {
+                        $addExtensionFile = config('app.webrtc_template_url');
+                    } else {
+                        $addExtensionFile = config('app.softphone_template_url');
+                    }
+
+                    $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
+                    $this->addExtensionInConfFile($dataChangeExtensions->name, $addExtensionFile, $dataChangeExtensions->secret, $user->company->account_code, $ConfTemplate->template_contents);
+                    Log::error('Write Extension into File : ' . $addExtensionFile);
+                    $server_flag = config('app.server_flag');
+                    if ($server_flag == 1) {
+                        $shell_script = config('app.shell_script');
+                        $result = shell_exec('sudo ' . $shell_script);
+                        Log::error('Extension Update File Transfer Log : ' . $result);
+                        $this->sipReload();
+                    }
                 }else{
                     $dataChangeExtensions->expirationdate = $requestExpirationDate;
                     $dataChangeExtensions->host = 'static';
@@ -1441,29 +1462,7 @@ class ExtensionController extends Controller
                         $this->sipReload();
                     }
                 }
-                /* if ($dataChangeExtensions->expirationdate > $requestExpirationDate) {
-                    $dataChangeExtensions->expirationdate = $requestExpirationDate;
-                    $dataChangeExtensions->host = 'static';
-                    $dataChangeExtensions->status = 0;
-
-                    $removeExtensionFile = config('app.webrtc_template_url');
-                    $this->removeExtensionFromConfFile($dataChangeExtensions->name, $removeExtensionFile);
-
-                    $removeExtensionFile = config('app.softphone_template_url');
-                    $this->removeExtensionFromConfFile($dataChangeExtensions->name, $removeExtensionFile);
-
-                    Log::error('Multiple Remove Extension From File: ' . $removeExtensionFile);
-
-                    $server_flag = config('app.server_flag');
-                    if ($server_flag == 1) {
-                        $shell_script = config('app.shell_script');
-                        $result = shell_exec('sudo ' . $shell_script);
-                        Log::error('Extension Update File Transfer Log : ' . $result);
-                        $this->sipReload();
-                    }
-                } else {
-                    $dataChangeExtensions->expirationdate = $requestExpirationDate;
-                } */
+                
                 $dateData = $dataChangeExtensions->save();
                 if ($dateData) {
                     $response = $dataChangeExtensions->toArray();
