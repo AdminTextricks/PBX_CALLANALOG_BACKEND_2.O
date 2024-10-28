@@ -1818,26 +1818,26 @@ class TfnController extends Controller
                 $requestExpirationDate =  \Carbon\Carbon::createFromFormat('Y-m-d', $request->expirationdate);
                 $updateTfn = array();
                 if ($requestExpirationDate->greaterThanOrEqualTo($currentDate)) { 
-                    $updateTfn = [
+                    /* $updateTfn = [
                             'expirationdate' => $requestExpirationDate,
                             'activated' => '1',
                             'status' => 1,
-                        ];
-                    /* $dataChangeTfns->expirationdate = $requestExpirationDate;
+                        ]; */
+                    $dataChangeTfns->expirationdate = $requestExpirationDate;
                     $dataChangeTfns->activated = '1';
-                    $dataChangeTfns->status = 1; */
+                    $dataChangeTfns->status = 1;
                 } else {
                     $updateTfn = [
                             'expirationdate' => $requestExpirationDate,
                             'activated' => '0',
                             'status' => 0,
                         ];
-                    /* $dataChangeTfns->expirationdate = $requestExpirationDate;
+                    $dataChangeTfns->expirationdate = $requestExpirationDate;
                     $dataChangeTfns->activated = '0';
-                    $dataChangeTfns->status = 0; */
+                    $dataChangeTfns->status = 0;
                 }
-                $dateData = Tfn::where('tfn_number', $request->tfn_number)->update($updateTfn);
-                //$dateData = $dataChangeTfns->save();
+                //$dateData = Tfn::where('tfn_number', $request->tfn_number)->update($updateTfn);
+                $dateData = $dataChangeTfns->save();
                 if ($dateData) {
                     $response = Tfn::where('tfn_number', $request->tfn_number)->first()->toArray();
                     return $this->output(true, "Tfn Date update Successfully!.", $response, 200);
