@@ -1397,7 +1397,7 @@ class ExtensionController extends Controller
 
     public function extensionexpDateUpdate(Request $request)
     {
-        return $user = \Auth::user();
+        $user = \Auth::user();
         $validator = Validator::make($request->all(), [
             'name' => 'required|numeric',
             'expirationdate' => 'required|date_format:Y-m-d',
@@ -1411,6 +1411,8 @@ class ExtensionController extends Controller
         }
         try {
             if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                $Company = Company::where('id', $user->company_id)->first();
+
                 $dataChangeExtensions = Extension::where('name', $request->name)->first();
                 if (is_null($dataChangeExtensions)) {
                     return $this->output(false, 'This Number does not exist with us. Please try again!', [], 404);
@@ -1432,7 +1434,7 @@ class ExtensionController extends Controller
                     }
 
                     $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
-                    $this->addExtensionInConfFile($dataChangeExtensions->name, $addExtensionFile, $dataChangeExtensions->secret, $user->company->account_code, $ConfTemplate->template_contents);
+                    $this->addExtensionInConfFile($dataChangeExtensions->name, $addExtensionFile, $dataChangeExtensions->secret, $Company->account_code, $ConfTemplate->template_contents);
                     Log::error('Write Extension into File : ' . $addExtensionFile);
                     $server_flag = config('app.server_flag');
                     if ($server_flag == 1) {
