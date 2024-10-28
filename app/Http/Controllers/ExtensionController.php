@@ -1397,9 +1397,7 @@ class ExtensionController extends Controller
 
     public function extensionexpDateUpdate(Request $request)
     {
-        return $user = \Auth::user();
-        return $user->company_id;
-                return $Company = Company::where('id', $user->company_id)->first();
+        $user = \Auth::user();
         $validator = Validator::make($request->all(), [
             'name' => 'required|numeric',
             'expirationdate' => 'required|date_format:Y-m-d',
@@ -1413,8 +1411,6 @@ class ExtensionController extends Controller
         }
         try {
             if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
-                
-
                 $dataChangeExtensions = Extension::where('name', $request->name)->first();
                 if (is_null($dataChangeExtensions)) {
                     return $this->output(false, 'This Number does not exist with us. Please try again!', [], 404);
@@ -1422,6 +1418,8 @@ class ExtensionController extends Controller
                 $currentDate = Carbon::today(); // Only the date part, time set to 00:00:00
                 $requestExpirationDate = \Carbon\Carbon::createFromFormat('Y-m-d', $request->expirationdate);
                 $sip_temp = $dataChangeExtensions->sip_temp;
+                
+                $Company = Company::where('id', $dataChangeExtensions->company_id)->first();
 
                 if ($requestExpirationDate->greaterThanOrEqualTo($currentDate)) 
                 { 
@@ -1474,6 +1472,8 @@ class ExtensionController extends Controller
                 } else {
                     return $this->output(false, "Somthing went wrong. While Tfn Date update", [], 400);
                 }
+
+
             } else {
                 return $this->output(false, 'Sorry! You are not authorized.', [], 400);
             }
