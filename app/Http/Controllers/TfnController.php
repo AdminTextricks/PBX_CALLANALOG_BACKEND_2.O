@@ -1814,7 +1814,7 @@ class TfnController extends Controller
                 if (is_null($dataChangeTfns)) {
                     return $this->output(false, 'This Number does not exist with us. Please try again!', [], 404);
                 }
-               return $currentDate = Carbon::today(); // Only the date part, time set to 00:00:00
+                $currentDate = Carbon::today(); // Only the date part, time set to 00:00:00
                 $requestExpirationDate =  \Carbon\Carbon::createFromFormat('Y-m-d', $request->expirationdate);
                 $updateTfn = array();
                 if ($requestExpirationDate->greaterThanOrEqualTo($currentDate)) { 
