@@ -444,7 +444,7 @@ class NowPaymentsController extends Controller
     public function nowPaymentsWalletcheckPaymentsStatus(Request $request, $paymentId)
     {
         $user = \Auth::user();
-        $NowPaymentData = $this->nowPaymentsService->getPaymentStatus($paymentId);
+       return $NowPaymentData = $this->nowPaymentsService->getPaymentStatus($paymentId);
         try {
             if ($NowPaymentData && $NowPaymentData['payment_status'] == "partially_paid" || $NowPaymentData['payment_status'] == "finished") {
                 // if ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
