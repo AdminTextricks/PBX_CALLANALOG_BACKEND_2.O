@@ -80,7 +80,8 @@ Route::group(['prefix' => 'plan'], function () {
 	Route::get('/{id?}', [MainPlansController::class, 'getAllPlans']);
 });
 
-Route::middleware(['throttle:60,1', 'token.expiry', 'auth:sanctum', 'log.request.response'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:60,1', 'token.expiry', 'log.request.response'])->group(function () {
+
 
 	# Company Management
 	Route::group(['prefix' => 'company'], function () {
@@ -111,6 +112,8 @@ Route::middleware(['throttle:60,1', 'token.expiry', 'auth:sanctum', 'log.request
 		Route::get('getCompanyUserslist', [UserController::class, 'getCompanyUserslist']);
 		Route::post('/liveCallHangUp', [UserController::class, 'liveCallHangUp']);
 	});
+
+	Route::post('/logout', [UserController::class, 'logout']);
 
 	Route::group(['prefix' => 'user-documents'], function () {
 		Route::post('/changeMultipleStatus', [UserDocumentsController::class, 'changeMultipleDocumentStatus']);

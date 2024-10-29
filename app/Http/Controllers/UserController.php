@@ -18,6 +18,7 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Validation\Rules\Password;
 use Crypt;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class UserController extends Controller
 {
@@ -320,7 +321,12 @@ class UserController extends Controller
                 }
 
                 $this->sendOtp($user); //OTP SEND
+                $ipAddress = $request->ip();
                 $token         =  $user->createToken('Callanalog-API')->plainTextToken;
+                $useragent = $request->header('User-Agent');
+                DB::table('personal_access_tokens')
+                    ->where('token', hash('sha256', explode('|', $token)[1]))  // Look up the token by its hashed value
+                    ->update(['ip_address' => $ipAddress, 'user_agent' => $useragent]);
                 $response     = $user->toArray();
                 $response['token'] = $token;
                 DB::commit();
@@ -581,13 +587,12 @@ class UserController extends Controller
                         if (Hash::check($request->password, $user->password)) {
                             $ipAddress = $request->ip();
                             $token =  $user->createToken('Callanalog API')->plainTextToken;
-                            $encryptedToken = Crypt::encryptString($token);
                             $useragent = $request->header('User-Agent');
                             DB::table('personal_access_tokens')
                                 ->where('token', hash('sha256', explode('|', $token)[1]))  // Look up the token by its hashed value
                                 ->update(['ip_address' => $ipAddress, 'user_agent' => $useragent]);
                             $response = $user->toArray();
-                            $response['token'] = $encryptedToken;
+                            $response['token'] = $token;
                             return $this->output(true, 'Login successfull', $response);
                         } else {
                             return $this->output(false, 'Invalid password!', [], 409);
@@ -611,10 +616,21 @@ class UserController extends Controller
         return $request->user();
     }
 
-    public function logout(Request $request)
+    /* public function logout(Request $request)
     {
         //$request->user()->tokens()->delete();  // delete all tokens
         $request->user()->currentAccessToken()->delete();
+        return $this->output(true, 'You have been successfully logged out!');
+    } */
+    public function logout(Request $request)
+    {
+        //$request->user()->tokens()->delete();  // delete all tokens
+        $encryptedToken = $request->bearerToken();
+        if (!$encryptedToken) {
+            return response()->json(['error' => 'Token not provided'], 401);
+        }
+        $token = PersonalAccessToken::findToken($encryptedToken);
+        $token->delete();
         return $this->output(true, 'You have been successfully logged out!');
     }
 

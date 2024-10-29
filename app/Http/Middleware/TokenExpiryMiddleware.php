@@ -26,12 +26,19 @@ class TokenExpiryMiddleware
         if ($accessToken) {
             // Retrieve the token from the database
             $token = PersonalAccessToken::findToken($accessToken);
-
+            
             if ($token) {
+
+                $currentIp = $request->ip();
+                $userAgent = $request->header('User-Agent');            
+                if ($token->ip_address !== $currentIp || $token->user_agent !== $userAgent) {
+                    return response()->json(['message' => 'Unauthorized: IP address or User-Agent mismatch'], 401);
+                }
+
                 // Check if the token has been inactive for more than 2 hours
                 $lastUsed = $token->last_used_at ? Carbon::parse($token->last_used_at) : $token->created_at;
                 $now = Carbon::now();
-                if ($lastUsed->diffInHours($now) >= 2) {
+                if ($lastUsed->diffInHours($now) >= 1) {
                     // Token is expired due to inactivity (more than 2 hours)
                     // Optionally, you can revoke or delete the token here
                     $token->delete();
@@ -39,6 +46,7 @@ class TokenExpiryMiddleware
                     return response()->json(['message' => 'Token expired due to inactivity'], 401);
                 }
             }
+            
         }
 
         //return $next($request);
