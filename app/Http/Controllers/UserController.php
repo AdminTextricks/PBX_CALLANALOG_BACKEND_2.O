@@ -17,6 +17,7 @@ use Mail;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Validation\Rules\Password;
+use Crypt;
 
 class UserController extends Controller
 {
@@ -578,9 +579,15 @@ class UserController extends Controller
                 if ((isset($user->company->status) && $user->company->status == 1) || in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc', 'reseller'))) {
                     if ($user->status == 1) {
                         if (Hash::check($request->password, $user->password)) {
+                            $ipAddress = $request->ip();
                             $token =  $user->createToken('Callanalog API')->plainTextToken;
+                            $encryptedToken = Crypt::encryptString($token);
+                            $useragent = $request->header('User-Agent');
+                            DB::table('personal_access_tokens')
+                                ->where('token', hash('sha256', explode('|', $token)[1]))  // Look up the token by its hashed value
+                                ->update(['ip_address' => $ipAddress, 'user_agent' => $useragent]);
                             $response = $user->toArray();
-                            $response['token'] = $token;
+                            $response['token'] = $encryptedToken;
                             return $this->output(true, 'Login successfull', $response);
                         } else {
                             return $this->output(false, 'Invalid password!', [], 409);
