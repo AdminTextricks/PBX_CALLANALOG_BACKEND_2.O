@@ -82,7 +82,6 @@ Route::group(['prefix' => 'plan'], function () {
 
 Route::middleware(['auth:sanctum', 'throttle:60,1', 'token.expiry', 'log.request.response'])->group(function () {
 
-
 	# Company Management
 	Route::group(['prefix' => 'company'], function () {
 		//Route::post ('/', [UserController::class, 'addCompany'])->middleware('role:super-admin,add-company');
