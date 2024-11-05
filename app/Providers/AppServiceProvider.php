@@ -3,8 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,8 +23,7 @@ class AppServiceProvider extends ServiceProvider
 		 DB::listen(function ($query) {
             static $connections = 0;
             $connections++;
-			$ipAddress = request()->ip();
-			Log::info("Current database connection count: {$connections} IP Address: {$ipAddress}");
+            Log::info("Current database connection count: {$connections}");
         });
     }
 }
