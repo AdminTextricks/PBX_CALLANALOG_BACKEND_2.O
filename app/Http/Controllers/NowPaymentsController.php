@@ -445,12 +445,14 @@ class NowPaymentsController extends Controller
     {
         $user = \Auth::user();
         $NowPaymentData = $this->nowPaymentsService->getPaymentStatus($paymentId);
+        // $paid_amount = 0;
         try {
             if ($NowPaymentData && $NowPaymentData['payment_status'] == "partially_paid" || $NowPaymentData['payment_status'] == "finished") {
                 // if ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
-                if (isset($NowPaymentData['actually_paid']) && $NowPaymentData['actually_paid'] !== $NowPaymentData['pay_amount']) {
-                    $paid_amount = $NowPaymentData['pay_amount'];
-                }
+                // if (isset($NowPaymentData['actually_paid']) && $NowPaymentData['actually_paid'] !== $NowPaymentData['pay_amount']) {
+                //     $paid_amount = $NowPaymentData['actually_paid'];
+                // }
+                $paid_amount = $NowPaymentData['actually_paid'];
                 $nowPayment_charge_id = Str::random(30);
                 DB::beginTransaction();
 
@@ -684,12 +686,14 @@ class NowPaymentsController extends Controller
     {
         $user = \Auth::user();
         $NowPaymentData = $this->nowPaymentsService->getPaymentStatus($paymentId);
+        // $paid_amount = 0;
         try {
             if ($NowPaymentData && $NowPaymentData['payment_status'] == "partially_paid" || $NowPaymentData['payment_status'] == "finished") {
                 // if ($NowPaymentData && $NowPaymentData['payment_status'] == "waiting") {
-                if (isset($NowPaymentData['actually_paid']) && $NowPaymentData['actually_paid'] !== $NowPaymentData['pay_amount']) {
-                    $paid_amount = $NowPaymentData['pay_amount'];
-                }
+                // if (isset($NowPaymentData['actually_paid']) && $NowPaymentData['actually_paid'] !== $NowPaymentData['pay_amount']) {
+                //     $paid_amount = $NowPaymentData['actually_paid'];
+                // }
+                $paid_amount = $NowPaymentData['actually_paid'];
                 $nowPayment_charge_id = Str::random(30);
                 DB::beginTransaction();
 
