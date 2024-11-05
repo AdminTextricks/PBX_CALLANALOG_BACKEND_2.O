@@ -25,7 +25,8 @@ class AppServiceProvider extends ServiceProvider
 		 DB::listen(function ($query) {
             static $connections = 0;
             $connections++;
-            Log::info("Current database connection count: {$connections}");
+			$ipAddress = request()->ip();
+			Log::info("Current database connection count: {$connections} IP Address: {$ipAddress}");
         });
     }
 }
