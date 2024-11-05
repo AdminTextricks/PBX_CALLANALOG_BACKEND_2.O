@@ -20,5 +20,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         //
+		 DB::listen(function ($query) {
+            static $connections = 0;
+            $connections++;
+            Log::info("Current database connection count: {$connections}");
+        });
     }
 }
