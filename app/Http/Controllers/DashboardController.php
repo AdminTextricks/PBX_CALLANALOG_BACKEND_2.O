@@ -424,7 +424,7 @@ class DashboardController extends Controller
 
         if ($user->roles->first()->slug == 'reseller') {
             try {
-                return $resellerCountsItems = DB::table('reseller_commission_of_items')
+                $resellerCountsItems = DB::table('reseller_commission_of_items')
                     ->leftJoin('invoice_items', 'reseller_commission_of_items.invoice_id', '=', 'invoice_items.invoice_id')
                     ->select(
                         DB::raw('COUNT(*) AS total'),
@@ -433,8 +433,7 @@ class DashboardController extends Controller
                         DB::raw("SUM(CASE WHEN invoice_items.item_type = 'TFN' THEN 1 ELSE 0 END) AS tfn"),
                         DB::raw("SUM( DISTINCT reseller_commission_of_items.commission_amount ) AS commission_amount"),
                     )->where('reseller_commission_of_items.reseller_id', '=', $user->id)
-                    ->toRawSql();
-
+                    ->first();
 
                 if ($resellerCountsItems->total > 0) {
                     return response()->json([
