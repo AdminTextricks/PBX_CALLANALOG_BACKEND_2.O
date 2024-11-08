@@ -431,7 +431,7 @@ class DashboardController extends Controller
                         DB::raw("SUM( reseller_commission_of_items.no_of_items ) AS total_number"),
                         DB::raw("SUM(CASE WHEN invoice_items.item_type = 'Extension' THEN 1 ELSE 0 END) AS extension"),
                         DB::raw("SUM(CASE WHEN invoice_items.item_type = 'TFN' THEN 1 ELSE 0 END) AS tfn"),
-                        DB::raw("SUM( commission_amount ) AS commission_amount"),
+                        DB::raw("SUM( reseller_commission_of_items.commission_amount ) AS commission_amount"),
                     )->where('reseller_commission_of_items.reseller_id', '=', $user->id)
                     ->first();
 
