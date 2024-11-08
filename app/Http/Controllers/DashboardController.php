@@ -428,10 +428,10 @@ class DashboardController extends Controller
                     ->leftJoin('invoice_items', 'reseller_commission_of_items.invoice_id', '=', 'invoice_items.invoice_id')
                     ->select(
                         DB::raw('COUNT(*) AS total'),
-                        DB::raw("SUM( reseller_commission_of_items.no_of_items ) AS total_number"),
+                        DB::raw("SUM( DISTINCT reseller_commission_of_items.no_of_items ) AS total_number"),
                         DB::raw("SUM(CASE WHEN invoice_items.item_type = 'Extension' THEN 1 ELSE 0 END) AS extension"),
                         DB::raw("SUM(CASE WHEN invoice_items.item_type = 'TFN' THEN 1 ELSE 0 END) AS tfn"),
-                        DB::raw("SUM( reseller_commission_of_items.commission_amount ) AS commission_amount"),
+                        DB::raw("SUM( DISTINCT reseller_commission_of_items.commission_amount ) AS commission_amount"),
                     )->where('reseller_commission_of_items.reseller_id', '=', $user->id)
                     ->toRawSql();
 
