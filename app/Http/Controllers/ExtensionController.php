@@ -376,6 +376,7 @@ class ExtensionController extends Controller
                 }
                 $resdelete = $Extension->delete();
                 if ($resdelete) {
+                    Log::error('Remove Extension From File: ' . $Extension->name);
                     Cart::where('item_id', '=', $id)->delete();
                     RingMember::where('extension', $Extension->name)->delete();
                     QueueMember::where('membername', $Extension->name)->delete();
@@ -1105,6 +1106,9 @@ class ExtensionController extends Controller
 
                             $resdelete = $Extension->delete();
                             if ($resdelete) {
+                                Log::error('Mutli delete- Remove Extension From File: ' . $Extension->name);
+
+
                                 Cart::where('item_id', '=', $id)->delete();
                                 RingMember::where('extension', $Extension->name)->delete();
                                 QueueMember::where('membername', $Extension->name)->delete();

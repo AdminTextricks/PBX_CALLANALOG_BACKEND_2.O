@@ -779,6 +779,9 @@ class UserController extends Controller
         fwrite($socket, "Channel: $channel\r\n\r\n");
         fwrite($socket, $command);
         fclose($socket);
+
+        DB::table('live_calls')->where('agent_channel', $channel)->delete();
+        
         return true;
     }
 
