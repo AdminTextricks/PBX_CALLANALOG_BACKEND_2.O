@@ -127,8 +127,8 @@ class CdrController extends Controller
         if ($endDate) {
             $query->where('call_date', '<=', $endDate);
         }
-        if ($request->get('callerId')) {
-            $query->where('caller_num', 'like', "%{$request->get('callerId')}%");
+        if ($request->get('caller_id')) {
+            $query->where('caller_num', 'like', "%{$request->get('caller_id')}%");
         }
         if ($request->get('destination')) {
             $query->where('destination', $request->get('destination'));
