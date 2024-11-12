@@ -251,7 +251,10 @@ class PaymentController extends Controller
                                     if ($server_flag == 1) {
                                         $shell_script = config('app.shell_script');
                                         $result = shell_exec('sudo ' . $shell_script);
-                                        // Log::error('Extension Update File Transfer Log : ' . $result);
+                                        Log::error('Extension Update File Transfer Log : ' . $result);
+                                        $opensips_shell_script = config('app.opensips_shell_script');
+                                        $result2 = shell_exec('sudo ' . $opensips_shell_script);
+                                        Log::error('Opensips reload command exe : ' . $result2);
                                         $this->sipReload();
                                     }
                                     //// End Template transfer code
@@ -276,7 +279,12 @@ class PaymentController extends Controller
                                 if ($server_flag == 1) {
                                     $shell_script = config('app.shell_script');
                                     $result = shell_exec('sudo ' . $shell_script);
-                                    // Log::error('Extension Update File Transfer Log : ' . $result);
+                                    Log::error('Extension Update File Transfer Log : ' . $result);
+
+                                    $opensips_shell_script = config('app.opensips_shell_script');
+                                    $result2 = shell_exec('sudo ' . $opensips_shell_script);
+                                    Log::error('Opensips reload command exe : ' . $result2);
+
                                     $this->sipReload();
                                 }
                                 //// End Template transfer code
@@ -1225,7 +1233,10 @@ class PaymentController extends Controller
                                 if ($server_flag == 1) {
                                     $shell_script = config('app.shell_script');
                                     $result = shell_exec('sudo ' . $shell_script);
-                                    // Log::error('Extension Update File Transfer Log : ' . $result);
+                                    Log::error('Extension Update File Transfer Log : ' . $result);
+                                    $opensips_shell_script = config('app.opensips_shell_script');
+                                    $result2 = shell_exec('sudo ' . $opensips_shell_script);
+                                    Log::error('Opensips reload command exe : ' . $result2);
                                     $this->sipReload();
                                 }
                                 //// End Template transfer code
@@ -1250,7 +1261,10 @@ class PaymentController extends Controller
                             if ($server_flag == 1) {
                                 $shell_script = config('app.shell_script');
                                 $result = shell_exec('sudo ' . $shell_script);
-                                // Log::error('Extension Update File Transfer Log : ' . $result);
+                                Log::error('Extension Update File Transfer Log : ' . $result);
+                                $opensips_shell_script = config('app.opensips_shell_script');
+                                $result2 = shell_exec('sudo ' . $opensips_shell_script);
+                                Log::error('Opensips reload command exe : ' . $result2);
                                 $this->sipReload();
                             }
                             //// End Template transfer code

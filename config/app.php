@@ -65,6 +65,8 @@ return [
     'shell_script' => env('SHELL_SCRIPT', '/var/www/html/pbxcallanalog/pbx_backend/public/transfer.sh'),
 
     'server_flag' => env('SERVER_FLAG', 1),
+
+    'opensips_shell_script' => env('OPENSIPS_SHELL_SCRIPT', '/var/www/html/pbxcallanalog/pbx_backend/public/opensips.sh'),
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
