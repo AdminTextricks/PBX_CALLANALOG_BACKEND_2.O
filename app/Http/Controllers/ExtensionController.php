@@ -314,7 +314,7 @@ class ExtensionController extends Controller
                                 $emailData['invoice_number'] = $invoice_id;
                                 $emailData['email']         = $Company->email;
                                 $emailData['email_template'] = 'invoice';
-                                //dispatch(new \App\Jobs\SendEmailJob($emailData));
+                                dispatch(new \App\Jobs\SendEmailJob($emailData));
 
                                 $response['total_extension'] = count($item_ids);
                                 //$Extensions;//->toArray();
@@ -323,13 +323,13 @@ class ExtensionController extends Controller
                                 $server_flag = config('app.server_flag');
                                 if ($server_flag == 1) {
                                     $shell_script = config('app.shell_script');
-                                  //  $result = shell_exec('sudo ' . $shell_script);
-                                  //  Log::error('Extension File Transfer Log : ' . $result);
+                                    $result = shell_exec('sudo ' . $shell_script);
+                                    Log::error('Extension File Transfer Log : ' . $result);
 
-                                    /* $opensips_shell_script = config('app.opensips_shell_script');
+                                    $opensips_shell_script = config('app.opensips_shell_script');
                                     $result2 = shell_exec('sudo ' . $opensips_shell_script);
-                                    Log::error('Opensips reload command exe : ' . $result2); */
-                                    //$this->sipReload();
+                                    Log::error('Opensips reload command exe : ' . $result2);
+                                    $this->sipReload();
                                 }
                                 DB::commit();
                                 return $this->output(true, 'Extension added successfully.', $response);
