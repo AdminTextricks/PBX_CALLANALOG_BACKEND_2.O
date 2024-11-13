@@ -326,9 +326,9 @@ class ExtensionController extends Controller
                                     $result = shell_exec('sudo ' . $shell_script);
                                     Log::error('Extension File Transfer Log : ' . $result);
 
-                                    $opensips_shell_script = config('app.opensips_shell_script');
+                                    /* $opensips_shell_script = config('app.opensips_shell_script');
                                     $result2 = shell_exec('sudo ' . $opensips_shell_script);
-                                    Log::error('Opensips reload command exe : ' . $result2);
+                                    Log::error('Opensips reload command exe : ' . $result2); */
                                     $this->sipReload();
                                 }
                                 DB::commit();
@@ -884,7 +884,7 @@ class ExtensionController extends Controller
     public function getSipRegistrationList(Request $request)
     {
         $user = \Auth::user();
-        $server_ip = "85.195.76.161";
+        /* $server_ip = "85.195.76.161";
         $socket = @fsockopen($server_ip, 5038);
         $response = "";
         if (!is_resource($socket)) {
@@ -978,7 +978,8 @@ class ExtensionController extends Controller
                     }
                 }
             }
-        }
+        } */
+        $data = array();
         if (count($data) > 0) {
             return $this->output(true, 'Success', $data, 200);
         } else {
