@@ -11,6 +11,7 @@ use Illuminate\Routing\Controller as BaseController;
 use App\Models\MainPrice;
 use App\Models\ResellerPrice;
 use Request;
+use Illuminate\Support\Facades\Log;
 
 class Controller extends BaseController
 {
@@ -204,7 +205,9 @@ class Controller extends BaseController
     public function sipReload()
     {
         $server_ip = "85.195.76.161";
-        $socket = @fsockopen($server_ip, 5038);
+        //$socket = @fsockopen($server_ip, 5038);
+        $socket = fsockopen($server_ip, 5038, $errno, $errstr, 60);
+        Log::error('fsockopen command load : ' . $socket);
         $response = "";
         if (!is_resource($socket)) {
             echo "conn failed in Engconnect ";
