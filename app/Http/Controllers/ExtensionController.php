@@ -329,7 +329,7 @@ class ExtensionController extends Controller
                                     /* $opensips_shell_script = config('app.opensips_shell_script');
                                     $result2 = shell_exec('sudo ' . $opensips_shell_script);
                                     Log::error('Opensips reload command exe : ' . $result2); */
-                                    //$this->sipReload();
+                                    $this->sipReload();
                                 }
                                 DB::commit();
                                 return $this->output(true, 'Extension added successfully.', $response);
