@@ -283,7 +283,7 @@ class ExtensionController extends Controller
                                     $webrtc_template_url = config('app.webrtc_template_url');
                                     $addExtensionFile = $webrtc_template_url;
                                     $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
-                                    $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
+                                    //$this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
                                 }
 
                                 if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
@@ -314,7 +314,7 @@ class ExtensionController extends Controller
                                 $emailData['invoice_number'] = $invoice_id;
                                 $emailData['email']         = $Company->email;
                                 $emailData['email_template'] = 'invoice';
-                                dispatch(new \App\Jobs\SendEmailJob($emailData));
+                                //dispatch(new \App\Jobs\SendEmailJob($emailData));
 
                                 $response['total_extension'] = count($item_ids);
                                 //$Extensions;//->toArray();
@@ -323,8 +323,8 @@ class ExtensionController extends Controller
                                 $server_flag = config('app.server_flag');
                                 if ($server_flag == 1) {
                                     $shell_script = config('app.shell_script');
-                                    $result = shell_exec('sudo ' . $shell_script);
-                                    Log::error('Extension File Transfer Log : ' . $result);
+                                  //  $result = shell_exec('sudo ' . $shell_script);
+                                  //  Log::error('Extension File Transfer Log : ' . $result);
 
                                     /* $opensips_shell_script = config('app.opensips_shell_script');
                                     $result2 = shell_exec('sudo ' . $opensips_shell_script);
