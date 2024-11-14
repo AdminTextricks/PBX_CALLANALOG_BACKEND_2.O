@@ -885,7 +885,7 @@ class ExtensionController extends Controller
     {
         $user = \Auth::user();
 
-        return $shell_script = config('app.extension_list_script');
+        $shell_script = config('app.extension_list_script');
         return $result = shell_exec('sudo ' . $shell_script);
         
         /* $server_ip = "85.195.76.161";
