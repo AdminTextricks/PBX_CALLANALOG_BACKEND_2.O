@@ -884,10 +884,56 @@ class ExtensionController extends Controller
     public function getSipRegistrationList(Request $request)
     {
         $user = \Auth::user();
+        $shell_script = config('app.extension_list_script');
+        $result = shell_exec('sudo ' . $shell_script);
+        $lines = explode("\n", $result); 
+        $data = [];
+        foreach ($lines as $line) {
+            $line = trim($line); // Trim whitespace and newlines
+            if (empty($line)) continue; // Skip empty lines
 
-        $shell_script = config('app.total_no_script');
-        return $result = shell_exec('sudo ' . $shell_script);
-        
+            // Split by '|', then trim and extract AOR and User-agent separately
+            $parts = explode('|', $line);
+            
+            // Extract AOR
+            $aorPart = trim($parts[0]);
+            $aor = trim(str_replace(['AOR:', '"', ','], '', $aorPart));
+
+            // Extract User-agent
+            $userAgentPart = trim($parts[1]);
+            $userAgent = trim(str_replace(['User-agent:', '"', ','], '', $userAgentPart));
+
+            // Extract Received
+            $ReceivedPart = trim($parts[2]);
+            $Received = trim(str_replace([ '"', ',','Received:'], '', $ReceivedPart));
+            
+            $SipPart = explode(':', $Received);
+            $Port = explode(';',end($SipPart));
+
+            /**** DB Data */            
+            $extension = Extension::with('company:id,company_name,email,mobile')
+                ->select('id', 'name', 'agent_name', 'sip_temp', 'callbackextension', 'country_id', 'company_id')
+                ->where('name', $aor)->first();
+            /*** End DB data */
+            // Add to data array
+            $data[] = [
+                'clientId'   => $extension->company_id,
+                'agent'      => $extension->agent_name,
+                'client_name' => $extension->company->company_name,
+                'email'      => $extension->company->email,
+                'AOR' => $aor,
+                'User-agent' => $userAgent,
+                'Received' => $SipPart[1],
+                'Port' => $Port[0],
+            ];
+        }
+        // Output the data array
+        //print_r($data);
+        if ($data) {
+            return $this->output(true, 'Success', $data, 200);
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
         /* $server_ip = "85.195.76.161";
         $socket = @fsockopen($server_ip, 5038);
         $response = "";
@@ -982,13 +1028,13 @@ class ExtensionController extends Controller
                     }
                 }
             }
-        } */
-        $data = $result;
+        } 
+
         if (count($data) > 0) {
             return $this->output(true, 'Success', $data, 200);
         } else {
             return $this->output(true, 'No Record Found', []);
-        }
+        }*/
     }
 
     public function getExtensionsNumberPassword(Request $request, $company_id)
