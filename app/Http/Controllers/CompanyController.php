@@ -425,6 +425,7 @@ class CompanyController extends Controller
             if ($company_id) {
                 $data = Company::select('*')
                     ->with('country:id,country_name')
+                    ->with('userRegisteredServer.server')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
                     ->with('user:id,company_id,name,email')
