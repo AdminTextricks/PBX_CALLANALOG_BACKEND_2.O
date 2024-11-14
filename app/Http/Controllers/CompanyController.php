@@ -436,6 +436,7 @@ class CompanyController extends Controller
                     ->with('country:id,country_name,iso3')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
+                    ->with('userRegisteredServer.server')
                     ->with('user:id,company_id,name,email');
                     if ($request->get('type') && $request->get('type') == 'rc') {
                         $query->where(function($query) use($params) {
@@ -463,7 +464,9 @@ class CompanyController extends Controller
                     ->with('country:id,country_name')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
+                    ->with('userRegisteredServer.server')
                     ->with('user:id,company_id,name,email');
+                    
                     if ($request->get('type') && $request->get('type') == 'rc') {
                         $query->where(function($query) use($params) {
 							$query->where('parent_id', '>', 1);
@@ -486,6 +489,7 @@ class CompanyController extends Controller
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
                     ->with('user:id,company_id,name,email')
+                    ->with('userRegisteredServer.server')
                     ->where('id', $company_id)
                     ->where('parent_id', $user->id)->first();
                 //->where('status', 1)         
@@ -494,6 +498,7 @@ class CompanyController extends Controller
                     ->with('country:id,country_name,iso3')
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
+                    ->with('userRegisteredServer.server')
                     ->with('user:id,company_id,name,email')
                     ->where('parent_id', $user->id)
                     ->where(function($query) use($params) {
@@ -512,6 +517,7 @@ class CompanyController extends Controller
                     ->with('state:id,state_name,state_code')
                     ->with('user_plan:id,name')
                     ->with('user:id,company_id,name,email')
+                    ->with('userRegisteredServer.server')
                     ->where('parent_id', $user->id)
                     ->orderBy('id', 'DESC')
                     ->paginate($perPage = $perPageNo, $columns = ['*'], $pageName = 'page');
@@ -522,6 +528,7 @@ class CompanyController extends Controller
                 ->with('state:id,state_name,state_code')
                 ->with('user_plan:id,name')
                 ->with('user:id,company_id,name,email')
+                ->with('userRegisteredServer.server')
                 ->where('id', $user->company_id)->first();
         }
 
