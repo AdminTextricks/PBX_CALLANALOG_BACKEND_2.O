@@ -66,7 +66,11 @@ return [
 
     'server_flag' => env('SERVER_FLAG', 1),
 
-    'opensips_shell_script' => env('OPENSIPS_SHELL_SCRIPT', '/var/www/html/pbxcallanalog/pbx_backend/public/opensips.sh'),
+    'total_no_script' => env('TOTAL_NO_SCRIPT', '/var/www/html/pbxcallanalog/pbx_backend/public/opensips_scripts/total_no_extensions.sh'),
+
+    'extension_list_script' => env('EXTENSION_LIST_SCRIPT', '/var/www/html/pbxcallanalog/pbx_backend/public/opensips_scripts/extensions.sh'),
+
+    'add_extension_script' => env('ADD_EXTENSION_SCRIPT', '/var/www/html/pbxcallanalog/pbx_backend/public/opensips_scripts/update_extension.sh'),
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

@@ -884,6 +884,10 @@ class ExtensionController extends Controller
     public function getSipRegistrationList(Request $request)
     {
         $user = \Auth::user();
+
+        $shell_script = config('app.total_no_script');
+        return $result = shell_exec('sudo ' . $shell_script);
+        
         /* $server_ip = "85.195.76.161";
         $socket = @fsockopen($server_ip, 5038);
         $response = "";
@@ -979,7 +983,7 @@ class ExtensionController extends Controller
                 }
             }
         } */
-        $data = array();
+        $data = $result;
         if (count($data) > 0) {
             return $this->output(true, 'Success', $data, 200);
         } else {
