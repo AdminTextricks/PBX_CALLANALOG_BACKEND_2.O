@@ -886,8 +886,12 @@ class ExtensionController extends Controller
         $user = \Auth::user();
 
         $shell_script = config('app.extension_list_script');
-        return $result = shell_exec('sudo ' . $shell_script);
-        
+        $data = shell_exec('sudo ' . $shell_script);
+        if ($data) {
+            return $this->output(true, 'Success', $data, 200);
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
         /* $server_ip = "85.195.76.161";
         $socket = @fsockopen($server_ip, 5038);
         $response = "";
@@ -982,13 +986,13 @@ class ExtensionController extends Controller
                     }
                 }
             }
-        } */
-        $data = $result;
+        } 
+        
         if (count($data) > 0) {
             return $this->output(true, 'Success', $data, 200);
         } else {
             return $this->output(true, 'No Record Found', []);
-        }
+        }*/
     }
 
     public function getExtensionsNumberPassword(Request $request, $company_id)
