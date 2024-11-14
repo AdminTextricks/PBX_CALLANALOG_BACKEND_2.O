@@ -60,6 +60,6 @@ class Company extends Model
         return $this->hasOne(User::class, 'id', 'parent_id');
     }
     public function userRegisteredServer(){
-        return $this->hasOne(UserRegisteredServer::class, 'company_id', 'id');
+        return $this->hasOne(UserRegisteredServer::class, 'id', 'company_id');
     }
 }
