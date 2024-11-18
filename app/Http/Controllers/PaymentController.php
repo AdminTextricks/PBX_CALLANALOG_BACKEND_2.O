@@ -1347,7 +1347,7 @@ class PaymentController extends Controller
 
                 return $this->output(true, 'Payment successfully.', $response, 200);
             } else {
-                return $this->output(false, 'You have insufficient balance in your Wallet. Please choose Pay Now Option.', null, 400);
+                return $this->output(false, 'You have insufficient balance. Please recharge your wallet.', null, 400);
             }
         } else {
             return $this->output(false, 'Oops! Something Went Wrong. Mismatch values', 409);
