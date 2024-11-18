@@ -911,9 +911,30 @@ class ExtensionController extends Controller
             $Port = explode(';',end($SipPart));
 
             /**** DB Data */            
-            $extension = Extension::with('company:id,company_name,email,mobile')
+            if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+
+                $extension = Extension::with('company:id,company_name,email,mobile')
+                        ->with([
+                            'userRegisteredServer' => function ($query) {
+                                $query->select('id', 'server_id', 'company_id')
+                                    ->with('server:id,name,ip,port,domain,status');
+                            }
+                        ])
+                        ->select('id', 'name', 'agent_name', 'sip_temp', 'callbackextension', 'country_id', 'company_id')
+                        ->where('name', $aor)->first();
+            }else{
+                $extension = Extension::with('company:id,company_name,email,mobile')
+                ->with([
+                    'userRegisteredServer' => function ($query) {
+                        $query->select('id', 'server_id', 'company_id')
+                            ->with('server:id,name,ip,port,domain,status');
+                    }
+                ])
                 ->select('id', 'name', 'agent_name', 'sip_temp', 'callbackextension', 'country_id', 'company_id')
+                ->where('company_id', $user->company_id)
                 ->where('name', $aor)->first();
+                
+            }
             /*** End DB data */
             // Add to data array
             $data[] = [

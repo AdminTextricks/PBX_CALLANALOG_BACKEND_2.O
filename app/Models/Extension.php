@@ -75,4 +75,8 @@ class Extension extends Model
     {
         return $this->belongsTo(Country::class);
     }
+
+    public function userRegisteredServer(){
+        return $this->hasOne(UserRegisteredServer::class, 'company_id', 'company_id');
+    }
 }
