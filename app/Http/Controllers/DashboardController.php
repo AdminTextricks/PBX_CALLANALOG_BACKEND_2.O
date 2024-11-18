@@ -455,7 +455,7 @@ class DashboardController extends Controller
                     }, 'base_data')
                     ->selectRaw('
                         COUNT(*) AS total,
-                        SUM(base_data.no_of_items) AS total_items,
+                        SUM(base_data.no_of_items) AS total_number,
                         SUM(CASE WHEN base_data.item_type = "Extension" THEN base_data.no_of_items ELSE 0 END) AS extension,
                         SUM(CASE WHEN base_data.item_type = "TFN" THEN base_data.no_of_items ELSE 0 END) AS tfn,
                         SUM(base_data.commission_amount) AS commission_amount
@@ -464,7 +464,7 @@ class DashboardController extends Controller
                 if ($resellerCountsItems->total > 0) {
                     return response()->json([
                         'total' => $resellerCountsItems->total,
-                        'total_items' => $resellerCountsItems->total_items,
+                        'total_number' => $resellerCountsItems->total_number,
                         'extension_number' => $resellerCountsItems->extension,
                         'tfn_number' => $resellerCountsItems->tfn,
                         'commission_amount' => $resellerCountsItems->commission_amount
