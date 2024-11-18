@@ -421,10 +421,11 @@ class DashboardController extends Controller
     public function getAllcompanyItemsCommissionListforResellerDashboard(Request $request)
     {
         $user = \Auth::user();
-
+        $resellerId = $user->id;
         if ($user->roles->first()->slug == 'reseller') {
             try {
-                $resellerCountsItems = DB::table('reseller_commission_of_items')
+                /*
+                return $resellerCountsItems = DB::table('reseller_commission_of_items')
                     ->leftJoin('invoice_items', 'reseller_commission_of_items.invoice_id', '=', 'invoice_items.invoice_id')
                     ->select(
                         DB::raw('COUNT(*) AS total'),
@@ -433,11 +434,37 @@ class DashboardController extends Controller
                         DB::raw("SUM(CASE WHEN invoice_items.item_type = 'TFN' THEN 1 ELSE 0 END) AS tfn"),
                         DB::raw("SUM( DISTINCT reseller_commission_of_items.commission_amount ) AS commission_amount"),
                     )->where('reseller_commission_of_items.reseller_id', '=', $user->id)
+                    ->toRawSql();
+*/
+                    $resellerCountsItems = DB::table(function ($query)use ($resellerId) {
+                        $query->select(
+                            'reseller_commission_of_items.id',
+                            'reseller_commission_of_items.no_of_items',
+                            'reseller_commission_of_items.commission_amount',
+                            'invoice_items.item_type'
+                        )
+                        ->from('reseller_commission_of_items')
+                        ->leftJoin('invoice_items', 'reseller_commission_of_items.invoice_id', '=', 'invoice_items.invoice_id')
+                        ->where('reseller_commission_of_items.reseller_id', $resellerId)
+                        ->groupBy(
+                            'reseller_commission_of_items.id',
+                            'reseller_commission_of_items.no_of_items',
+                            'reseller_commission_of_items.commission_amount',
+                            'invoice_items.item_type'
+                        );
+                    }, 'base_data')
+                    ->selectRaw('
+                        COUNT(*) AS total,
+                        SUM(base_data.no_of_items) AS total_items,
+                        SUM(CASE WHEN base_data.item_type = "Extension" THEN base_data.no_of_items ELSE 0 END) AS extension,
+                        SUM(CASE WHEN base_data.item_type = "TFN" THEN base_data.no_of_items ELSE 0 END) AS tfn,
+                        SUM(base_data.commission_amount) AS commission_amount
+                    ')
                     ->first();
-
                 if ($resellerCountsItems->total > 0) {
                     return response()->json([
-                        'total_number' => $resellerCountsItems->total_number,
+                        'total' => $resellerCountsItems->total,
+                        'total_items' => $resellerCountsItems->total_items,
                         'extension_number' => $resellerCountsItems->extension,
                         'tfn_number' => $resellerCountsItems->tfn,
                         'commission_amount' => $resellerCountsItems->commission_amount
