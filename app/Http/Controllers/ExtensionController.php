@@ -935,13 +935,13 @@ class ExtensionController extends Controller
                 ->where('name', $aor)->first();
                 
             }
-            return $extension->company;
+            //return $extension->userRegisteredServer;
             /*** End DB data */
             // Add to data array
             $data[] = [
-                /* 'server_name'   => $extension->user_registered_server->server->name,
-                'server_ip'     => $extension->user_registered_server->server->ip,
-                'server_port'   => $extension->user_registered_server->server->port, */
+                'server_name'   => $extension->userRegisteredServer->server->name,
+                'server_ip'     => $extension->userRegisteredServer->server->ip,
+                'server_port'   => $extension->userRegisteredServer->server->port,
                 'company_id'    => $extension->company_id,
                 'agent'         => $extension->agent_name,
                 'company_name'  => $extension->company->company_name,
