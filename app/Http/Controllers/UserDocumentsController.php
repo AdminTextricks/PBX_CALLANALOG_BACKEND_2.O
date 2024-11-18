@@ -6,10 +6,14 @@ use App\Models\UserDocuments;
 use App\Models\User;
 use Illuminate\Validation\Rules\File;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Traits\ManageNotifications;
 use Validator;
 
 class UserDocumentsController extends Controller
 {
+    use ManageNotifications;
     public function __construct(){
 
     }
@@ -71,6 +75,22 @@ class UserDocumentsController extends Controller
             if($error_flag == 1){
                 return $this->output(false, 'Error occurred in User Document uploading.', $response, 200);
             }else{
+                $User = User::find($request->user()->id); 
+                /**
+                 *  Notification code
+                 */
+                $subject = 'Upload Documents';
+                $message = 'A new user has been uploaded a documents: ' . $User->company->company_name . ' / ' . $User->company->email;
+                $type = 'info';
+                $notifyUserType = ['super-admin', 'support', 'noc'];
+                $notifyUser = array();
+                $res = $this->addNotification($User, $subject, $message, $type, $notifyUserType, $notifyUser);
+                if (!$res) {
+                    Log::error('Notification not created when user role: ' . $User->role_id . '  in paymentWithWallet method.');
+                }
+                /**
+                 * End of Notification code
+                 */
                 return $this->output(true, 'User Document uploaded successfully.', $response, 200);
             }
             
