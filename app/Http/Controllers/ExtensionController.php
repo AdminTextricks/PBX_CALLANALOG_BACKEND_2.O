@@ -913,7 +913,7 @@ class ExtensionController extends Controller
             /**** DB Data */            
             if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
 
-                return $extension = Extension::with('company:id,company_name,email,mobile')
+                $extension = Extension::with('company:id,company_name,email,mobile')
                         ->with([
                             'userRegisteredServer' => function ($query) {
                                 $query->select('id', 'server_id', 'company_id')
@@ -938,7 +938,10 @@ class ExtensionController extends Controller
             /*** End DB data */
             // Add to data array
             $data[] = [
-                'clientId'   => $extension->company_id,
+                'server_name'   => $extension->user_registered_server->server->name,
+                'server_ip'   => $extension->user_registered_server->server->ip,
+                'server_port' => $extension->user_registered_server->server->port,
+                'company_id'   => $extension->company_id,
                 'agent'      => $extension->agent_name,
                 'company_name'  => $extension->company->company_name,
                 'email'         => $extension->company->email,
