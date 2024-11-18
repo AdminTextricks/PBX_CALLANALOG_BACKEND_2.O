@@ -935,7 +935,7 @@ class ExtensionController extends Controller
                 ->where('name', $aor)->first();
                 
             }
-            echo $extension->user_registered_server->server->name;
+            echo $extension->user_registered_server;
             /*** End DB data */
             // Add to data array
             $data[] = [
