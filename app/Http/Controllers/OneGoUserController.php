@@ -469,7 +469,7 @@ class OneGoUserController extends Controller
                                 $response['invoice'] = $createinvoice->toArray();
                                 $response['invoice']['invoice_items'] = $InvoiceItems;
                                 DB::commit();
-                                return $this->output(true, 'Invoice Created Successfully!!.', $response);
+                                return $this->output(true, 'Invoice Created Successfully!!', $response);
                             } else {
                                 DB::rollback();
                                 return $this->output(false, 'Error occurred in creating Invoice.', [], 409);
@@ -677,15 +677,15 @@ class OneGoUserController extends Controller
                                 }
                             } else {
                                 DB::rollback();
-                                return $this->output(false, 'Error occurred in amount deducting!.', [], 409);
+                                return $this->output(false, 'Error occurred in amount deducting!', [], 409);
                             }
                         } else {
                             DB::commit();
-                            return $this->output(false, 'Reseller account has insufficient balance!.', [], 409);
+                            return $this->output(false, 'Reseller account has insufficient balance!', [], 409);
                         }
                     } else {
                         DB::commit();
-                        return $this->output(false, 'Reseller wallet account not exist!.', [], 409);
+                        return $this->output(false, 'Reseller wallet account not exist!', [], 409);
                     }
                 }
             } else {
@@ -735,7 +735,7 @@ class OneGoUserController extends Controller
                         $TfnObjRes     = $TfnObj->save();
                         if (!$TfnObjRes) {
                             DB::rollBack();
-                            return $this->output(false, 'Error occurred in tfn Updating. Please try again!.', [], 200);
+                            return $this->output(false, 'Error occurred in tfn Updating. Please try again!', [], 200);
                         }
                     }
                 }
@@ -754,7 +754,7 @@ class OneGoUserController extends Controller
                     return $this->output(true, 'Success', 200);
                 } else {
                     DB::commit();
-                    return $this->output(false, 'Error occurred in One-Go-User deleting. Please try again!.', [], 209);
+                    return $this->output(false, 'Error occurred in One-Go-User deleting. Please try again!', [], 209);
                 }
             } else {
                 DB::commit();
