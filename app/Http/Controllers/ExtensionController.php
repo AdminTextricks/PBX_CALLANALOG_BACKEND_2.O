@@ -884,80 +884,79 @@ class ExtensionController extends Controller
     public function getSipRegistrationList(Request $request)
     {
         $user = \Auth::user();
+        $data = [];
         $shell_script = config('app.extension_list_script');
         $result = shell_exec('sudo ' . $shell_script);
-        $lines = explode("\n", $result); 
-        $data = [];
-        foreach ($lines as $line) {
-            $line = trim($line); // Trim whitespace and newlines
-            if (empty($line)) continue; // Skip empty lines
+        if(!empty($result)){
+            $lines = explode("\n", $result); 
+            foreach ($lines as $line) {
+                $line = trim($line); // Trim whitespace and newlines
+                if (empty($line)) continue; // Skip empty lines
 
-            // Split by '|', then trim and extract AOR and User-agent separately
-            $parts = explode('|', $line);
-            
-            // Extract AOR
-            $aorPart = trim($parts[0]);
-            $aor = trim(str_replace(['AOR:', '"', ','], '', $aorPart));
-
-            // Extract User-agent
-            $userAgentPart = trim($parts[1]);
-            $userAgent = trim(str_replace(['User-agent:', '"', ','], '', $userAgentPart));
-
-            // Extract Received
-            $ReceivedPart = trim($parts[2]);
-            $Received = trim(str_replace([ '"', ',','Received:'], '', $ReceivedPart));
-            
-            $SipPart = explode(':', $Received);
-            $Port = explode(';',end($SipPart));
-
-            /**** DB Data */            
-            if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
-
-                $extension = Extension::with('company:id,company_name,email,mobile')
-                        ->with([
-                            'userRegisteredServer' => function ($query) {
-                                $query->select('id', 'server_id', 'company_id')
-                                    ->with('server:id,name,ip,port,domain,status');
-                            }
-                        ])
-                        ->select('id', 'name', 'agent_name', 'sip_temp', 'callbackextension', 'country_id', 'company_id')
-                        ->where('name', $aor)->first();
-            }else{
-                $extension = Extension::with('company:id,company_name,email,mobile')
-                ->with([
-                    'userRegisteredServer' => function ($query) {
-                        $query->select('id', 'server_id', 'company_id')
-                            ->with('server:id,name,ip,port,domain,status');
-                    }
-                ])
-                ->select('id', 'name', 'agent_name', 'sip_temp', 'callbackextension', 'country_id', 'company_id')
-                ->where('company_id', $user->company_id)
-                ->where('name', $aor)->first();
+                // Split by '|', then trim and extract AOR and User-agent separately
+                $parts = explode('|', $line);
                 
+                // Extract AOR
+                $aorPart = trim($parts[0]);
+                $aor = trim(str_replace(['AOR:', '"', ','], '', $aorPart));
+
+                // Extract User-agent
+                $userAgentPart = trim($parts[1]);
+                $userAgent = trim(str_replace(['User-agent:', '"', ','], '', $userAgentPart));
+
+                // Extract Received
+                $ReceivedPart = trim($parts[2]);
+                $Received = trim(str_replace([ '"', ',','Received:'], '', $ReceivedPart));
+                
+                $SipPart = explode(':', $Received);
+                $Port = explode(';',end($SipPart));
+
+                /**** DB Data */            
+                if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+
+                    $extension = Extension::with('company:id,company_name,email,mobile')
+                            ->with([
+                                'userRegisteredServer' => function ($query) {
+                                    $query->select('id', 'server_id', 'company_id')
+                                        ->with('server:id,name,ip,port,domain,status');
+                                }
+                            ])
+                            ->select('id', 'name', 'agent_name', 'sip_temp', 'callbackextension', 'country_id', 'company_id')
+                            ->where('name', $aor)->first();
+                }else{
+                    $extension = Extension::with('company:id,company_name,email,mobile')
+                            ->with([
+                                'userRegisteredServer' => function ($query) {
+                                    $query->select('id', 'server_id', 'company_id')
+                                        ->with('server:id,name,ip,port,domain,status');
+                                }
+                            ])
+                            ->select('id', 'name', 'agent_name', 'sip_temp', 'callbackextension', 'country_id', 'company_id')
+                            ->where('company_id', $user->company_id)
+                            ->where('name', $aor)->first();
+                    
+                }
+                //return $extension->userRegisteredServer;
+                /*** End DB data */
+                // Add to data array
+                if ($extension) {
+                    $data[] = [
+                        'server_name'   => $extension->userRegisteredServer->server->name,
+                        'server_ip'     => $extension->userRegisteredServer->server->ip,
+                        'server_port'   => $extension->userRegisteredServer->server->port,
+                        'company_id'    => $extension->company_id,
+                        'agent'         => $extension->agent_name,
+                        'company_name'  => $extension->company->company_name,
+                        'email'         => $extension->company->email,
+                        'extension'     => $aor,
+                        'User-agent' => $userAgent,
+                        'Received'  => $SipPart[1],
+                        'Port' => $Port[0],
+                    ];
+                }
             }
-            //return $extension->userRegisteredServer;
-            /*** End DB data */
-            // Add to data array
-            $data[] = [
-                'server_name'   => $extension->userRegisteredServer->server->name,
-                'server_ip'     => $extension->userRegisteredServer->server->ip,
-                'server_port'   => $extension->userRegisteredServer->server->port,
-                'company_id'    => $extension->company_id,
-                'agent'         => $extension->agent_name,
-                'company_name'  => $extension->company->company_name,
-                'email'         => $extension->company->email,
-                'extension'     => $aor,
-                'User-agent' => $userAgent,
-                'Received'  => $SipPart[1],
-                'Port' => $Port[0],
-            ];
-        }
-        // Output the data array
-        //print_r($data);
-        if ($data) {
-            return $this->output(true, 'Success', $data, 200);
-        } else {
-            return $this->output(true, 'No Record Found', []);
+            // Output the data array
+            //print_r($data);
         }
         /* $server_ip = "85.195.76.161";
         $socket = @fsockopen($server_ip, 5038);
