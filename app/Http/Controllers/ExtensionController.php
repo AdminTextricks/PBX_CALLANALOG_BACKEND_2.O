@@ -958,6 +958,11 @@ class ExtensionController extends Controller
             // Output the data array
             //print_r($data);
         }
+        if ($data) {
+            return $this->output(true, 'Success', $data, 200);
+        } else {
+            return $this->output(true, 'No Record Found', []);
+        }
         /* $server_ip = "85.195.76.161";
         $socket = @fsockopen($server_ip, 5038);
         $response = "";
