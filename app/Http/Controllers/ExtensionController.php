@@ -1748,4 +1748,24 @@ class ExtensionController extends Controller
             return $this->output(false, 'Sorry! You are not authorized.', [], 403);
         }
     }
+
+    public function extensionUnregisterFromOpenSips(Request $request, $extension_number)
+    {
+        $user = \Auth::user();
+        try{
+            $existExtension = Extension::select(['name'])->where('name', $extension_number)->get();
+            $exitArray = $existExtension->toArray();
+            if(!empty($exitArray)){
+                $shell_script = config('app.shell_script');
+                $result = shell_exec('sudo ' . $shell_script.' '.$extension_number);
+                Log::error('Extension {'.$extension_number.'} unregistered Successfully : ' . $result);
+            }else{
+                Log::error('Sorry! extension not exist with us');
+                return $this->output(false, 'Sorry! extension not exist with us.', [], 403);
+            }      
+        } catch (\Exception $e) {
+            Log::error('Error occurred in unregistered extension from opensips : ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
+        }
+    }
 }

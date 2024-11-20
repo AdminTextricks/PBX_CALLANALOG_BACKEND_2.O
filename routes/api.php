@@ -55,7 +55,7 @@ use App\Http\Controllers\ResellerPaymentHistoryController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-Route::post('/sipReload', [UserController::class, 'sipReload']);
+//Route::post('/sipReload', [UserController::class, 'sipReload']);
 Route::post('/registration', [UserController::class, 'registration']);
 
 Route::middleware(['throttle:5,1', 'log.request.response'])->group(function () {
@@ -256,6 +256,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1', 'token.expiry', 'log.request
 		Route::get('/getForBarging/{company_id?}', [ExtensionController::class, 'getExtensionsForBarging']);
 		Route::post('/renewExtensions', [ExtensionController::class, 'renewExtensions']);
 		Route::get('/extensionlog', [ExtensionController::class, 'getAllExtensionsLog']);
+		Route::get('/extensionUnregisterFromOpenSips/{extension_number}', [ExtensionController::class, 'extensionUnregisterFromOpenSips']);
 	});
 
 	#Conf Template Manage

@@ -71,6 +71,8 @@ return [
     'extension_list_script' => env('EXTENSION_LIST_SCRIPT', '/var/www/html/pbxcallanalog/pbx_backend/public/opensips_scripts/extensions.sh'),
 
     'add_extension_script' => env('ADD_EXTENSION_SCRIPT', '/var/www/html/pbxcallanalog/pbx_backend/public/opensips_scripts/update_extension.sh'),
+    
+    'extension_unregister_script' => env('EXTENSION_UNREGISTER_SCRIPT', '/var/www/html/pbxcallanalog/pbx_backend/public/opensips_scripts/update_extension.sh'),
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
