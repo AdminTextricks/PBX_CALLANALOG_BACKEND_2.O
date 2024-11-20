@@ -55,7 +55,7 @@ use App\Http\Controllers\ResellerPaymentHistoryController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-
+Route::post('/sipReload', [UserController::class, 'sipReload']);
 Route::post('/registration', [UserController::class, 'registration']);
 
 Route::middleware(['throttle:5,1', 'log.request.response'])->group(function () {

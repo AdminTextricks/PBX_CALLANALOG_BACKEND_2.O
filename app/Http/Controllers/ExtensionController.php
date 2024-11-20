@@ -325,10 +325,6 @@ class ExtensionController extends Controller
                                     $shell_script = config('app.shell_script');
                                     $result = shell_exec('sudo ' . $shell_script);
                                     Log::error('Extension File Transfer Log : ' . $result);
-
-                                    $add_extension_script = config('app.add_extension_script');
-                                    $result2 = shell_exec('sudo ' . $add_extension_script);
-                                    Log::error('Opensips add extension command exe : ' . $result2);
                                     $this->sipReload();
                                 }
                                 DB::commit();

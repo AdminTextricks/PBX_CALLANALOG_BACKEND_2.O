@@ -10,6 +10,7 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use App\Models\MainPrice;
 use App\Models\ResellerPrice;
+use App\Models\Server;
 use Request;
 use Illuminate\Support\Facades\Log;
 
@@ -204,25 +205,43 @@ class Controller extends BaseController
 
     public function sipReload()
     {
-        $server_ip = "85.195.76.161";
-        //$socket = @fsockopen($server_ip, 5038);
-        $socket = fsockopen($server_ip, 5038, $errno, $errstr, 60);
-        Log::error('fsockopen command load : ' . $socket);
-        $response = "";
-        if (!is_resource($socket)) {
-            echo "conn failed in Engconnect ";
-            exit;
+        $add_extension_script = config('app.add_extension_script');
+        $result2 = shell_exec('sudo ' . $add_extension_script);
+        Log::error('Opensips add extension command exe : ' . $result2);
+        
+        $Server_arr = Server::where('status',1)->get();
+        if ($Server_arr->isNotEmpty()) {
+            foreach($Server_arr as $server){
+                $server_ip  = $server['ip'];
+                $ami_port   = $server['ami_port'];
+                $user_name  = $server['user_name'];
+                $secret     = $server['secret'];
+                //$socket = @fsockopen($server_ip, 5038);
+                $socket = fsockopen($server_ip, $ami_port, $errno, $errstr, 60);
+                Log::error('fsockopen command load : ' . $socket);
+                $response = "";
+                if (!is_resource($socket)) {
+                // echo "conn failed in Engconnect ";
+                    Log::error('conn failed in Engconnect');
+                    return false;
+                //  exit;
+                }
+                fputs($socket, "Action: Login\r\n");
+                fputs($socket, "UserName: ".$user_name."\r\n");
+                fputs($socket, "Secret: ".$secret."\r\n\r\n");
+                fputs($socket, "Action: Command\r\n");
+                fputs($socket, "Command: sip reload\r\n\r\n");
+                fputs($socket, "Action: Logoff\r\n\r\n");
+                while (!feof($socket))
+                    $response .= fread($socket, $ami_port);
+                fclose($socket);
+                Log::error('fsockopen command run for : ' . $server_ip);
+            }
+            return true;
+        }else{
+            Log::error('Server details not available to reload sip');
+            return false;
         }
-        fputs($socket, "Action: Login\r\n");
-        fputs($socket, "UserName: TxuserGClanlg\r\n");
-        fputs($socket, "Secret: l3o9zMP3&X[k2+\r\n\r\n");
-        fputs($socket, "Action: Command\r\n");
-        fputs($socket, "Command: sip reload\r\n\r\n");
-        fputs($socket, "Action: Logoff\r\n\r\n");
-        while (!feof($socket))
-            $response .= fread($socket, 5038);
-        fclose($socket);
-        return true;
     }
     public function addExtensionInConfFile($extensionName, $conf_file_path, $secret, $account_code, $template_contents)
     {
