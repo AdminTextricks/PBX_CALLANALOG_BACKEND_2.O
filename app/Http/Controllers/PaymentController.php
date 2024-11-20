@@ -1223,14 +1223,14 @@ class PaymentController extends Controller
                                 }
                                 $ConfTemplate = ConfTemplate::select()->where('template_id', $numbers_list->sip_temp)->first();
                                 $this->addExtensionInConfFile($numbers_list->name, $addExtensionFile, $numbers_list->secret, $user->company->account_code, $ConfTemplate->template_contents);
-                                $server_flag = config('app.server_flag');
+                                /* $server_flag = config('app.server_flag');
                                 if ($server_flag == 1) {
                                     $shell_script = config('app.shell_script');
                                     $result = shell_exec('sudo ' . $shell_script);
                                     Log::error('Extension Update File Transfer Log : ' . $result);
                                   
                                     $this->sipReload();
-                                }
+                                } */
                                 //// End Template transfer code
                             }
 
@@ -1249,14 +1249,14 @@ class PaymentController extends Controller
                             $addExtensionFile = $webrtc_template_url;
                             $ConfTemplate = ConfTemplate::select()->where('template_id', 'WEBRTC')->first();
                             $this->addExtensionInConfFile($numbers_list->name, $addExtensionFile, $numbers_list->secret, $user->company->account_code, $ConfTemplate->template_contents);
-                            $server_flag = config('app.server_flag');
+                           /*  $server_flag = config('app.server_flag');
                             if ($server_flag == 1) {
                                 $shell_script = config('app.shell_script');
                                 $result = shell_exec('sudo ' . $shell_script);
                                 Log::error('Extension Update File Transfer Log : ' . $result);
                               
                                 $this->sipReload();
-                            }
+                            } */
                             //// End Template transfer code
                             $value = "Purchase";
                             $numbers_list->update([
@@ -1279,7 +1279,15 @@ class PaymentController extends Controller
                         return $this->output(false, 'Invoice item not found.', 400);
                     }
                 }
-
+                
+                $server_flag = config('app.server_flag');
+                if ($server_flag == 1) {
+                    $shell_script = config('app.shell_script');
+                    $result = shell_exec('sudo ' . $shell_script);
+                    Log::error('Extension Update File Transfer Log : ' . $result);
+                  
+                    $this->sipReload();
+                }
                 $invoice_update = Invoice::where('id', $request->invoice_id)->first();
                 if (!$invoice_update) {
                     DB::rollback();
