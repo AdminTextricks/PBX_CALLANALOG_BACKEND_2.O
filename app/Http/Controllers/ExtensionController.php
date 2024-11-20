@@ -1761,6 +1761,7 @@ class ExtensionController extends Controller
                 Log::error('Extension {'.$extension_number.'} unregistered Successfully : ' . $result);
 
                 return $this->output(true, 'Extension {'.$extension_number.'} unregistered Successfully.', [], 200);
+                
             }else{
                 Log::error('Sorry! extension not exist with us');
                 return $this->output(false, 'Sorry! extension not exist with us.', [], 403);
