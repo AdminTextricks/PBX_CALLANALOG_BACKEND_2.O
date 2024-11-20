@@ -14,6 +14,9 @@ class Server extends Model
         'ip',
         'port',
         'domain',
+        'user_name',
+        'secret',
+        'ami_port',
         'status',
     ];
 

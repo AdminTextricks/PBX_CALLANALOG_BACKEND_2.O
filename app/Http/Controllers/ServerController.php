@@ -27,6 +27,9 @@ class ServerController extends Controller
 				'name'	    => 'required',
 				'port'	    => 'nullable',
 				'ip'	    => 'required|ip',
+				'user_name'	=> 'required',
+				'secret'	=> 'required',
+				'ami_port'	=> 'required',
 				'domain'    => 'required|regex:/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu',				
 			]);
 			if ($validator->fails()){
@@ -43,7 +46,10 @@ class ServerController extends Controller
 							'name'	    => $request->name,
 							'ip'        => $request->ip,
 							'port'      => isset($request->port) ? $request->port : 5060,
-							'domain'	=> $request->domain,							
+							'domain'	=> $request->domain,
+							'user_name'	=> $request->user_name,
+							'secret'	=> $request->secret,
+							'ami_port'	=> $request->ami_port,
 							'status' 	=> isset($request->status) ? $request->status : '1',
 						]);
 					$response = $Server->toArray();
@@ -143,6 +149,9 @@ class ServerController extends Controller
 					'name'      => 'required',
 					'ip'	    => 'required|ip|unique:servers,ip,'.$Server->id,
 					'port'		=> 'nullable',
+					'user_name'	=> 'required',
+					'secret'	=> 'required',
+					'ami_port'	=> 'required',
 					'domain'	=> 'required|regex:/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu',					
 					'status'	=> 'nullable',
 				]);
@@ -155,11 +164,14 @@ class ServerController extends Controller
 							->where('id','!=', $id)
 							->first();
 				if(!$ServerOld){
-					$Server->name   = $request->name;
-					$Server->ip     = $request->ip;
-					$Server->port   = $request->port;
-					$Server->domain = $request->domain;
-					$ServersRes     = $Server->save();
+					$Server->name   	= $request->name;
+					$Server->ip     	= $request->ip;
+					$Server->port   	= $request->port;
+					$Server->domain 	= $request->domain;
+					$Server->user_name 	= $request->user_name;
+					$Server->secret 	= $request->secret;
+					$Server->ami_port 	= $request->ami_port;
+					$ServersRes     	= $Server->save();
 					if($ServersRes){
 						$Server = Server::where('id', $id)->first();        
 						$response = $Server->toArray();

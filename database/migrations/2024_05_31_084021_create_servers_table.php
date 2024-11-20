@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('ip')->nullable()->index();
             $table->integer('port')->nullable()->default(5060);
             $table->string('domain')->nullable();
+            $table->string('user_name')->nullable();
+            $table->string('secret')->nullable();
+            $table->string('ami_port')->nullable();
             $table->tinyInteger('status')->nullable()->default(1);
             $table->timestamps();            
         });
