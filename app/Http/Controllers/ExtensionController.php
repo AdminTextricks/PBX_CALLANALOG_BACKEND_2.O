@@ -1757,6 +1757,7 @@ class ExtensionController extends Controller
             $exitArray = $existExtension->toArray();
             if(!empty($exitArray)){
                 $shell_script = config('app.extension_unregister_script');
+                return $shell_script.' '.escapeshellarg($extension_number);
                 $result = shell_exec('sudo ' . $shell_script.' '.escapeshellarg($extension_number));
                 Log::error('Extension {'.$extension_number.'} unregistered Successfully : ' . $result);
 
