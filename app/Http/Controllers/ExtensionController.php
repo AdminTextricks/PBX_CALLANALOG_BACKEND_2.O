@@ -1759,6 +1759,8 @@ class ExtensionController extends Controller
                 $shell_script = config('app.shell_script');
                 $result = shell_exec('sudo ' . $shell_script.' '.$extension_number);
                 Log::error('Extension {'.$extension_number.'} unregistered Successfully : ' . $result);
+
+                return $this->output(true, 'Extension {'.$extension_number.'} unregistered Successfully.', [], 200);
             }else{
                 Log::error('Sorry! extension not exist with us');
                 return $this->output(false, 'Sorry! extension not exist with us.', [], 403);
