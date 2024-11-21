@@ -1757,12 +1757,18 @@ class ExtensionController extends Controller
             $exitArray = $existExtension->toArray();
             if(!empty($exitArray)){
                 $shell_script = config('app.extension_unregister_script');
-                echo 'Command: sudo ' . $shell_script . ' ' . escapeshellarg($extension_number);
-                $result = shell_exec('sudo ' . $shell_script.' '.escapeshellarg($extension_number));
-                Log::error('Extension {'.$extension_number.'} unregistered Successfully : ' . $result);
+                $command = 'sudo ' . escapeshellcmd($shell_script) . ' ' . escapeshellarg($extension_number);
 
-                return $this->output(true, 'Extension {'.$extension_number.'} unregistered Successfully. '.$result, [], 200);
-                
+               // echo 'Command: ' . $command; // Debug the command being executed
+                $result = shell_exec($command);
+
+                Log::error('Extension {' . $extension_number . '} unregistered Successfully : ' . $result);
+
+                if(strtoupper($result) == 'OK'){
+                    return $this->output(true, 'Extension {'.$extension_number.'} unregistered Successfully. ', [], 200);
+                }else{
+                    return $this->output(false, 'Sorry! extension not unregistered.', [], 403);
+                }
             }else{
                 Log::error('Sorry! extension not exist with us');
                 return $this->output(false, 'Sorry! extension not exist with us.', [], 403);
