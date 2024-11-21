@@ -4,10 +4,10 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use Carbon\Carbon;
 use Laravel\Sanctum\PersonalAccessToken;
-
 
 class TokenExpiryMiddleware
 {
@@ -32,17 +32,19 @@ class TokenExpiryMiddleware
                 $currentIp = $request->ip();
                 $userAgent = $request->header('User-Agent');            
                 if ($token->ip_address !== $currentIp || $token->user_agent !== $userAgent) {
+                    Log::error('Unauthorized: IP address or User-Agent mismatch. IP:'.$currentIp.' User-Agent: '. $userAgent);
                     return response()->json(['message' => 'Unauthorized: IP address or User-Agent mismatch'], 401);
+                    
                 }
 
                 // Check if the token has been inactive for more than 2 hours
                 $lastUsed = $token->last_used_at ? Carbon::parse($token->last_used_at) : $token->created_at;
                 $now = Carbon::now();
-                if ($lastUsed->diffInHours($now) >= 1) {
+                if ($lastUsed->diffInHours($now) >= 2) {
                     // Token is expired due to inactivity (more than 2 hours)
                     // Optionally, you can revoke or delete the token here
                     $token->delete();
-
+                    Log::error('Token expired due to inactivity');
                     return response()->json(['message' => 'Token expired due to inactivity'], 401);
                 }
             }

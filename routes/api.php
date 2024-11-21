@@ -80,7 +80,7 @@ Route::group(['prefix' => 'plan'], function () {
 	Route::get('/{id?}', [MainPlansController::class, 'getAllPlans']);
 });
 
-Route::middleware(['auth:sanctum', 'throttle:60,1', 'token.expiry', 'log.request.response'])->group(function () {
+Route::middleware(['auth:sanctum', 'token.expiry', 'throttle:60,1', 'log.request.response'])->group(function () {
 
 	# Company Management
 	Route::group(['prefix' => 'company'], function () {
