@@ -26,11 +26,11 @@ class ServerController extends Controller
 			$validator = Validator::make($request->all(), [
 				'name'	    => 'required',
 				'port'	    => 'nullable',
-				'ip'	    => 'required|ip',
+				'ip'	    => 'required',
 				'user_name'	=> 'required',
 				'secret'	=> 'required',
 				'ami_port'	=> 'required',
-				'domain'    => 'required|regex:/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu',				
+				//'domain'    => 'required|regex:/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu',				
 			]);
 			if ($validator->fails()){
 				return $this->output(false, $validator->errors()->first(), [], 409);
@@ -39,14 +39,13 @@ class ServerController extends Controller
 			$user = \Auth::user();
 			if(!is_null($user)){
 				$Server = Server::where('ip', $request->ip)
-							->where('domain', $request->domain)
 							->first();
 				if(!$Server){
 					$Server = Server::create([
 							'name'	    => $request->name,
 							'ip'        => $request->ip,
 							'port'      => isset($request->port) ? $request->port : 5060,
-							'domain'	=> $request->domain,
+							//'domain'	=> $request->domain,
 							'user_name'	=> $request->user_name,
 							'secret'	=> $request->secret,
 							'ami_port'	=> $request->ami_port,
@@ -147,27 +146,26 @@ class ServerController extends Controller
 			}else{
 				$validator = Validator::make($request->all(), [
 					'name'      => 'required',
-					'ip'	    => 'required|ip|unique:servers,ip,'.$Server->id,
+					'ip'	    => 'required|unique:servers,ip,'.$Server->id,
 					'port'		=> 'nullable',
 					'user_name'	=> 'required',
 					'secret'	=> 'required',
 					'ami_port'	=> 'required',
-					'domain'	=> 'required|regex:/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu',					
+					//'domain'	=> 'required|regex:/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu',					
 					'status'	=> 'nullable',
 				]);
 				if ($validator->fails()){
 					return $this->output(false, $validator->errors()->first(), [], 409);
 				}
 				
-				$ServerOld = Server::where('ip', $request->digits)
-							->where('domain', $request->subject)
+				$ServerOld = Server::where('ip', $request->ip)
 							->where('id','!=', $id)
 							->first();
 				if(!$ServerOld){
 					$Server->name   	= $request->name;
 					$Server->ip     	= $request->ip;
 					$Server->port   	= $request->port;
-					$Server->domain 	= $request->domain;
+					//$Server->domain 	= $request->domain;
 					$Server->user_name 	= $request->user_name;
 					$Server->secret 	= $request->secret;
 					$Server->ami_port 	= $request->ami_port;
