@@ -96,6 +96,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1', 'token.expiry', 'log.request
 		Route::post('/add-to-wallet', [CompanyController::class, 'AddbalanceForCompanyBySuperAdmin']);
 		Route::get('/resellersCompany/{reseller_id}/{plan_id}', [CompanyController::class, 'getAllActiveCompanyOfResellersByPlanId']);
 		Route::post('/reseller-add-to-wallet', [RechargeHistoryController::class, 'AddbalanceForResellerBySuperAdmin']);
+		Route::post('/changeServer', [CompanyController::class, 'changeCompanyRegisteredServer']);
 	});
 
 	Route::group(['prefix' => 'user'], function () {

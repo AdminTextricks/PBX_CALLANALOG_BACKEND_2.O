@@ -306,7 +306,7 @@ class UserController extends Controller
                     DB::table('user_registered_servers')->insert([
                         'server_id'   => $Server['id'],
                         'company_id'   => $company->id,
-                        'domain'   => $Server['domain'],
+                        'domain'   => $Server['ip'],
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                     ]);
@@ -314,7 +314,7 @@ class UserController extends Controller
                     DB::table('user_registered_servers')->insert([
                         'server_id'   => $Server[0]['id'],
                         'company_id'   => $company->id,
-                        'domain'   => $Server[0]['domain'],
+                        'domain'   => $Server[0]['ip'],
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                     ]);

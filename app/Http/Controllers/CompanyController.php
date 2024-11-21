@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\Server;
+use App\Models\UserRegisteredServer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
@@ -126,7 +127,7 @@ class CompanyController extends Controller
                     DB::table('user_registered_servers')->insert([
                         'server_id'   => $Server['id'],
                         'company_id'   => $company->id,
-                        'domain'   => $Server['domain'],
+                        'domain'   => $Server['ip'],
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                     ]);
@@ -134,7 +135,7 @@ class CompanyController extends Controller
                     DB::table('user_registered_servers')->insert([
                         'server_id'   => $Server[0]['id'],
                         'company_id'   => $company->id,
-                        'domain'   => $Server[0]['domain'],
+                        'domain'   => $Server[0]['ip'],
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                     ]);
@@ -627,6 +628,51 @@ class CompanyController extends Controller
             return $this->output(true, 'Success', $data->toArray(), 200);
         } else {
             return $this->output(true, 'No Record Found', []);
+        }
+    }
+
+    public function changeCompanyRegisteredServer(Request $request)
+    {
+        try { 
+            $user = \Auth::user();
+            if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
+                $validator = Validator::make($request->all(), [
+                    'company_id'    => 'required|numeric|exists:companies,id',
+                    'server_id'     => 'required||numeric|exists:servers,id',
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->output(false, $validator->errors()->first(), [], 409);
+                } else {
+                    $Server = Server::select()
+                            ->where('id', $request->server_id)
+                            ->where('status', '=', 1)->first(); 
+                    if($Server) {
+                        $UserRegisteredServer = UserRegisteredServer::select()
+                                        ->where('company_id', $request->company_id)
+                                        ->first();
+                        if($UserRegisteredServer){
+                            $UserRegisteredServer->server_id = $request->server_id;
+                            $UserRegisteredServer->domain = $Server->ip;
+                            $UserRegisteredServer->save();
+                            $response = [];
+                            return $this->output(true, 'Server updated successfully.', $response, 200);
+                        }else{
+                            return $this->output(false, 'Company not registered on any server. Please contact with development team!.', [], 200); 
+                        }
+
+                    }else{
+                        return $this->output(false, 'Server is disabled. Please contact with development team!.', [], 200);  
+                    }
+                }
+            } else {
+                return $this->output(false, 'Unauthorized user action.', [], 403);
+            }
+        
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error in Server Updating for company: ' . $e->getMessage() . ' In file: ' . $e->getFile() . ' On line: ' . $e->getLine());
+            return $this->output(false, 'Something went wrong, Please try after some time.', [], 409);
         }
     }
 }
