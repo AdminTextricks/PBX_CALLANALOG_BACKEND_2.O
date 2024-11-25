@@ -31,7 +31,8 @@ class TokenExpiryMiddleware
 
                 $currentIp = $request->ip();
                 $userAgent = $request->header('User-Agent');            
-                if ($token->ip_address !== $currentIp || $token->user_agent !== $userAgent) {
+                //if ($token->ip_address !== $currentIp || $token->user_agent !== $userAgent) {
+                if ($token->user_agent !== $userAgent) {
                     Log::error('Unauthorized: IP address or User-Agent mismatch. IP:'.$currentIp.' User-Agent: '. $userAgent);
                     return response()->json(['message' => 'Unauthorized: IP address or User-Agent mismatch'], 401);
                     
