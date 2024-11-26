@@ -17,6 +17,7 @@ class Server extends Model
         'user_name',
         'secret',
         'ami_port',
+        'barge_url',
         'status',
     ];
 

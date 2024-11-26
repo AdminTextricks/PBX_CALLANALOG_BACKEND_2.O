@@ -30,6 +30,7 @@ class ServerController extends Controller
 				'user_name'	=> 'required',
 				'secret'	=> 'required',
 				'ami_port'	=> 'required',
+				'barge_url'	=> 'required',
 				//'domain'    => 'required|regex:/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu',				
 			]);
 			if ($validator->fails()){
@@ -49,6 +50,7 @@ class ServerController extends Controller
 							'user_name'	=> $request->user_name,
 							'secret'	=> $request->secret,
 							'ami_port'	=> $request->ami_port,
+							'barge_url'	=> $request->barge_url,
 							'status' 	=> isset($request->status) ? $request->status : '1',
 						]);
 					$response = $Server->toArray();
@@ -151,6 +153,7 @@ class ServerController extends Controller
 					'user_name'	=> 'required',
 					'secret'	=> 'required',
 					'ami_port'	=> 'required',
+					'barge_url'	=> 'required',
 					//'domain'	=> 'required|regex:/^(?:[a-z0-9](?:[a-z0-9-æøå]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/isu',					
 					'status'	=> 'nullable',
 				]);
@@ -169,6 +172,7 @@ class ServerController extends Controller
 					$Server->user_name 	= $request->user_name;
 					$Server->secret 	= $request->secret;
 					$Server->ami_port 	= $request->ami_port;
+					$Server->barge_url 	= $request->barge_url;
 					$ServersRes     	= $Server->save();
 					if($ServersRes){
 						$Server = Server::where('id', $id)->first();        
