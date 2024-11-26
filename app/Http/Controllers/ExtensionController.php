@@ -1764,7 +1764,7 @@ class ExtensionController extends Controller
 
                 Log::error('Extension {' . $extension_number . '} unregistered Successfully : ' . $result);
 
-                if(strtoupper($result) == 'OK'){
+                if($result){
                     return $this->output(true, 'Extension {'.$extension_number.'} unregistered Successfully. ', [], 200);
                 }else{
                     return $this->output(false, 'Sorry! extension not unregistered.', [], 403);
