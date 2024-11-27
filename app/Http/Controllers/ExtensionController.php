@@ -1675,7 +1675,7 @@ class ExtensionController extends Controller
         try {
             $Extension = Extension::select('id', 'company_id', 'name', 'callbackextension', 'country_id')->where('name', $request->name)->first();
             if ($Extension) {
-                $Extensions = Extension::select('id', 'name', 'agent_name', 'country_id')
+                $Extensions = Extension::select('id', 'name', 'agent_name', 'callbackextension', 'country_id')
                     ->where('company_id', $Extension->company_id)
                     ->where('name', '!=', $request->name)
                     ->where('host', 'dynamic')
