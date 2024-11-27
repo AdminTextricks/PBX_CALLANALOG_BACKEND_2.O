@@ -1673,7 +1673,7 @@ class ExtensionController extends Controller
             return $this->output(false, $validator->errors()->first(), [], 400);
         }
         try {
-            $Extension = Extension::select('id', 'company_id', 'name', 'country_id')->where('name', $request->name)->first();
+            $Extension = Extension::select('id', 'company_id', 'name', 'callbackextension', 'country_id')->where('name', $request->name)->first();
             if ($Extension) {
                 $Extensions = Extension::select('id', 'name', 'agent_name', 'country_id')
                     ->where('company_id', $Extension->company_id)
