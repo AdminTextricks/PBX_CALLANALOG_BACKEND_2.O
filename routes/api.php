@@ -66,8 +66,10 @@ Route::middleware(['throttle:5,1', 'log.request.response'])->group(function () {
 	/********  Webphone API   *********/
 });
 Route::post('/verifyEmail', [UserController::class, 'verifyEmailIdByOTP'])->name('verifyEmailIdByOTP');
+Route::post('/verifyMobile', [UserController::class, 'verifyMobileByOTP']);
 //Route::get('/user/{id?}', [UserController::class, 'getUser']);
 Route::post('/resend-otp', [UserController::class, 'resendOtp'])->name('resendOtp');
+Route::post('/resend-sms-otp', [UserController::class, 'resendSMSOtp']);
 Route::get('/countries', [CountryController::class, 'getCountries']);
 Route::get('/states/{country_id?}', [StateController::class, 'getStates']);
 Route::get('/getTimeZone/{country_id}', [CountryController::class, 'getCountriesTimeZones']);

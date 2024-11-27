@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MobileVerification;
 use App\Traits\ManageNotifications;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -9,6 +10,7 @@ use App\Models\Company;
 use App\Models\Server;
 use App\Models\Trunk;
 use App\Models\EmailVerification;
+use App\Models\Country;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\LOG;
@@ -23,6 +25,7 @@ use Laravel\Sanctum\PersonalAccessToken;
 class UserController extends Controller
 {
     use ManageNotifications;
+    protected $twilioService;
     public function __construct() {}
 
     public function getUser(Request $request)
@@ -210,7 +213,6 @@ class UserController extends Controller
 
     public function registration(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
             'parent_id'     => 'required',
             'plan_id'       => 'required',
@@ -256,6 +258,7 @@ class UserController extends Controller
                 foreach ($Trunk as $key => $Trunk_id) {
                     $Trunk_ids .= $Trunk_id . ',';
                 }
+                $countryCode = $request->countryCode;
                 $company = Company::create([
                     'plan_id'       => $request->plan_id,
                     'parent_id'     => $request->parent_id,
@@ -321,6 +324,7 @@ class UserController extends Controller
                 }
 
                 $this->sendOtp($user); //OTP SEND
+                $this->sendSMSOtp($user, $countryCode); //OTP SEND
                 $ipAddress = $request->ip();
                 $token         =  $user->createToken('Callanalog-API')->plainTextToken;
                 $useragent = $request->header('User-Agent');
@@ -509,6 +513,67 @@ class UserController extends Controller
         }
     }
 
+    
+    public function sendSMSOtp($user, $countryCode)
+    {
+        $otp = rand(100000, 999999);
+        $time = time();
+        $newOTP = MobileVerification::updateOrCreate(
+            ['mobile' => $user->mobile],
+            [
+                'mobile' => $user->mobile,
+                'otp' => $otp,
+                'created_at' => $time
+            ]
+        );
+        if ($newOTP) {
+            $to = $this->formatPhoneNumber($user->mobile, $countryCode);
+            $message = 'Your mobile verification OTP code for PBX Callanalog is: '.$otp; 
+           
+            dispatch(new \App\Jobs\SendSmsJob($to, $message));
+        } else {
+            return $this->output(false, 'Error occurred in OTP creation. Try after some time.');
+        }
+    }
+
+    public function formatPhoneNumber($phoneNumber, $countryCode = '1')
+    {
+        $phoneNumber = preg_replace('/[^0-9]/', '', $phoneNumber); // Remove non-numeric characters
+    
+        if (substr($phoneNumber, 0, 1) !== '+') {
+            $phoneNumber = '+' . $countryCode . $phoneNumber;
+        }
+    
+        return $phoneNumber;
+    }
+
+    public function verifyMobileByOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'mobile' => 'required|max:255|exists:mobile_verifications',
+            'otp' => 'required|numeric|digits:6'
+        ]);
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+        $user = User::where('mobile', $request->mobile)->first();
+        $otpData = MobileVerification::where('otp', $request->otp)
+                ->where('mobile', $request->mobile)->first();
+        if (!$otpData) {
+            return $this->output(false, 'You entered wrong OTP.', [], 409);
+        } else {
+            $currentTime = time();
+            $time = $otpData->created_at;
+            if ($currentTime >= $time && $time >= $currentTime - (300 + 5)) { //5 Min
+                User::where('id', $user->id)->update([
+                    'mobile_verified_at' => now()
+                ]);
+                return $this->output(true, 'Mobile has been verified.', [], 202);
+            } else {
+                return $this->output(false, 'Your OTP has been Expired!', [], 410);
+            }
+        }
+    }
 
     public function verifyEmailIdByOTP(Request $request)
     {
@@ -520,7 +585,8 @@ class UserController extends Controller
             return $this->output(false, $validator->errors()->first(), [], 409);
         }
         $user = User::where('email', $request->email)->first();
-        $otpData = EmailVerification::where('otp', $request->otp)->first();
+        $otpData = EmailVerification::where('otp', $request->otp)
+                    ->where('email', $request->email)->first();
         if (!$otpData) {
             return $this->output(false, 'You entered wrong OTP.', [], 409);
         } else {
@@ -562,6 +628,26 @@ class UserController extends Controller
         }
     }
 
+    public function resendSMSOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'mobile' => 'required|max:255|exists:mobile_verifications'
+        ]);
+        if ($validator->fails()) {
+            return $this->output(false, $validator->errors()->first(), [], 409);
+        }
+        $user = User::where('mobile', $request->mobile)->first();
+        $otpData = MobileVerification::where('mobile', $request->mobile)->first();
+        $currentTime = time();
+        $time = $otpData->created_at;
+        if ($currentTime >= $time && $time >= $currentTime - (300 + 2)) { //2 Min
+            return $this->output(false, 'Please try after 2 Minutes.');
+        } else {
+            $countryDetails = Country::find($user->country_id);
+            $this->sendSMSOtp($user, $countryDetails->phone_code); //OTP SEND
+            return $this->output(true, 'OTP has been sent.');
+        }
+    }
 
     public function login(Request $request)
     {

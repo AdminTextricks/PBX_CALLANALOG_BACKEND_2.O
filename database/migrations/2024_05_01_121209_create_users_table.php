@@ -25,6 +25,7 @@ return new class extends Migration
 			$table->string('city',50);
 			$table->string('zip',50);
             $table->timestamp('email_verified_at')->nullable();
+            $table->timestamp('mobile_verified_at')->nullable();
             $table->tinyInteger('is_verified')->default(0);
 			$table->tinyInteger('is_verified_doc')->default(0);
 			$table->rememberToken();
