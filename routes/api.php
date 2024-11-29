@@ -63,6 +63,7 @@ Route::middleware(['throttle:5,1', 'log.request.response'])->group(function () {
 	/********  Webphone API   *********/
 	Route::post('/extension_login', [ExtensionController::class, 'extensionLogin']);
 	Route::get('/getContactList', [ExtensionController::class, 'extensionContactList']);
+	Route::get('/UnregisterSip/{extension_number}', [ExtensionController::class, 'extensionUnregisterFromOpenSips']);
 	/********  Webphone API   *********/
 });
 Route::post('/verifyEmail', [UserController::class, 'verifyEmailIdByOTP'])->name('verifyEmailIdByOTP');
