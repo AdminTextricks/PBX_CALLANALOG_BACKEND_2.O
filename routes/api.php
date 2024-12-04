@@ -56,6 +56,7 @@ use App\Http\Controllers\ResellerPaymentHistoryController;
 |
 */
 //Route::post('/sipReload', [UserController::class, 'sipReload']);
+Route::post('/sendTestSMSOtp', [UserController::class, 'sendTestSMSOtp']);
 Route::post('/registration', [UserController::class, 'registration']);
 
 Route::middleware(['throttle:5,1', 'log.request.response'])->group(function () {
