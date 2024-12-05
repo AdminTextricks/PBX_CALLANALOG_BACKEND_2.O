@@ -538,26 +538,14 @@ class UserController extends Controller
 
     public function sendTestSMSOtp(Request $request)
     {
-        $otp = rand(100000, 999999);
-        $time = time();
-        $newOTP = MobileVerification::updateOrCreate(
-            ['mobile' => '8218098735'],
-            [
-                'mobile' => '8218098735',
-                'otp' => $otp,
-                'created_at' => $time
-            ]
-        );
-        if ($newOTP) {
-            $to = $this->formatPhoneNumber('8218098735', '91');
-            $message = 'Your mobile verification OTP code for PBX Callanalog is: '.$otp; 
-           
-            dispatch(new \App\Jobs\SendSmsJob($to, $message));
-            Log::error('SendSMSJob response : ' );            
-            return $this->output(true, 'SMS OTP Sent successfull.', [], 200);            
-        } else {
-            return $this->output(false, 'Error occurred in OTP creation. Try after some time.');
-        }
+        $otp = rand(100000, 999999);        
+        $to = $this->formatPhoneNumber('8218098735', '91');
+        $message = 'Your mobile verification OTP code for PBX Callanalog is: '.$otp; 
+        
+        dispatch(new \App\Jobs\SendSmsJob($to, $message));
+        Log::error('SendSMSJob response : ' );            
+        return $this->output(true, 'SMS OTP Sent successfull.', [], 200);            
+        
     }
 
     public function formatPhoneNumber($phoneNumber, $countryCode = '1')
