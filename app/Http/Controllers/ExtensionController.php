@@ -283,7 +283,7 @@ class ExtensionController extends Controller
                                     $webrtc_template_url = config('app.webrtc_template_url');
                                     $addExtensionFile = $webrtc_template_url;
                                     $ConfTemplate = ConfTemplate::select()->where('template_id', $sip_temp)->first();
-                                    //$this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
+                                    $this->addExtensionInConfFile($item, $addExtensionFile, $request->secret, $Company->account_code, $ConfTemplate->template_contents);
                                 }
 
                                 if (in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc'))) {
