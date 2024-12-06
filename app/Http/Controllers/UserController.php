@@ -702,7 +702,8 @@ class UserController extends Controller
                     return $this->output(false, 'Your company account has been suspended. Please contact with support.', [], 423);
                 }
             } else {
-                return $this->output(false, 'Email Id is not verifie!', [], 403);
+                $response = $user->toArray();
+                return $this->output(false, 'Mobile number or email ID is not verified!', $response, 403);
             }
         } else {
             return $this->output(false, 'Email Id dose not exist!', [], 404);
