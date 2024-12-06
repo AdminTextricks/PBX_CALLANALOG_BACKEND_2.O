@@ -4,7 +4,7 @@
 REMOTE_USER="root"
 REMOTE_HOST="92.42.108.123"
 SSH_PORT="18634"
-SSH_KEY_PATH="/root/.ssh/id_rsa"
+SSH_KEY_PATH="/var/www/.ssh/id_rsa"
 
 # The commands to run on the remote server
 COMMANDS="

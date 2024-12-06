@@ -307,14 +307,14 @@ class ExtensionController extends Controller
                                     'status'            => 1,
                                 ]);
 
-                                $emailData['title']         = 'Invoice From Callanalog';
+                                /* $emailData['title']         = 'Invoice From Callanalog';
                                 $emailData['item_numbers']  = $item_ids;
                                 $emailData['item_types']    = 'Extension';
                                 $emailData['price']         = $TotalItemPrice;
                                 $emailData['invoice_number'] = $invoice_id;
                                 $emailData['email']         = $Company->email;
                                 $emailData['email_template'] = 'invoice';
-                                dispatch(new \App\Jobs\SendEmailJob($emailData));
+                                dispatch(new \App\Jobs\SendEmailJob($emailData)); */
 
                                 $response['total_extension'] = count($item_ids);
                                 //$Extensions;//->toArray();
@@ -1430,14 +1430,14 @@ class ExtensionController extends Controller
                                     'status'            => 1,
                                 ]);
 
-                                $emailData['title']         = 'Invoice From Callanalog';
+                                /* $emailData['title']         = 'Invoice From Callanalog';
                                 $emailData['item_numbers']  = $item_ids;
                                 $emailData['item_types']    = 'Extension';
                                 $emailData['price']         = $TotalItemPrice;
                                 $emailData['invoice_number'] = $invoice_id;
                                 $emailData['email']         = $Company->email;
                                 $emailData['email_template'] = 'invoice';
-                                dispatch(new \App\Jobs\SendEmailJob($emailData));
+                                dispatch(new \App\Jobs\SendEmailJob($emailData)); */
 
                                 $response['total_extension'] = count($item_ids);
                                 //$Extensions;//->toArray();
