@@ -703,7 +703,7 @@ class UserController extends Controller
                 }
             } else {
                 $response = $user->toArray();
-                return $this->output(false, 'Mobile number or email ID is not verified!', $response, 403);
+                return $this->output(true, 'Mobile number or email ID is not verified!', $response, 403);
             }
         } else {
             return $this->output(false, 'Email Id dose not exist!', [], 404);
