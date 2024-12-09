@@ -102,6 +102,7 @@ class CompanyController extends Controller
                     'city'         => $request->city,
                     'zip'         => $request->zip,
                     'email_verified_at' => Carbon::now(),
+                    'mobile_verified_at' => Carbon::now(),
                     'is_verified' => '1',
                     'role_id'     => '4', //$request->role_id,
                     'status'     => '1',
