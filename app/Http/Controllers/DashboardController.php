@@ -400,7 +400,8 @@ class DashboardController extends Controller
         if ($user->roles->first()->slug == 'reseller') {
             try {
                 $resellercommissionofcalls = ResellerCommissionOfCalls::selectRaw('COUNT(*) as total,
-                    SUM( commission_amount ) as commission_amount')->first();
+                    SUM( commission_amount ) as commission_amount')
+                    ->where('reseller_id', $user->id)->first();
                 if ($resellercommissionofcalls->total > 0) {
                     return response()->json([
                         'commission_amount' => $resellercommissionofcalls->commission_amount,
