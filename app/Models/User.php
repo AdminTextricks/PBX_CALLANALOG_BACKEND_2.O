@@ -30,6 +30,8 @@ class User extends Authenticatable
         'city',
         'zip',
         'role_id',
+        'email_verified_at',
+        'mobile_verified_at',
         'is_verified',
         'is_verified_doc',
         'status',

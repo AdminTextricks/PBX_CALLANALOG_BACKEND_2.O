@@ -385,7 +385,8 @@ class UserController extends Controller
             //'password' 	=> 'required|confirmed',
             //'account_code'  => 'required|max:500|unique:users', 
         ], [
-            'company_id' => 'The company field is required when you are creating company user',
+            'company_id.required_if' => 'The company field is required when Creating company user.',
+            'company_id.exists' => 'The selected company is invalid.',
             'role_id' => 'The selected role is invalid!',
             'email.unique' => 'This email ID is already registered. Please try with different email ID.',
             'mobile.unique' => 'This mobile number is already registered. Please try with different mobile number.',
