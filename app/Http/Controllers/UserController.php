@@ -678,7 +678,7 @@ class UserController extends Controller
             ->with(['company', 'company.user_plan:id,name'])
             ->where('email', $request->email)->first();
         if ($user) {
-            if ($user->is_verified == 1) {
+            if ($user->is_verified == 1 && !empty($user->mobile_verified_at)) {
 
                 if ((isset($user->company->status) && $user->company->status == 1) || in_array($user->roles->first()->slug, array('super-admin', 'support', 'noc', 'reseller'))) {
                     if ($user->status == 1) {
